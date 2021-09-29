@@ -1,5 +1,0 @@
-package bedrockDragon
-
-class DragonThread {
-
-}

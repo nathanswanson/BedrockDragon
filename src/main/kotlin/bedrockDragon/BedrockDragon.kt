@@ -9,7 +9,7 @@ private val logger = KotlinLogging.logger {}
 
 fun main() {
     val bindAddress = InetSocketAddress("0.0.0.0", 19132)
-    val server = BedrockServer(bindAddress)
+    val server = Server(bindAddress)
 
     val pong = BedrockPong()
     pong.edition = "MCPE"
@@ -40,15 +40,7 @@ fun main() {
     }
 
 
-    val message = "world"
+    logger.info { "Starting Bedrock Dragon" }
 
-    logger.info { "hello $message" }
-
-
-    server.bind().join()
-
-    //Main server tick
-    while(true) {
-    }
-
+    server.start()
 }
