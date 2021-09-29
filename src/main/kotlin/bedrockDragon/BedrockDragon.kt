@@ -3,7 +3,9 @@ package bedrockDragon
 import com.nukkitx.protocol.bedrock.*
 import com.nukkitx.protocol.bedrock.v465.Bedrock_v465
 import java.net.InetSocketAddress
+import mu.KotlinLogging
 
+private val logger = KotlinLogging.logger {}
 
 fun main() {
     val bindAddress = InetSocketAddress("0.0.0.0", 19132)
@@ -37,15 +39,16 @@ fun main() {
         }
     }
 
+
+    val message = "world"
+
+    logger.info { "hello $message" }
+
+
     server.bind().join()
 
-    val clientAddress = InetSocketAddress("0.0.0.0", 12345)
-    val client = BedrockClient(clientAddress)
-
-    client.bind().join()
     //Main server tick
     while(true) {
-        println(server.bootstrap)
     }
 
 }
