@@ -1,7 +1,6 @@
 package bedrockDragon
 
-import com.nukkitx.protocol.bedrock.*
-import com.nukkitx.protocol.bedrock.v465.Bedrock_v465
+import protocol.bedrock.*
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 
@@ -17,7 +16,7 @@ fun main() {
     pong.playerCount = 0
     pong.maximumPlayerCount = 20
     pong.gameType = "Survival"
-    pong.protocolVersion = Bedrock_v465.V465_CODEC.protocolVersion
+   // pong.protocolVersion = protocol.bedrock.
 
     server.handler = object : BedrockServerEventHandler {
         override fun onConnectionRequest(address: InetSocketAddress): Boolean {
@@ -38,7 +37,7 @@ fun main() {
             // After receiving the LoginPacket, you need to set the correct packet codec for the client and continue.
         }
     }
-    server.bind().join()
+
 
     logger.info { "Starting Bedrock Dragon" }
 

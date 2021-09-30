@@ -1,3 +1,0 @@
-[submodule "protocol"]
-	path = src.main.kotlin
-	url = https://github.com/nathanswanson/Protocol.git

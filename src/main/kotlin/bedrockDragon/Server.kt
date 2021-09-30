@@ -2,7 +2,7 @@ package bedrockDragon
 
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
-import com.nukkitx.protocol.bedrock.BedrockServer
+import protocol.bedrock.BedrockServer
 import kotlinx.coroutines.*
 import mu.KotlinLogging
 import java.net.InetSocketAddress
