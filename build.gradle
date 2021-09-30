@@ -8,9 +8,6 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenLocal()
-    maven {
-        url uri("https://repo.nukkitx.com/snapshot/")
-    }
     mavenCentral()
 }
 
