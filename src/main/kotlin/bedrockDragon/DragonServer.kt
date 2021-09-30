@@ -1,31 +1,72 @@
 package bedrockDragon
 
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.ThreadedListener
+import bedrockDragon.network.raknet.peer.RakNetClientPeer
+import bedrockDragon.network.raknet.server.RakNetServerHandler
+import bedrockDragon.network.raknet.server.RakNetServerListener
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
-import kotlinx.coroutines.*
+import io.netty.bootstrap.Bootstrap
+import io.netty.channel.Channel
+import io.netty.channel.ChannelOption
+import io.netty.channel.FixedRecvByteBufAllocator
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.nio.NioDatagramChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import network.common.util.EventLoops
-import protocol.bedrock.Bedrock
-import protocol.bedrock.BedrockServerEventHandler
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.Consumer
+import kotlin.math.log
 
 private val logger = KotlinLogging.logger {}
 
-class DragonServer(bindAddress: InetSocketAddress) : Bedrock(EventLoops.commonGroup()) {
+class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
 
+    private var eventThreadCount = 0
     private var isRunning = false
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
-    lateinit var handler : BedrockServerEventHandler
+    private var bootstrap: Bootstrap = Bootstrap()
+    private var group: NioEventLoopGroup = NioEventLoopGroup()
+
+    private lateinit var channel: Channel
+    private lateinit var handle : RakNetServerHandler
+    private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
 
     fun start() {
+
+        logger.info { "Starting RakNet" }
+        handle = RakNetServerHandler(this)
+        //netty
+
+
+
+        bootstrap.handler(handle)
+        bootstrap.channel(NioDatagramChannel::class.java).group(group)
+        bootstrap.option(ChannelOption.SO_BROADCAST, true).option(ChannelOption.SO_REUSEADDR, false)
+            .option(ChannelOption.SO_SNDBUF, 256)
+            .option(ChannelOption.SO_RCVBUF, 256)
+            .option(ChannelOption.RCVBUF_ALLOCATOR, FixedRecvByteBufAllocator(256))
+
+        channel = bootstrap.bind(bindAddress).sync().channel()
+
+
+
         //Coroutine Entity
+        logger.info { "Starting Entity Thread" }
         scope.launch { entityLightThread() }
         //Coroutine World
+        logger.info { "Starting World Thread" }
         scope.launch { worldLightThread() }
         //Start server tick.
         //Main thread deals with packets received and sent to client. packets received are converted into objects and sent to the related lightThread
         isRunning = true
         tick()
+
     }
 
     private fun tick() {
@@ -55,12 +96,46 @@ class DragonServer(bindAddress: InetSocketAddress) : Bedrock(EventLoops.commonGr
         worldTicker.initialize()
     }
 
-    override fun onTick() {
-        TODO("Not yet implemented")
+    fun disconnect(client: RakNetClientPeer, s: String) {
+
     }
 
-    override fun close(force: Boolean) {
-        TODO("Not yet implemented")
+    @Throws(NullPointerException::class)
+    fun callEvent(event: Consumer<in RakNetServerListener?>?) {
+        if (event == null) {
+            throw NullPointerException("Event cannot be null")
+        }
+        //logger.trace("Called event of class " + event.getClass().getName() + " for " + listeners.size() + " listeners");
+        for (listener: RakNetServerListener in listeners) {
+            if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
+                val threadedListener = listener.javaClass.getAnnotation(
+                    ThreadedListener::class.java
+                )
+                object : Thread(
+                    DragonServer::class.java.simpleName + (if (threadedListener.name.isNotEmpty()) "-" else "")
+                            + threadedListener.name + "-Thread-" + ++eventThreadCount
+                ) {
+                    override fun run() {
+                        event.accept(listener)
+                    }
+                }.start()
+            } else {
+                event.accept(listener)
+            }
+        }
+    }
+
+    fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
+        logger.info { sender.hostString }
+        logger.info { packet.id }
+    }
+
+    fun handleHandlerException(causeAddress: InetSocketAddress, cause: Throwable) {
+
+    }
+
+    fun clients(): ArrayList<RakNetClientPeer> {
+        return TODO()
     }
 
 }
