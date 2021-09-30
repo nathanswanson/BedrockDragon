@@ -2,17 +2,20 @@ package bedrockDragon
 
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
-import protocol.bedrock.BedrockServer
 import kotlinx.coroutines.*
 import mu.KotlinLogging
+import network.common.util.EventLoops
+import protocol.bedrock.Bedrock
+import protocol.bedrock.BedrockServerEventHandler
 import java.net.InetSocketAddress
 
 private val logger = KotlinLogging.logger {}
 
-class Server(bindAddress: InetSocketAddress?) : BedrockServer(bindAddress) {
+class DragonServer(bindAddress: InetSocketAddress) : Bedrock(EventLoops.commonGroup()) {
 
     private var isRunning = false
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    lateinit var handler : BedrockServerEventHandler
 
     fun start() {
         //Coroutine Entity
@@ -51,4 +54,13 @@ class Server(bindAddress: InetSocketAddress?) : BedrockServer(bindAddress) {
         val worldTicker = WorldTicker()
         worldTicker.initialize()
     }
+
+    override fun onTick() {
+        TODO("Not yet implemented")
+    }
+
+    override fun close(force: Boolean) {
+        TODO("Not yet implemented")
+    }
+
 }

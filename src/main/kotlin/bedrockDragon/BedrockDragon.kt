@@ -8,7 +8,7 @@ private val logger = KotlinLogging.logger {}
 
 fun main() {
     val bindAddress = InetSocketAddress("0.0.0.0", 19132)
-    val server = Server(bindAddress)
+    val server = DragonServer(bindAddress)
 
     val pong = BedrockPong()
     pong.edition = "MCPE"
@@ -23,14 +23,14 @@ fun main() {
             return true // Connection will be accepted
         }
 
-        override fun onQuery(address: InetSocketAddress): BedrockPong? {
+        override fun onQuery(address: InetSocketAddress): BedrockPong {
             return pong
         }
 
-        override fun onSessionCreation(serverSession: BedrockServerSession) {
+        override fun onSessionCreation(serverSession: BedrockServerSession?) {
             // Connection established
             // Add disconnect handler
-            serverSession.addDisconnectHandler { reason -> println("Disconnected") }
+            serverSession?.addDisconnectHandler() { reason -> println("Disconnected") }
             // Remember to set a packet handler so you receive incoming packets
             //serverSession.setPacketHandler(handler)
             // By default, the server will use a compatible codec that will read any LoginPacket.
