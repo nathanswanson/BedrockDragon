@@ -38,7 +38,7 @@ fun main() {
             // After receiving the LoginPacket, you need to set the correct packet codec for the client and continue.
         }
     }
-
+    server.bind().join()
 
     logger.info { "Starting Bedrock Dragon" }
 

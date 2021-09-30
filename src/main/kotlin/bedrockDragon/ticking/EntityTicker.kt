@@ -9,7 +9,7 @@ class EntityTicker : TickingThread {
         var lastTick = System.currentTimeMillis()
         while(true) {
             if(System.currentTimeMillis() - lastTick >= 50) {
-                    logger.info { "entity tick ${System.currentTimeMillis()}" }
+                    //logger.info { "entity tick ${System.currentTimeMillis()}" }
                     lastTick = System.currentTimeMillis()
              }
         }

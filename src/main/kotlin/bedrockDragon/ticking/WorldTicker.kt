@@ -9,7 +9,7 @@ class WorldTicker : TickingThread {
         var lastTick = System.currentTimeMillis()
         while(true) {
             if(System.currentTimeMillis() - lastTick >= 50) {
-                logger.info { "world tick ${System.currentTimeMillis()}" }
+                //logger.info { "world tick ${System.currentTimeMillis()}" }
                 lastTick = System.currentTimeMillis()
             }
         }
