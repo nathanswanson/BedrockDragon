@@ -27,7 +27,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol;
+package bedrockDragon.network.raknet.protocol
 
 /**
  * Packets that extend this class indicate that they have a possibility of
@@ -37,14 +37,12 @@ package bedrockDragon.network.raknet.protocol;
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.2.0
  */
-public interface Failable {
-
-	/**
-	 * Returns whether or not the packet failed to encode/decode.
-	 * 
-	 * @return <code>true</code> if the packet failed to encode/decode,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean failed();
-
+interface Failable {
+    /**
+     * Returns whether or not the packet failed to encode/decode.
+     *
+     * @return `true` if the packet failed to encode/decode,
+     * `false` otherwise.
+     */
+    fun failed(): Boolean
 }

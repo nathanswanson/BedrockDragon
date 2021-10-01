@@ -1,5 +1,8 @@
 package bedrockDragon
 
+import bedrockDragon.network.bedrockprotocol.IPacketCoolDown
+import bedrockDragon.network.bedrockprotocol.PacketSortFactory
+import bedrockDragon.network.bedrockprotocol.packethandler.PacketHandler
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
@@ -13,10 +16,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import mu.KotlinLogging
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -41,9 +41,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         logger.info { "Starting RakNet" }
         handle = RakNetServerHandler(this)
-        //netty
-
-
 
         bootstrap.handler(handle)
         bootstrap.channel(NioDatagramChannel::class.java).group(group)
@@ -126,8 +123,19 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     }
 
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
-        logger.info { sender.hostString }
-        logger.info { packet.id }
+        val packetHandler = PacketSortFactory.createPacketHandle(sender, packet, channel)
+
+
+            logger.info { "test" }
+            packetHandler.responseToClient()
+            //packetHandler.responseToServer()
+
+
+        logger.info { packetHandler }
+
+
+
+
     }
 
     fun handleHandlerException(causeAddress: InetSocketAddress, cause: Throwable) {

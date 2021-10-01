@@ -49,7 +49,8 @@ import java.lang.Exception
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-class RakNetServerHandler(  //private final Logger logger;
+class RakNetServerHandler(
+    //private final Logger logger;
     private val server: DragonServer
 ) : ChannelInboundHandlerAdapter() {
     private val blocked: ConcurrentHashMap<InetAddress, BlockedAddress?> = ConcurrentHashMap()

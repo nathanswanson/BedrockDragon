@@ -27,101 +27,75 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.server;
+package bedrockDragon.network.raknet.server
 
-import java.net.InetSocketAddress;
-import java.util.Objects;
-
-import bedrockDragon.network.raknet.identifier.Identifier;
-import bedrockDragon.network.raknet.protocol.ConnectionType;
+import bedrockDragon.network.raknet.identifier.Identifier
+import java.net.InetSocketAddress
+import bedrockDragon.network.raknet.protocol.ConnectionType
+import java.util.Objects
+import bedrockDragon.network.raknet.server.ServerPing
 
 /**
  * Contains information about a server ping such as who sent the ping and what
  * the server will respond back with.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class ServerPing {
+class ServerPing
+/**
+ * Creates a server ping.
+ *
+ * @param sender
+ * the address of the ping sender.
+ * @param connectionType
+ * the connection type of the ping sender.
+ * @param identifier
+ * the identifier to respond with.
+ */(
+    /**
+     * Returns the address of the ping sender.
+     *
+     * @return the address of the ping sender.
+     */
+    val sender: InetSocketAddress,
+    /**
+     * Returns the connection type of the ping sender.
+     *
+     * @return the connection type of the ping sender.
+     */
+    val connectionType: ConnectionType,
+    /**
+     * Sets the identifier being sent back to the sender.
+     *
+     * @param identifier
+     * the new identifier.
+     */
+    var identifier: Identifier
+) {
 
-	private final InetSocketAddress sender;
-	private final ConnectionType connectionType;
-	private Identifier identifier;
+    /**
+     * Returns the identifier being sent back to the sender.
+     *
+     * @return the identifier being sent back to the sender.
+     */
+    override fun hashCode(): Int {
+        return Objects.hash(sender, connectionType, identifier)
+    }
 
-	/**
-	 * Creates a server ping.
-	 * 
-	 * @param sender
-	 *            the address of the ping sender.
-	 * @param connectionType
-	 *            the connection type of the ping sender.
-	 * @param identifier
-	 *            the identifier to respond with.
-	 */
-	public ServerPing(InetSocketAddress sender, ConnectionType connectionType, Identifier identifier) {
-		this.sender = sender;
-		this.connectionType = connectionType;
-		this.identifier = identifier;
-	}
+    override fun equals(o: Any?): Boolean {
+        if (o === this) {
+            return true
+        } else if (o !is ServerPing) {
+            return false
+        }
+        val sp = o
+        return (sender == sp.sender && connectionType == sp.connectionType
+                && identifier == sp.identifier)
+    }
 
-	/**
-	 * Returns the address of the ping sender.
-	 * 
-	 * @return the address of the ping sender.
-	 */
-	public InetSocketAddress getSender() {
-		return this.sender;
-	}
-
-	/**
-	 * Returns the connection type of the ping sender.
-	 * 
-	 * @return the connection type of the ping sender.
-	 */
-	public ConnectionType getConnectionType() {
-		return this.connectionType;
-	}
-
-	/**
-	 * Returns the identifier being sent back to the sender.
-	 * 
-	 * @return the identifier being sent back to the sender.
-	 */
-	public Identifier getIdentifier() {
-		return this.identifier;
-	}
-
-	/**
-	 * Sets the identifier being sent back to the sender.
-	 * 
-	 * @param identifier
-	 *            the new identifier.
-	 */
-	public void setIdentifier(Identifier identifier) {
-		this.identifier = identifier;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(sender, connectionType, identifier);
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o == this) {
-			return true;
-		} else if (!(o instanceof ServerPing)) {
-			return false;
-		}
-		ServerPing sp = (ServerPing) o;
-		return Objects.equals(sender, sp.sender) && Objects.equals(connectionType, sp.connectionType)
-				&& Objects.equals(identifier, sp.identifier);
-	}
-
-	@Override
-	public String toString() {
-		return "ServerPing [sender=" + sender + ", identifier=" + identifier + ", connectionType=" + connectionType
-				+ "]";
-	}
-
+    override fun toString(): String {
+        return ("ServerPing [sender=" + sender + ", identifier=" + identifier + ", connectionType=" + connectionType
+                + "]")
+    }
 }

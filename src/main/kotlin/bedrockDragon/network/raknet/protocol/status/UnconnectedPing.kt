@@ -27,121 +27,115 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.status;
+package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetException;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.ConnectionType;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.RakNetException
 
 /**
- * An <code>UNCONNECTED_PING</code> packet.
- * <p>
+ * An `UNCONNECTED_PING` packet.
+ *
+ *
  * This packet is sent by clients either by broadcasting to the local network or
  * sending directly to servers in order to get their status and descriptor, also
- * known as an {@link bedrockDragon.network.raknet.identifier.Identifier Identifier}.
- * 
+ * known as an [Identifier][bedrockDragon.network.raknet.identifier.Identifier].
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public class UnconnectedPing extends RakNetPacket implements Failable {
+open class UnconnectedPing : RakNetPacket, Failable {
+    /**
+     * The timestamp of the sender.
+     */
+	@JvmField
+	var timestamp: Long = 0
 
-	/**
-	 * The timestamp of the sender.
-	 */
-	public long timestamp;
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+	@JvmField
+	var magic = false
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The client's ping ID.
+     */
+	@JvmField
+	var pingId: Long = 0
 
-	/**
-	 * The client's ping ID.
-	 */
-	public long pingId;
+    /**
+     * The client's connection type.
+     */
+	@JvmField
+	var connectionType: ConnectionType? = null
 
-	/**
-	 * The client's connection type.
-	 */
-	public ConnectionType connectionType;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates an `UNCONNECTED_PING` packet to be encoded.
+     *
+     * @param requiresOpenConnections
+     * `true` if the server should only respond if it has
+     * open connections available, `false` if the server
+     * should unconditionally respond.
+     * @see .encode
+     */
+    protected constructor(requiresOpenConnections: Boolean) : super((if (requiresOpenConnections) ID_UNCONNECTED_PING_OPEN_CONNECTIONS else ID_UNCONNECTED_PING).toInt()) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PING</code> packet to be encoded.
-	 * 
-	 * @param requiresOpenConnections
-	 *            <code>true</code> if the server should only respond if it has
-	 *            open connections available, <code>false</code> if the server
-	 *            should unconditionally respond.
-	 * @see #encode()
-	 */
-	protected UnconnectedPing(boolean requiresOpenConnections) {
-		super((requiresOpenConnections ? ID_UNCONNECTED_PING_OPEN_CONNECTIONS : ID_UNCONNECTED_PING));
-	}
+    /**
+     * Creates an `UNCONNECTED_PING` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : this(false) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PING</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public UnconnectedPing() {
-		this(false);
-	}
+    /**
+     * Creates an `UNCONNECTED_PING` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PING</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public UnconnectedPing(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            writeLong(timestamp)
+            writeMagic()
+            writeLong(pingId)
+            this.writeConnectionType(connectionType)
+        } catch (e: RakNetException) {
+            timestamp = 0
+            magic = false
+            pingId = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.writeLong(timestamp);
-			this.writeMagic();
-			this.writeLong(pingId);
-			this.writeConnectionType(connectionType);
-		} catch (RakNetException e) {
-			this.timestamp = 0;
-			this.magic = false;
-			this.pingId = 0;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
+    override fun decode() {
+        try {
+            timestamp = readLong()
+            magic = readMagic()
+            pingId = readLong()
+            connectionType = readConnectionType()
+        } catch (e: RakNetException) {
+            timestamp = 0
+            magic = false
+            pingId = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.timestamp = this.readLong();
-			this.magic = this.readMagic();
-			this.pingId = this.readLong();
-			this.connectionType = this.readConnectionType();
-		} catch (RakNetException e) {
-			this.timestamp = 0;
-			this.magic = false;
-			this.pingId = 0;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }

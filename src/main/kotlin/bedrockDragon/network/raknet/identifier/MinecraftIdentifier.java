@@ -73,7 +73,7 @@ public class MinecraftIdentifier extends Identifier {
 	 * periods. A <code>null</code> value is also valid, seeing as when the
 	 * identifier is being built no version will be placed inside the identifier
 	 * string.
-	 * 
+	 *
 	 * @param versionTag
 	 *            the version tag.
 	 * @return <code>true</code> if the version tag is valid, <code>false</code>
@@ -92,7 +92,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns whether or not the the identifier is a Minecraft identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *            the identifier to check.
 	 * @return <code>true</code> if the identifier is a Minecraft identifier,
@@ -117,7 +117,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Creates a Minecraft identifier.
-	 * 
+	 *
 	 * @param serverName
 	 *            the server name.
 	 * @param serverProtocol
@@ -155,7 +155,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Creates a Minecraft identifier from an existing identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *            the identifier.
 	 * @throws NullPointerException
@@ -197,7 +197,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Creates a Minecraft identifier from an existing identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *            the identifier.
 	 * @throws NullPointerException
@@ -219,7 +219,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the server name.
-	 * 
+	 *
 	 * @return the server name.
 	 */
 	public String getServerName() {
@@ -228,7 +228,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the server protocol.
-	 * 
+	 *
 	 * @return the server protocol.
 	 */
 	public int getServerProtocol() {
@@ -237,7 +237,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the version tag.
-	 * 
+	 *
 	 * @return the version tag.
 	 */
 	public String getVersionTag() {
@@ -246,7 +246,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the online player count.
-	 * 
+	 *
 	 * @return the online player count.
 	 */
 	public int getOnlinePlayerCount() {
@@ -255,7 +255,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the max player count.
-	 * 
+	 *
 	 * @return the max player count.
 	 */
 	public int getMaxPlayerCount() {
@@ -264,7 +264,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the globally unique ID.
-	 * 
+	 *
 	 * @return the globally unique ID.
 	 */
 	public long getGloballyUniqueId() {
@@ -273,7 +273,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the world name.
-	 * 
+	 *
 	 * @return the world name.
 	 */
 	public String getWorldName() {
@@ -282,7 +282,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns the gamemode.
-	 * 
+	 *
 	 * @return the gamemode.
 	 */
 	public String getGamemode() {
@@ -291,7 +291,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the server name.
-	 * 
+	 *
 	 * @param serverName
 	 *            the new server name.
 	 * @throws IllegalArgumentException
@@ -309,7 +309,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the server protocol.
-	 * 
+	 *
 	 * @param serverProtocol
 	 *            the new server protocol.
 	 */
@@ -319,7 +319,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the version tag.
-	 * 
+	 *
 	 * @param versionTag
 	 *            the new version tag.
 	 * @throws IllegalArgumentException
@@ -334,7 +334,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the online player count.
-	 * 
+	 *
 	 * @param onlinePlayerCount
 	 *            the new online player count.
 	 */
@@ -344,7 +344,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the max player count.
-	 * 
+	 *
 	 * @param maxPlayerCount
 	 *            the new max player count.
 	 */
@@ -354,7 +354,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the globally unique ID.
-	 * 
+	 *
 	 * @param guid
 	 *            the new globally unique ID.
 	 */
@@ -364,7 +364,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the world name.
-	 * 
+	 *
 	 * @param worldName
 	 *            the new world name.
 	 * @throws IllegalArgumentException
@@ -382,7 +382,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Sets the gamemode.
-	 * 
+	 *
 	 * @param gamemode
 	 *            the new gamemode.
 	 * @throws IllegalArgumentException
@@ -400,7 +400,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Enables/Disables the legacy builder.
-	 * 
+	 *
 	 * @param legacy
 	 *            <code>true</code> to enable the legacy builder,
 	 *            <code>false</code> to use the regular builder.
@@ -411,7 +411,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Returns whether or not the identifier is using the legacy builder.
-	 * 
+	 *
 	 * @return <code>true</code> if the identifier is using the legacy builder,
 	 *         <code>false</code> if the identifier is using the regular
 	 *         builder.
@@ -422,7 +422,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * Converts the values to a Minecraft identifier string.
-	 * 
+	 *
 	 * @param values
 	 *            the values to write to the identifier.
 	 * @return the built identifier text.
@@ -465,7 +465,7 @@ public class MinecraftIdentifier extends Identifier {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if the version tag is invalid.
 	 */

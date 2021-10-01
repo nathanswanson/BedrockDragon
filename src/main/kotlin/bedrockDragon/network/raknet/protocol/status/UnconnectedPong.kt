@@ -27,118 +27,111 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.status;
+package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetException;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.identifier.Identifier;
-import bedrockDragon.network.raknet.protocol.ConnectionType;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.RakNetException
+import bedrockDragon.network.raknet.identifier.Identifier
 
 /**
- * An <code>UNCONNECTED_PONG</code> packet.
- * <p>
- * This packet is sent in response to {@link UnconnectedPing UNCONNECTED_PING}
- * and {@link UnconnectedPingOpenConnections UNCONNECTED_PING_OPEN_CONNECTIONS}
+ * An `UNCONNECTED_PONG` packet.
+ *
+ *
+ * This packet is sent in response to [UNCONNECTED_PING][UnconnectedPing]
+ * and [UNCONNECTED_PING_OPEN_CONNECTIONS][UnconnectedPingOpenConnections]
  * packets in order to give the client server information and show that it is
  * online.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet 1.0.0
  */
-public final class UnconnectedPong extends RakNetPacket implements Failable {
+class UnconnectedPong : RakNetPacket, Failable {
+    /**
+     * The timestamp sent in the ping packet.
+     */
+    var timestamp: Long = 0
 
-	/**
-	 * The timestamp sent in the ping packet.
-	 */
-	public long timestamp;
+    /**
+     * The server's pong ID.
+     */
+    var pongId: Long = 0
 
-	/**
-	 * The server's pong ID.
-	 */
-	public long pongId;
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The server's identifier.
+     */
+	@JvmField
+	var identifier: Identifier? = null
 
-	/**
-	 * The server's identifier.
-	 */
-	public Identifier identifier;
+    /**
+     * The server's connection type.
+     */
+    var connectionType: ConnectionType? = null
 
-	/**
-	 * The server's connection type.
-	 */
-	public ConnectionType connectionType;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates an `UNCONNECTED_PONG` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_UNCONNECTED_PONG.toInt()) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PONG</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public UnconnectedPong() {
-		super(ID_UNCONNECTED_PONG);
-	}
+    /**
+     * Creates an `UNCONNECTED_PONG` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PONG</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public UnconnectedPong(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            writeLong(timestamp)
+            writeLong(pongId)
+            writeMagic()
+            writeString(identifier!!.build())
+            this.writeConnectionType(connectionType)
+        } catch (e: RakNetException) {
+            timestamp = 0
+            pongId = 0
+            magic = false
+            identifier = null
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.writeLong(timestamp);
-			this.writeLong(pongId);
-			this.writeMagic();
-			this.writeString(identifier.build());
-			this.writeConnectionType(connectionType);
-		} catch (RakNetException e) {
-			this.timestamp = 0;
-			this.pongId = 0;
-			this.magic = false;
-			this.identifier = null;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
+    override fun decode() {
+        try {
+            timestamp = readLong()
+            pongId = readLong()
+            magic = readMagic()
+            identifier = Identifier(readString(), readConnectionType().also { connectionType = it })
+        } catch (e: RakNetException) {
+            timestamp = 0
+            pongId = 0
+            magic = false
+            identifier = null
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.timestamp = this.readLong();
-			this.pongId = this.readLong();
-			this.magic = this.readMagic();
-			this.identifier = new Identifier(this.readString(), this.connectionType = this.readConnectionType());
-		} catch (RakNetException e) {
-			this.timestamp = 0;
-			this.pongId = 0;
-			this.magic = false;
-			this.identifier = null;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }
