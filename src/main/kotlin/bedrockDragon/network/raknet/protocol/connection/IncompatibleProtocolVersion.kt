@@ -27,72 +27,64 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
-
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 /**
- * An <code>INCOMPATIBLE_PROTOCOL_VERSION</code> packet.
- * <p>
+ * An `INCOMPATIBLE_PROTOCOL_VERSION` packet.
+ *
+ *
  * This packet is sent by the server to the client after receiving a
- * {@link OpenConnectionRequestOne OPEN_CONNECTION_REQUEST_1} packet to indicate
+ * [OPEN_CONNECTION_REQUEST_1][OpenConnectionRequestOne] packet to indicate
  * that the client is unable to connect due to unmatching protocols versions.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class IncompatibleProtocolVersion extends RakNetPacket {
+class IncompatibleProtocolVersion : RakNetPacket {
+    /**
+     * The network protocol the server is using.
+     */
+    var networkProtocol = 0
 
-	/**
-	 * The network protocol the server is using.
-	 */
-	public int networkProtocol;
+    /**
+     * Whether or not the magic is valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic is valid.
-	 */
-	public boolean magic;
+    /**
+     * The server's globally unique ID.
+     */
+    var serverGuid: Long = 0
 
-	/**
-	 * The server's globally unique ID.
-	 */
-	public long serverGuid;
+    /**
+     * Creates an `INCOMPATIBLE_PROTOCOL_VERSION` packet to be
+     * encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_INCOMPATIBLE_PROTOCOL_VERSION.toInt()) {}
 
-	/**
-	 * Creates an <code>INCOMPATIBLE_PROTOCOL_VERSION</code> packet to be
-	 * encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public IncompatibleProtocolVersion() {
-		super(ID_INCOMPATIBLE_PROTOCOL_VERSION);
-	}
+    /**
+     * Creates an `INCOMPATIBLE_PROTOCOL_VERSION` packet to be
+     * decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>INCOMPATIBLE_PROTOCOL_VERSION</code> packet to be
-	 * decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public IncompatibleProtocolVersion(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        writeUnsignedByte(networkProtocol)
+        writeMagic()
+        writeLong(serverGuid)
+    }
 
-	@Override
-	public void encode() {
-		this.writeUnsignedByte(networkProtocol);
-		this.writeMagic();
-		this.writeLong(serverGuid);
-	}
-
-	@Override
-	public void decode() {
-		this.networkProtocol = this.readUnsignedByte();
-		this.magic = this.readMagic();
-		this.serverGuid = this.readLong();
-	}
-
+    override fun decode() {
+        networkProtocol = readUnsignedByte().toInt()
+        magic = readMagic()
+        serverGuid = readLong()
+    }
 }

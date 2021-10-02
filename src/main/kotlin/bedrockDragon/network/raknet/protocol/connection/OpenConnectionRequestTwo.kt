@@ -27,120 +27,127 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetException;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.ConnectionType;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import java.net.InetSocketAddress
+import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.RakNetException
+import java.net.UnknownHostException
 
 /**
- * An <code>OPEN_CONNECTION_REQUEST_2</code> packet.
- * <p>
+ * An `OPEN_CONNECTION_REQUEST_2` packet.
+ *
+ *
  * This packet is sent by the client to the server after receiving a
- * {@link OpenConnectionResponseOne OPEN_CONNECTION_RESPONSE_1} packet.
- * 
+ * [OPEN_CONNECTION_RESPONSE_1][OpenConnectionResponseOne] packet.
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class OpenConnectionRequestTwo extends RakNetPacket implements Failable {
+class OpenConnectionRequestTwo : RakNetPacket, Failable {
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The address of the server that the client wishes to connect to.
+     */
+    var serverAddress: InetSocketAddress? = null
 
-	/**
-	 * The address of the server that the client wishes to connect to.
-	 */
-	public InetSocketAddress serverAddress;
+    /**
+     * The maximum transfer unit size the client and the server have agreed
+     * upon.
+     */
+    var maximumTransferUnit = 0
 
-	/**
-	 * The maximum transfer unit size the client and the server have agreed
-	 * upon.
-	 */
-	public int maximumTransferUnit;
+    /**
+     * The client's globally unique ID.
+     */
+    var clientGuid: Long = 0
 
-	/**
-	 * The client's globally unique ID.
-	 */
-	public long clientGuid;
+    /**
+     * The client connection type.
+     */
+    var connectionType: ConnectionType? = null
 
-	/**
-	 * The client connection type.
-	 */
-	public ConnectionType connectionType;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates an `OPEN_CONNECTION_REQUEST_2` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_OPEN_CONNECTION_REQUEST_2.toInt()) {}
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_REQUEST_2</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public OpenConnectionRequestTwo() {
-		super(ID_OPEN_CONNECTION_REQUEST_2);
-	}
+    /**
+     * Creates an `OPEN_CONNECTION_REQUEST_2` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_REQUEST_2</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public OpenConnectionRequestTwo(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            writeMagic()
+            this.writeAddress(serverAddress)
+            writeUnsignedShort(maximumTransferUnit)
+            writeLong(clientGuid)
+            this.writeConnectionType(connectionType)
+        } catch (e: UnknownHostException) {
+            magic = false
+            serverAddress = null
+            maximumTransferUnit = 0
+            clientGuid = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        } catch (e: RakNetException) {
+            magic = false
+            serverAddress = null
+            maximumTransferUnit = 0
+            clientGuid = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.writeMagic();
-			this.writeAddress(serverAddress);
-			this.writeUnsignedShort(maximumTransferUnit);
-			this.writeLong(clientGuid);
-			this.writeConnectionType(connectionType);
-		} catch (UnknownHostException | RakNetException e) {
-			this.magic = false;
-			this.serverAddress = null;
-			this.maximumTransferUnit = 0;
-			this.clientGuid = 0;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
+    override fun decode() {
+        try {
+            magic = readMagic()
+            serverAddress = readAddress()
+            maximumTransferUnit = readUnsignedShort().toInt()
+            clientGuid = readLong()
+            connectionType = readConnectionType()
+        } catch (e: UnknownHostException) {
+            magic = false
+            serverAddress = null
+            maximumTransferUnit = 0
+            clientGuid = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        } catch (e: RakNetException) {
+            magic = false
+            serverAddress = null
+            maximumTransferUnit = 0
+            clientGuid = 0
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.magic = this.readMagic();
-			this.serverAddress = this.readAddress();
-			this.maximumTransferUnit = this.readUnsignedShort();
-			this.clientGuid = this.readLong();
-			this.connectionType = this.readConnectionType();
-		} catch (UnknownHostException | RakNetException e) {
-			this.magic = false;
-			this.serverAddress = null;
-			this.maximumTransferUnit = 0;
-			this.clientGuid = 0;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }

@@ -30,8 +30,9 @@
 /**
  * The packets that are sent between the server and client during initial
  * connection.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package com.whirvis.jraknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
+

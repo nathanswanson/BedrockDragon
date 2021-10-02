@@ -27,55 +27,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.status;
+package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * A <code>CONNECTED_PING</code> packet.
- * <p>
+ * A `CONNECTED_PING` packet.
+ *
+ *
  * This packet is sent by either the client or server in order to get a response
  * to determine if the connection is still active.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class ConnectedPing extends RakNetPacket {
+class ConnectedPing : RakNetPacket {
+    /**
+     * The timestamp of the sender.
+     */
+    @JvmField
+    var timestamp: Long = 0
 
-	/**
-	 * The timestamp of the sender.
-	 */
-	public long timestamp;
+    /**
+     * Creates a `CONNECTED_PING` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_CONNECTED_PING.toInt()) {}
 
-	/**
-	 * Creates a <code>CONNECTED_PING</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public ConnectedPing() {
-		super(ID_CONNECTED_PING);
-	}
+    /**
+     * Creates a `CONNECTED_PING` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>CONNECTED_PING</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public ConnectedPing(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        writeLong(timestamp)
+    }
 
-	@Override
-	public void encode() {
-		this.writeLong(timestamp);
-	}
-
-	@Override
-	public void decode() {
-		this.timestamp = this.readLong();
-	}
-
+    override fun decode() {
+        timestamp = readLong()
+    }
 }

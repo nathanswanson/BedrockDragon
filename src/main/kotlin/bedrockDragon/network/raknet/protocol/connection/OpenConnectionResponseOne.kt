@@ -27,81 +27,75 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * An <code>OPEN_CONNECTION_RESPONSE_1</code> packet.
- * <p>
+ * An `OPEN_CONNECTION_RESPONSE_1` packet.
+ *
+ *
  * This packet is sent by the server to the client after receiving an
- * {@link OpenConnectionRequestOne OPEN_CONNECTION_REQUEST_1} packet.
- * 
+ * [OPEN_CONNECTION_REQUEST_1][OpenConnectionRequestOne] packet.
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class OpenConnectionResponseOne extends RakNetPacket {
+class OpenConnectionResponseOne : RakNetPacket {
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The server's globally unique ID.
+     */
+    var serverGuid: Long = 0
 
-	/**
-	 * The server's globally unique ID.
-	 */
-	public long serverGuid;
+    /**
+     * The server's maximum transfer unit size.
+     */
+    var maximumTransferUnit = 0
 
-	/**
-	 * The server's maximum transfer unit size.
-	 */
-	public int maximumTransferUnit;
+    /**
+     * Whether or not security should be used.
+     *
+     *
+     * Since JRakNet does not have this feature implemented, `false`
+     * will always be the value used when sending this value. However, this
+     * value can be `true` if it is being set through decoding.
+     */
+    var useSecurity = false
 
-	/**
-	 * Whether or not security should be used.
-	 * <p>
-	 * Since JRakNet does not have this feature implemented, <code>false</code>
-	 * will always be the value used when sending this value. However, this
-	 * value can be <code>true</code> if it is being set through decoding.
-	 */
-	public boolean useSecurity;
+    /**
+     * Creates a `OPEN_CONNECTION_RESPONSE_1` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_OPEN_CONNECTION_REPLY_1.toInt()) {}
 
-	/**
-	 * Creates a <code>OPEN_CONNECTION_RESPONSE_1</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public OpenConnectionResponseOne() {
-		super(ID_OPEN_CONNECTION_REPLY_1);
-	}
+    /**
+     * Creates a `OPEN_CONNECTION_RESPONSE_1` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>OPEN_CONNECTION_RESPONSE_1</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public OpenConnectionResponseOne(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        useSecurity = false // TODO: Not supported
+        writeMagic()
+        writeLong(serverGuid)
+        writeBoolean(useSecurity)
+        writeUnsignedShort(maximumTransferUnit)
+    }
 
-	@Override
-	public void encode() {
-		this.useSecurity = false; // TODO: Not supported
-		this.writeMagic();
-		this.writeLong(serverGuid);
-		this.writeBoolean(useSecurity);
-		this.writeUnsignedShort(maximumTransferUnit);
-	}
-
-	@Override
-	public void decode() {
-		this.magic = this.readMagic();
-		this.serverGuid = this.readLong();
-		this.useSecurity = this.readBoolean();
-		this.maximumTransferUnit = this.readUnsignedShort();
-	}
-
+    override fun decode() {
+        magic = readMagic()
+        serverGuid = readLong()
+        useSecurity = readBoolean()
+        maximumTransferUnit = readUnsignedShort().toInt()
+    }
 }

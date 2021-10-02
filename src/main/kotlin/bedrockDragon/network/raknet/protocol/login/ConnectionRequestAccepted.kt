@@ -27,123 +27,117 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.login;
+package bedrockDragon.network.raknet.protocol.login
 
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNet;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNet.systemAddressCount
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import java.net.InetSocketAddress
+import bedrockDragon.network.raknet.RakNet
+import java.net.UnknownHostException
 
 /**
- * A <code>CONNECTION_REQUEST_ACCEPTED</code> packet.
- * <p>
+ * A `CONNECTION_REQUEST_ACCEPTED` packet.
+ *
+ *
  * This packet is sent by the server during login after the
- * {@link ConnectionRequest CONNECTION_REQUEST} packet to indicate that a
+ * [CONNECTION_REQUEST][ConnectionRequest] packet to indicate that a
  * client's connection has been accepted.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class ConnectionRequestAccepted extends RakNetPacket implements Failable {
+class ConnectionRequestAccepted : RakNetPacket, Failable {
+    /**
+     * The address of the client that sent the connection request.
+     */
+	@JvmField
+	var clientAddress: InetSocketAddress? = null
 
-	/**
-	 * The address of the client that sent the connection request.
-	 */
-	public InetSocketAddress clientAddress;
+    /**
+     * The RakNet system addresses.
+     */
+    lateinit var systemAddresses: Array<InetSocketAddress>
 
-	/**
-	 * The RakNet system addresses.
-	 */
-	public InetSocketAddress[] systemAddresses;
+    /**
+     * The client timestamp.
+     */
+	@JvmField
+	var clientTimestamp: Long = 0
 
-	/**
-	 * The client timestamp.
-	 */
-	public long clientTimestamp;
+    /**
+     * The server timestamp.
+     */
+	@JvmField
+	var serverTimestamp: Long = 0
 
-	/**
-	 * The server timestamp.
-	 */
-	public long serverTimestamp;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates a `CONNECTION_REQUEST_ACCEPTED` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_CONNECTION_REQUEST_ACCEPTED.toInt()) {
+        for (i in systemAddresses.indices) {
+            systemAddresses[i] = RakNet.SYSTEM_ADDRESS
+        }
+    }
 
-	/**
-	 * Creates a <code>CONNECTION_REQUEST_ACCEPTED</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public ConnectionRequestAccepted() {
-		super(ID_CONNECTION_REQUEST_ACCEPTED);
-		this.systemAddresses = new InetSocketAddress[RakNet.getSystemAddressCount()];
-		for (int i = 0; i < systemAddresses.length; i++) {
-			systemAddresses[i] = RakNet.SYSTEM_ADDRESS;
-		}
-	}
+    /**
+     * Creates a `CONNECTION_REQUEST_ACCEPTED` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>CONNECTION_REQUEST_ACCEPTED</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public ConnectionRequestAccepted(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            this.writeAddress(clientAddress)
+            writeShort(0)
+            for (i in systemAddresses.indices) {
+                this.writeAddress(systemAddresses[i])
+            }
+            writeLong(clientTimestamp)
+            writeLong(serverTimestamp)
+        } catch (e: UnknownHostException) {
+            clientAddress = null
+            clientTimestamp = 0
+            serverTimestamp = 0
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.writeAddress(clientAddress);
-			this.writeShort(0);
-			for (int i = 0; i < systemAddresses.length; i++) {
-				this.writeAddress(systemAddresses[i]);
-			}
-			this.writeLong(clientTimestamp);
-			this.writeLong(serverTimestamp);
-		} catch (UnknownHostException e) {
-			this.clientAddress = null;
-			this.clientTimestamp = 0;
-			this.serverTimestamp = 0;
-			this.clear();
-			this.failed = true;
-		}
-	}
+    override fun decode() {
+        try {
+            clientAddress = readAddress()
+            readShort() // TODO: Discover usage
+            for (i in systemAddresses.indices) {
+                if (remaining() >= 16) {
+                    systemAddresses[i] = readAddress()
+                } else {
+                    systemAddresses[i] = RakNet.SYSTEM_ADDRESS
+                }
+            }
+            clientTimestamp = readLong()
+            serverTimestamp = readLong()
+        } catch (e: UnknownHostException) {
+            clientAddress = null
+            clientTimestamp = 0
+            serverTimestamp = 0
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.clientAddress = this.readAddress();
-			this.readShort(); // TODO: Discover usage
-			this.systemAddresses = new InetSocketAddress[RakNet.getSystemAddressCount()];
-			for (int i = 0; i < systemAddresses.length; i++) {
-				if (this.remaining() >= 16) {
-					this.systemAddresses[i] = this.readAddress();
-				} else {
-					this.systemAddresses[i] = RakNet.SYSTEM_ADDRESS;
-				}
-			}
-			this.clientTimestamp = this.readLong();
-			this.serverTimestamp = this.readLong();
-		} catch (UnknownHostException e) {
-			this.clientAddress = null;
-			this.clientTimestamp = 0;
-			this.serverTimestamp = 0;
-			this.clear();
-			this.failed = true;
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }

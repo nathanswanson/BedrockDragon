@@ -751,6 +751,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
     @Throws(IllegalArgumentException::class)
     fun writeUnsignedByte(b: Int): Packet {
         require(!(b < 0x00 || b > 0xFF)) { "Value must be in between 0-255" }
+        //println(b)
         buffer.writeByte(b and 0xFF)
         return this
     }

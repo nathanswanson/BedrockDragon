@@ -126,12 +126,12 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         val packetHandler = PacketSortFactory.createPacketHandle(sender, packet, channel)
 
 
-            logger.info { "test" }
             packetHandler.responseToClient()
+
+            logger.info { packetHandler }
             //packetHandler.responseToServer()
 
 
-        logger.info { packetHandler }
 
 
 

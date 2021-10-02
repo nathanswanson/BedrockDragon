@@ -27,182 +27,172 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol;
+package bedrockDragon.network.raknet.protocol
+
+import java.lang.IllegalArgumentException
 
 /**
  * Represents a RakNet reliability. Reliabilities determine how packets are
  * handled when they are being sent or received.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public enum Reliability {
+enum class Reliability(id: Int, reliable: Boolean, ordered: Boolean, sequenced: Boolean, requiresAck: Boolean) {
+    /**
+     * The packet will be sent, but it is not guaranteed that it will be
+     * received.
+     */
+    UNRELIABLE(0, false, false, false, false),
 
-	/**
-	 * The packet will be sent, but it is not guaranteed that it will be
-	 * received.
-	 */
-	UNRELIABLE(0, false, false, false, false),
+    /**
+     * Same as [.UNRELIABLE], however it will not be handled if a newer
+     * sequenced packet on the channel has already arrived.
+     */
+    UNRELIABLE_SEQUENCED(1, false, false, true, false),
 
-	/**
-	 * Same as {@link #UNRELIABLE}, however it will not be handled if a newer
-	 * sequenced packet on the channel has already arrived.
-	 */
-	UNRELIABLE_SEQUENCED(1, false, false, true, false),
+    /**
+     * The packet will be sent and is guaranteed to be received at some point.
+     */
+    RELIABLE(2, true, false, false, false),
 
-	/**
-	 * The packet will be sent and is guaranteed to be received at some point.
-	 */
-	RELIABLE(2, true, false, false, false),
+    /**
+     * Same as [.RELIABLE], however it will not be handled until all
+     * packets sent before it are also received.
+     */
+    RELIABLE_ORDERED(3, true, true, false, false),
 
-	/**
-	 * Same as {@link #RELIABLE}, however it will not be handled until all
-	 * packets sent before it are also received.
-	 */
-	RELIABLE_ORDERED(3, true, true, false, false),
+    /**
+     * Same as [RELIABLE], however it will not be handled if a newer
+     * sequenced packet on the channel has already arrived.
+     */
+    RELIABLE_SEQUENCED(4, true, false, true, false),
 
-	/**
-	 * Same as {@link RELIABLE}, however it will not be handled if a newer
-	 * sequenced packet on the channel has already arrived.
-	 */
-	RELIABLE_SEQUENCED(4, true, false, true, false),
+    /**
+     * Same as [.UNRELIABLE], however you will be notified whether the
+     * packet was lost or received through the `onAcknowledge()` and
+     * `onLoss()` methods found inside the
+     * `RakNetServerListener` and `RakNetClientListener`
+     * classes.
+     *
+     * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
+     *
+     * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
+     */
+    UNRELIABLE_WITH_ACK_RECEIPT(5, false, false, false, true),
 
-	/**
-	 * Same as {@link #UNRELIABLE}, however you will be notified whether the
-	 * packet was lost or received through the <code>onAcknowledge()</code> and
-	 * <code>onLoss()</code> methods found inside the
-	 * <code>RakNetServerListener</code> and <code>RakNetClientListener</code>
-	 * classes.
-	 * 
-	 * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
-	 * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
-	 */
-	UNRELIABLE_WITH_ACK_RECEIPT(5, false, false, false, true),
+    /**
+     * Same as [.RELIABLE], however you will be notified when the packet
+     * was received through the `onAcknowledge()` method through the
+     * `RakNetServerListener` and `RakNetClientListener`
+     * classes.
+     *
+     * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
+     *
+     * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
+     */
+    RELIABLE_WITH_ACK_RECEIPT(6, true, false, false, true),
 
-	/**
-	 * Same as {@link #RELIABLE}, however you will be notified when the packet
-	 * was received through the <code>onAcknowledge()</code> method through the
-	 * <code>RakNetServerListener</code> and <code>RakNetClientListener</code>
-	 * classes.
-	 * 
-	 * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
-	 * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
-	 */
-	RELIABLE_WITH_ACK_RECEIPT(6, true, false, false, true),
+    /**
+     * Same as [.RELIABLE_ORDERED], however you will be notified when the
+     * packet was received through the `onAcknowledge()` method
+     * through the `RakNetServerListener` and
+     * `RakNetClientListener` classes.
+     *
+     * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
+     *
+     * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
+     */
+    RELIABLE_ORDERED_WITH_ACK_RECEIPT(7, true, true, false, true);
 
-	/**
-	 * Same as {@link #RELIABLE_ORDERED}, however you will be notified when the
-	 * packet was received through the <code>onAcknowledge()</code> method
-	 * through the <code>RakNetServerListener</code> and
-	 * <code>RakNetClientListener</code> classes.
-	 * 
-	 * @see com.whirvis.jraknet.server.RakNetServerListener RakNetServerListener
-	 * @see com.whirvis.jraknet.client.RakNetClientListener RakNetClientListener
-	 */
-	RELIABLE_ORDERED_WITH_ACK_RECEIPT(7, true, true, false, true);
+    /**
+     * Returns the ID of the reliability.
+     *
+     * @return the ID of the reliability.
+     */
+    val id: Byte
 
-	private final byte id;
-	private final boolean reliable;
-	private final boolean ordered;
-	private final boolean sequenced;
-	private final boolean requiresAck;
+    /**
+     * Returns whether or not the reliability is reliable.
+     *
+     * @return `true` if the reliability is reliable,
+     * `false` otherwise.
+     */
+    val isReliable: Boolean
 
-	/**
-	 * Constructs a <code>Reliability</code>.
-	 * 
-	 * @param id
-	 *            the ID of the reliability.
-	 * @param reliable
-	 *            <code>true</code> if it is reliable, <code>false</code>
-	 *            otherwise.
-	 * @param ordered
-	 *            <code>true</code> if it is ordered, <code>false</code>
-	 *            otherwise.
-	 * @param sequenced
-	 *            <code>true</code> if it is sequenced, <code>false</code>
-	 *            otherwise.
-	 * @param requiresAck
-	 *            <code>true</code> if it requires an acknowledge receipt,
-	 *            <code>false</code> otherwise.
-	 * @throws IllegalArgumentException
-	 *             if both <code>ordered</code> and <code>sequenced</code> are
-	 *             <code>true</code>.
-	 */
-	private Reliability(int id, boolean reliable, boolean ordered, boolean sequenced, boolean requiresAck)
-			throws IllegalArgumentException {
-		this.id = (byte) id;
-		this.reliable = reliable;
-		this.ordered = ordered;
-		this.sequenced = sequenced;
-		this.requiresAck = requiresAck;
-		if (ordered == true && sequenced == true) {
-			throw new IllegalArgumentException("A reliability cannot be both ordered and sequenced");
-		}
-	}
+    /**
+     * Returns whether or not the reliability is ordered.
+     *
+     * @return `true` if the reliability is ordered,
+     * `false` otherwise.
+     */
+    val isOrdered: Boolean
 
-	/**
-	 * Returns the ID of the reliability.
-	 * 
-	 * @return the ID of the reliability.
-	 */
-	public byte getId() {
-		return this.id;
-	}
+    /**
+     * Returns whether not the reliability is sequenced.
+     *
+     * @return `true` if the reliability is sequenced,
+     * `false` otherwise.
+     */
+    val isSequenced: Boolean
+    private val requiresAck: Boolean
 
-	/**
-	 * Returns whether or not the reliability is reliable.
-	 * 
-	 * @return <code>true</code> if the reliability is reliable,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean isReliable() {
-		return this.reliable;
-	}
+    /**
+     * Returns whether or not the reliability requires acknowledgement.
+     *
+     * @return `true` if the reliability requires acknowledgement,
+     * `false` otherwise.
+     */
+    fun requiresAck(): Boolean {
+        return requiresAck
+    }
 
-	/**
-	 * Returns whether or not the reliability is ordered.
-	 * 
-	 * @return <code>true</code> if the reliability is ordered,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean isOrdered() {
-		return this.ordered;
-	}
+    companion object {
+        /**
+         * Returns the reliability based on its ID.
+         *
+         * @param id
+         * the ID of the reliability.
+         * @return the reliability with the specified ID.
+         */
+		@JvmStatic
+		fun lookup(id: Int): Reliability? {
+            for (reliability in values()) {
+                if (reliability.id.toInt() == id) {
+                    return reliability
+                }
+            }
+            return null
+        }
+    }
 
-	/**
-	 * Returns whether not the reliability is sequenced.
-	 * 
-	 * @return <code>true</code> if the reliability is sequenced,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean isSequenced() {
-		return this.sequenced;
-	}
-
-	/**
-	 * Returns whether or not the reliability requires acknowledgement.
-	 * 
-	 * @return <code>true</code> if the reliability requires acknowledgement,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean requiresAck() {
-		return this.requiresAck;
-	}
-
-	/**
-	 * Returns the reliability based on its ID.
-	 * 
-	 * @param id
-	 *            the ID of the reliability.
-	 * @return the reliability with the specified ID.
-	 */
-	public static Reliability lookup(int id) {
-		for (Reliability reliability : Reliability.values()) {
-			if (reliability.getId() == id) {
-				return reliability;
-			}
-		}
-		return null;
-	}
-
+    /**
+     * Constructs a `Reliability`.
+     *
+     * @param id
+     * the ID of the reliability.
+     * @param reliable
+     * `true` if it is reliable, `false`
+     * otherwise.
+     * @param ordered
+     * `true` if it is ordered, `false`
+     * otherwise.
+     * @param sequenced
+     * `true` if it is sequenced, `false`
+     * otherwise.
+     * @param requiresAck
+     * `true` if it requires an acknowledge receipt,
+     * `false` otherwise.
+     * @throws IllegalArgumentException
+     * if both `ordered` and `sequenced` are
+     * `true`.
+     */
+    init {
+        this.id = id.toByte()
+        isReliable = reliable
+        isOrdered = ordered
+        isSequenced = sequenced
+        this.requiresAck = requiresAck
+        require(!(ordered == true && sequenced == true)) { "A reliability cannot be both ordered and sequenced" }
+    }
 }

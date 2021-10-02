@@ -27,62 +27,55 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * A <code>CONNECTION_BANNED</code> packet.
- * <p>
+ * A `CONNECTION_BANNED` packet.
+ *
+ *
  * This packet is sent by the server to the client if it has been banned either
  * during connection or while it is connected to the server.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.1.0
  */
-public final class ConnectionBanned extends RakNetPacket {
+class ConnectionBanned : RakNetPacket {
+    /**
+     * Whether or not the magic is valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic is valid.
-	 */
-	public boolean magic;
+    /**
+     * The server's globally unique identifier.
+     */
+    var serverGuid: Long = 0
 
-	/**
-	 * The server's globally unique identifier.
-	 */
-	public long serverGuid;
+    /**
+     * Creates a `CONNECTION_BANNED` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_CONNECTION_BANNED.toInt()) {}
 
-	/**
-	 * Creates a <code>CONNECTION_BANNED</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public ConnectionBanned() {
-		super(ID_CONNECTION_BANNED);
-	}
+    /**
+     * Creates a `CONNECTION_BANNED` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>CONNECTION_BANNED</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public ConnectionBanned(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        writeMagic()
+        writeLong(serverGuid)
+    }
 
-	@Override
-	public void encode() {
-		this.writeMagic();
-		this.writeLong(serverGuid);
-	}
-
-	@Override
-	public void decode() {
-		this.magic = this.readMagic();
-		this.serverGuid = this.readLong();
-	}
-
+    override fun decode() {
+        magic = readMagic()
+        serverGuid = readLong()
+    }
 }

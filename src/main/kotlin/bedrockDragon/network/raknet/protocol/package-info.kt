@@ -30,8 +30,8 @@
 /**
  * The packets and extra components required for communication between both the
  * server and the client to be possible.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package bedrockDragon.network.raknet.protocol;
+package bedrockDragon.network.raknet.protocol

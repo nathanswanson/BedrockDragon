@@ -60,7 +60,7 @@ open class RakNetPacket : Packet {
      */
 
 	var id: Short = 0
-        private set
+        protected set
 
     private val supportsEncoding: Boolean
     private val supportsDecoding: Boolean
@@ -75,6 +75,7 @@ open class RakNetPacket : Packet {
      */
     constructor(id: Int) : super() {
         require(!(id < 0x00 || id > 0xFF)) { "ID must be in between 0-255" }
+        println(id)
         writeUnsignedByte(id)
         supportsEncoding = isMethodOverriden(this.javaClass, RakNetPacket::class.java, ENCODE_METHOD_NAME)
         supportsDecoding = isMethodOverriden(this.javaClass, RakNetPacket::class.java, DECODE_METHOD_NAME)
@@ -323,7 +324,7 @@ open class RakNetPacket : Packet {
     @Throws(IndexOutOfBoundsException::class)
     fun setBuffer(buffer: ByteBuf?, updateId: Boolean): RakNetPacket {
         super.setBuffer(buffer)
-        if (updateId == true) {
+        if (updateId) {
             id = readUnsignedByte()
         }
         return this

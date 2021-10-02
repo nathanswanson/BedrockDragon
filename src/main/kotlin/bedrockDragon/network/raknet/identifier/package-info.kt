@@ -30,9 +30,9 @@
 /**
  * Classes used to create identifiers that describe servers or parse identifiers
  * to get their information.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  * @see bedrockDragon.network.raknet.identifier.Identifier Identifier
  */
-package bedrockDragon.network.raknet.identifier;
+package bedrockDragon.network.raknet.identifier

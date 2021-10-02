@@ -27,120 +27,116 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.login;
+package bedrockDragon.network.raknet.protocol.login
 
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNet;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNet.systemAddressCount
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import java.net.InetSocketAddress
+import bedrockDragon.network.raknet.RakNet
+import java.net.UnknownHostException
 
 /**
- * A <code>NEW_INCOMING_CONNECTION</code> packet.
- * <p>
+ * A `NEW_INCOMING_CONNECTION` packet.
+ *
+ *
  * This is sent by the client after receiving the
- * {@link ConnectionRequestAccepted CONNECTION_REQUEST_ACCEPTED} packet.
- * 
+ * [CONNECTION_REQUEST_ACCEPTED][ConnectionRequestAccepted] packet.
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class NewIncomingConnection extends RakNetPacket implements Failable {
+class NewIncomingConnection : RakNetPacket, Failable {
+    /**
+     * The server address.
+     */
+    @JvmField
+    var serverAddress: InetSocketAddress? = null
 
-	/**
-	 * The server address.
-	 */
-	public InetSocketAddress serverAddress;
+    /**
+     * The RakNet system addresses.
+     */
+    private lateinit var systemAddresses: Array<InetSocketAddress?>
 
-	/**
-	 * The RakNet system addresses.
-	 */
-	public InetSocketAddress[] systemAddresses;
+    /**
+     * The server timestamp.
+     */
+    @JvmField
+    var serverTimestamp: Long = 0
 
-	/**
-	 * The server timestamp.
-	 */
-	public long serverTimestamp;
+    /**
+     * The client timestamp.
+     */
+    @JvmField
+    var clientTimestamp: Long = 0
 
-	/**
-	 * The client timestamp.
-	 */
-	public long clientTimestamp;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates a `NEW_INCOMING_CONNECTION` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_NEW_INCOMING_CONNECTION.toInt()) {
+        systemAddresses = arrayOfNulls(systemAddressCount)
+        for (i in systemAddresses.indices) {
+            systemAddresses[i] = RakNet.SYSTEM_ADDRESS
+        }
+    }
 
-	/**
-	 * Creates a <code>NEW_INCOMING_CONNECTION</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public NewIncomingConnection() {
-		super(ID_NEW_INCOMING_CONNECTION);
-		this.systemAddresses = new InetSocketAddress[RakNet.getSystemAddressCount()];
-		for (int i = 0; i < systemAddresses.length; i++) {
-			systemAddresses[i] = RakNet.SYSTEM_ADDRESS;
-		}
-	}
+    /**
+     * Creates a `NEW_INCOMING_CONNECTION` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>NEW_INCOMING_CONNECTION</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public NewIncomingConnection(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            this.writeAddress(serverAddress)
+            for (i in systemAddresses.indices) {
+                this.writeAddress(systemAddresses[i])
+            }
+            writeLong(serverTimestamp)
+            writeLong(clientTimestamp)
+        } catch (e: UnknownHostException) {
+            failed = true
+            serverAddress = null
+            serverTimestamp = 0
+            clientTimestamp = 0
+            this.clear()
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.writeAddress(serverAddress);
-			for (int i = 0; i < systemAddresses.length; i++) {
-				this.writeAddress(systemAddresses[i]);
-			}
-			this.writeLong(serverTimestamp);
-			this.writeLong(clientTimestamp);
-		} catch (UnknownHostException e) {
-			this.failed = true;
-			this.serverAddress = null;
-			this.serverTimestamp = 0;
-			this.clientTimestamp = 0;
-			this.clear();
-		}
-	}
+    override fun decode() {
+        try {
+            serverAddress = readAddress()
+            systemAddresses = arrayOfNulls(systemAddressCount)
+            for (i in systemAddresses.indices) {
+                if (remaining() > java.lang.Long.SIZE + java.lang.Long.SIZE) {
+                    systemAddresses[i] = readAddress()
+                } else {
+                    systemAddresses[i] = RakNet.SYSTEM_ADDRESS
+                }
+            }
+            serverTimestamp = readLong()
+            clientTimestamp = readLong()
+        } catch (e: UnknownHostException) {
+            failed = true
+            serverAddress = null
+            serverTimestamp = 0
+            clientTimestamp = 0
+            this.clear()
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.serverAddress = this.readAddress();
-			this.systemAddresses = new InetSocketAddress[RakNet.getSystemAddressCount()];
-			for (int i = 0; i < systemAddresses.length; i++) {
-				if (this.remaining() > Long.SIZE + Long.SIZE) {
-					this.systemAddresses[i] = this.readAddress();
-				} else {
-					this.systemAddresses[i] = RakNet.SYSTEM_ADDRESS;
-				}
-			}
-			this.serverTimestamp = this.readLong();
-			this.clientTimestamp = this.readLong();
-		} catch (UnknownHostException e) {
-			this.failed = true;
-			this.serverAddress = null;
-			this.serverTimestamp = 0;
-			this.clientTimestamp = 0;
-			this.clear();
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }

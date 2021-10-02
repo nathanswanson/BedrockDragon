@@ -30,8 +30,8 @@
 /**
  * The packets that are sent between the server and client during login after
  * initial connection has succeeded.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package bedrockDragon.network.raknet.protocol.login;
+package bedrockDragon.network.raknet.protocol.login

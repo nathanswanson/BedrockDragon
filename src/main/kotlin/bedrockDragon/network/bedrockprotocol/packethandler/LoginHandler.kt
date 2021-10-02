@@ -10,12 +10,8 @@ import io.netty.channel.Channel
 import java.net.InetSocketAddress
 import java.util.*
 
-class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel), IPacketCoolDown {
+class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
 
-    override val coolDownTime: Int
-        get() = 100
-
-    private var msSinceLastLoad: Long = System.currentTimeMillis()
 
     override fun responseToClient() {
 
@@ -32,7 +28,6 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
             pong.identifier = pingEvent.identifier
             pong.encode()
             if(!pong.failed()) {
-                logger.info { "Sending pong" }
                 sendNettyMessage(pong, sender)
             } else {
                 logger.info { "Failed to send back response Packet" }
@@ -44,18 +39,6 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
          //NO RESPONSE
     }
 
-    override fun canLoad(): Boolean {
-
-         if (System.currentTimeMillis() - msSinceLastLoad > coolDownTime) {
-             msSinceLastLoad = System.currentTimeMillis()
-             return true
-         }
-        return false
-    }
-
-    override fun global(): Boolean {
-        return false
-    }
 
     override fun toString(): String {
         return "Login Handle"

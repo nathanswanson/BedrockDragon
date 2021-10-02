@@ -27,11 +27,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.identifier;
+package bedrockDragon.network.raknet.identifier
 
-import java.util.Objects;
-
-import bedrockDragon.network.raknet.RakNet;
+import bedrockDragon.network.raknet.RakNet.parseIntPassive
+import bedrockDragon.network.raknet.RakNet.parseLongPassive
+import kotlin.jvm.JvmOverloads
+import java.lang.NullPointerException
+import java.lang.IllegalArgumentException
+import kotlin.Throws
+import java.lang.StringBuilder
+import java.util.Objects
 
 /**
  * Represents a Minecraft identifier.
@@ -39,445 +44,398 @@ import bedrockDragon.network.raknet.RakNet;
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public class MinecraftIdentifier extends Identifier {
+class MinecraftIdentifier : Identifier {
+    private var serverName: String? = null
+    /**
+     * Returns the server protocol.
+     *
+     * @return the server protocol.
+     */
+    /**
+     * Sets the server protocol.
+     *
+     * @param serverProtocol
+     * the new server protocol.
+     */
+    var serverProtocol = 0
+    private var versionTag: String? = null
+    /**
+     * Returns the online player count.
+     *
+     * @return the online player count.
+     */
+    /**
+     * Sets the online player count.
+     *
+     * @param onlinePlayerCount
+     * the new online player count.
+     */
+    var onlinePlayerCount = 0
+    /**
+     * Returns the max player count.
+     *
+     * @return the max player count.
+     */
+    /**
+     * Sets the max player count.
+     *
+     * @param maxPlayerCount
+     * the new max player count.
+     */
+    var maxPlayerCount = 0
 
-	/**
-	 * The header found at the beginning of a Minecraft identifier.
-	 * <p>
-	 * This allows for easy indication that the identifier is actually a
-	 * Minecraft identifier, rather than that of another game.
-	 */
-	private static final String HEADER = "MCPE";
+    /**
+     * Returns the globally unique ID.
+     *
+     * @return the globally unique ID.
+     */
+    var globallyUniqueId: Long = 0
+        private set
+    private var worldName: String? = null
+    private var gamemode: String? = null
+    /**
+     * Returns whether or not the identifier is using the legacy builder.
+     *
+     * @return `true` if the identifier is using the legacy builder,
+     * `false` if the identifier is using the regular
+     * builder.
+     */
+    /**
+     * Enables/Disables the legacy builder.
+     *
+     * @param legacy
+     * `true` to enable the legacy builder,
+     * `false` to use the regular builder.
+     */
+    var isLegacyMode = false
+    /**
+     * Creates a Minecraft identifier.
+     *
+     * @param serverName
+     * the server name.
+     * @param serverProtocol
+     * the server protocol.
+     * @param versionTag
+     * the version tag.
+     * @param onlinePlayerCount
+     * the online player count.
+     * @param maxPlayerCount
+     * the max player count.
+     * @param guid
+     * the globally unique ID.
+     * @param worldName
+     * the world name.
+     * @param gamemode
+     * the gamemode.
+     * @throws IllegalArgumentException
+     * if the `serverName`, `worldName`, or
+     * `gamemode` contain the separator character
+     * {@value #SEPARATOR}, or if the `versionTag` is
+     * invalid.
+     */
+    /**
+     * Creates a blank Minecraft identifier.
+     */
+   // @JvmOverloads
+   // constructor(
+   //     serverName: String? = null, serverProtocol: Int = 0, versionTag: String? = null, onlinePlayerCount: Int = 0,
+    //    maxPlayerCount: Int = 0, guid: Long = 0, worldName: String? = null, gamemode: String? = null
+  //  ) {
+       // setServerName(serverName)
+       // this.serverProtocol = serverProtocol
+      //  setVersionTag(versionTag)
+       // this.onlinePlayerCount = onlinePlayerCount
+      ///  this.maxPlayerCount = maxPlayerCount
+      //  setServerGloballyUniqueId(guid)
+      //  setWorldName(worldName)
+      //  setGamemode(gamemode)
+      //  isLegacyMode = false
+    //}
 
-	/**
-	 * The separator character used to easily split data from it into parseable
-	 * chunks.
-	 */
-	private static final String SEPARATOR = ";";
+    /**
+     * Creates a Minecraft identifier from an existing identifier.
+     *
+     * @param identifier
+     * the identifier.
+     * @throws NullPointerException
+     * if the `identifier` or its contents are
+     * `null`.
+     * @throws IllegalArgumentException
+     * if the `identifier` is not a Minecraft identifier
+     * or there are missing fields.
+     */
+    constructor(identifier: Identifier?) : super(identifier!!) {
+        if (identifier == null) {
+            throw NullPointerException("Identifier cannot be null")
+        } else if (identifier.build() == null) {
+            throw NullPointerException("Identifier contents cannot be null")
+        } else require(isMinecraftIdentifier(identifier)) { "Not a Minecraft identifier" }
+        val data: Array<String?> = identifier.build().split(SEPARATOR).toTypedArray()
+        require(data.size >= DATA_COUNT_LEGACY) { "Missing " + (DATA_COUNT_LEGACY - data.size) + " fields" }
+        for (i in data.indices) {
+            data[i] = if (data[i]!!.length > 0) data[i] else null
+        }
+        serverName = data[1]
+        serverProtocol = parseIntPassive(data[2]!!)
+        versionTag = data[3]
+        onlinePlayerCount = parseIntPassive(data[4]!!)
+        maxPlayerCount = parseIntPassive(data[5]!!)
+        isLegacyMode = true
+        if (data.size >= DATA_COUNT) {
+            globallyUniqueId = parseLongPassive(data[6]!!)
+            worldName = data[7]
+            gamemode = data[8]
+            isLegacyMode = false
+        }
+    }
 
-	/**
-	 * The amount of fields found in a Minecraft identifier when it is in legacy
-	 * mode.
-	 */
-	private static final int DATA_COUNT_LEGACY = 6;
+    /**
+     * Creates a Minecraft identifier from an existing identifier.
+     *
+     * @param identifier
+     * the identifier.
+     * @throws NullPointerException
+     * if the `identifier` is `null`.
+     * @throws IllegalArgumentException
+     * if the `identifier` is not a Minecraft identifier
+     * or there are missing fields.
+     */
+    constructor(identifier: String?) : this(Identifier(identifier!!)) {}
 
-	/**
-	 * The amount of fields found in a Minecraft identifier.
-	 */
-	private static final int DATA_COUNT = 9;
+    /**
+     * Returns the server name.
+     *
+     * @return the server name.
+     */
+    fun getServerName(): String? {
+        return serverName
+    }
 
-	/**
-	 * Returns whether or not the version tag is valid.
-	 * <p>
-	 * In order for a version tag to be valid, it can only have numbers or
-	 * periods. A <code>null</code> value is also valid, seeing as when the
-	 * identifier is being built no version will be placed inside the identifier
-	 * string.
-	 *
-	 * @param versionTag
-	 *            the version tag.
-	 * @return <code>true</code> if the version tag is valid, <code>false</code>
-	 *         otherwise.
-	 */
-	private static boolean verifyVersionTag(String versionTag) {
-		if (versionTag != null) {
-			for (char c : versionTag.toCharArray()) {
-				if ((c < '0' || c > '9') && c != '.') {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
+    /**
+     * Returns the version tag.
+     *
+     * @return the version tag.
+     */
+    fun getVersionTag(): String? {
+        return versionTag
+    }
 
-	/**
-	 * Returns whether or not the the identifier is a Minecraft identifier.
-	 *
-	 * @param identifier
-	 *            the identifier to check.
-	 * @return <code>true</code> if the identifier is a Minecraft identifier,
-	 *         <code>false</code> otherwise.
-	 */
-	public static boolean isMinecraftIdentifier(Identifier identifier) {
-		if (identifier != null) {
-			return identifier.build().startsWith(HEADER);
-		}
-		return false;
-	}
+    /**
+     * Returns the world name.
+     *
+     * @return the world name.
+     */
+    fun getWorldName(): String? {
+        return worldName
+    }
 
-	private String serverName;
-	private int serverProtocol;
-	private String versionTag;
-	private int onlinePlayerCount;
-	private int maxPlayerCount;
-	private long guid;
-	private String worldName;
-	private String gamemode;
-	private boolean legacy;
+    /**
+     * Returns the gamemode.
+     *
+     * @return the gamemode.
+     */
+    fun getGamemode(): String? {
+        return gamemode
+    }
 
-	/**
-	 * Creates a Minecraft identifier.
-	 *
-	 * @param serverName
-	 *            the server name.
-	 * @param serverProtocol
-	 *            the server protocol.
-	 * @param versionTag
-	 *            the version tag.
-	 * @param onlinePlayerCount
-	 *            the online player count.
-	 * @param maxPlayerCount
-	 *            the max player count.
-	 * @param guid
-	 *            the globally unique ID.
-	 * @param worldName
-	 *            the world name.
-	 * @param gamemode
-	 *            the gamemode.
-	 * @throws IllegalArgumentException
-	 *             if the <code>serverName</code>, <code>worldName</code>, or
-	 *             <code>gamemode</code> contain the separator character
-	 *             {@value #SEPARATOR}, or if the <code>versionTag</code> is
-	 *             invalid.
-	 */
-	public MinecraftIdentifier(String serverName, int serverProtocol, String versionTag, int onlinePlayerCount,
-			int maxPlayerCount, long guid, String worldName, String gamemode) throws IllegalArgumentException {
-		this.setServerName(serverName);
-		this.setServerProtocol(serverProtocol);
-		this.setVersionTag(versionTag);
-		this.setOnlinePlayerCount(onlinePlayerCount);
-		this.setMaxPlayerCount(maxPlayerCount);
-		this.setServerGloballyUniqueId(guid);
-		this.setWorldName(worldName);
-		this.setGamemode(gamemode);
-		this.setLegacyMode(false);
-	}
+    /**
+     * Sets the server name.
+     *
+     * @param serverName
+     * the new server name.
+     * @throws IllegalArgumentException
+     * if the `serverName` contains the separator
+     * character {@value #SEPARATOR}.
+     */
+    @Throws(IllegalArgumentException::class)
+    fun setServerName(serverName: String?) {
+        if (serverName != null) {
+            require(!serverName.contains(SEPARATOR)) { "Server name cannot contain contain separator character" }
+        }
+        this.serverName = serverName
+    }
 
-	/**
-	 * Creates a Minecraft identifier from an existing identifier.
-	 *
-	 * @param identifier
-	 *            the identifier.
-	 * @throws NullPointerException
-	 *             if the <code>identifier</code> or its contents are
-	 *             <code>null</code>.
-	 * @throws IllegalArgumentException
-	 *             if the <code>identifier</code> is not a Minecraft identifier
-	 *             or there are missing fields.
-	 */
-	public MinecraftIdentifier(Identifier identifier) throws NullPointerException, IllegalArgumentException {
-		super(identifier);
-		if (identifier == null) {
-			throw new NullPointerException("Identifier cannot be null");
-		} else if (identifier.build() == null) {
-			throw new NullPointerException("Identifier contents cannot be null");
-		} else if (!isMinecraftIdentifier(identifier)) {
-			throw new IllegalArgumentException("Not a Minecraft identifier");
-		}
-		String[] data = identifier.build().split(SEPARATOR);
-		if (data.length < DATA_COUNT_LEGACY) {
-			throw new IllegalArgumentException("Missing " + (DATA_COUNT_LEGACY - data.length) + " fields");
-		}
-		for (int i = 0; i < data.length; i++) {
-			data[i] = (data[i].length() > 0 ? data[i] : null);
-		}
-		this.serverName = data[1];
-		this.serverProtocol = RakNet.parseIntPassive(data[2]);
-		this.versionTag = data[3];
-		this.onlinePlayerCount = RakNet.parseIntPassive(data[4]);
-		this.maxPlayerCount = RakNet.parseIntPassive(data[5]);
-		this.legacy = true;
-		if (data.length >= DATA_COUNT) {
-			this.guid = RakNet.parseLongPassive(data[6]);
-			this.worldName = data[7];
-			this.gamemode = data[8];
-			this.legacy = false;
-		}
-	}
+    /**
+     * Sets the version tag.
+     *
+     * @param versionTag
+     * the new version tag.
+     * @throws IllegalArgumentException
+     * if the version tag is invalid.
+     */
+    @Throws(IllegalArgumentException::class)
+    fun setVersionTag(versionTag: String?) {
+        require(verifyVersionTag(versionTag)) { "Invalid version tag" }
+        this.versionTag = versionTag
+    }
 
-	/**
-	 * Creates a Minecraft identifier from an existing identifier.
-	 *
-	 * @param identifier
-	 *            the identifier.
-	 * @throws NullPointerException
-	 *             if the <code>identifier</code> is <code>null</code>.
-	 * @throws IllegalArgumentException
-	 *             if the <code>identifier</code> is not a Minecraft identifier
-	 *             or there are missing fields.
-	 */
-	public MinecraftIdentifier(String identifier) throws NullPointerException, IllegalArgumentException {
-		this(new Identifier(identifier));
-	}
+    /**
+     * Sets the globally unique ID.
+     *
+     * @param guid
+     * the new globally unique ID.
+     */
+    fun setServerGloballyUniqueId(guid: Long) {
+        globallyUniqueId = guid
+    }
 
-	/**
-	 * Creates a blank Minecraft identifier.
-	 */
-	public MinecraftIdentifier() {
-		this(null, 0, null, 0, 0, 0, null, null);
-	}
+    /**
+     * Sets the world name.
+     *
+     * @param worldName
+     * the new world name.
+     * @throws IllegalArgumentException
+     * if the `worldName` contains the separator
+     * character {@value #SEPARATOR}.
+     */
+    @Throws(IllegalArgumentException::class)
+    fun setWorldName(worldName: String?) {
+        if (worldName != null) {
+            require(!worldName.contains(SEPARATOR)) { "World name cannot contain contain separator character" }
+        }
+        this.worldName = worldName
+    }
 
-	/**
-	 * Returns the server name.
-	 *
-	 * @return the server name.
-	 */
-	public String getServerName() {
-		return this.serverName;
-	}
+    /**
+     * Sets the gamemode.
+     *
+     * @param gamemode
+     * the new gamemode.
+     * @throws IllegalArgumentException
+     * if the `gamemode` contains the separator character
+     * {@value #SEPARATOR}.
+     */
+    @Throws(IllegalArgumentException::class)
+    fun setGamemode(gamemode: String?) {
+        if (gamemode != null) {
+            require(!gamemode.contains(SEPARATOR)) { "Gamemode cannot contain contain separator character" }
+        }
+        this.gamemode = gamemode
+    }
 
-	/**
-	 * Returns the server protocol.
-	 *
-	 * @return the server protocol.
-	 */
-	public int getServerProtocol() {
-		return this.serverProtocol;
-	}
+    /**
+     * Converts the values to a Minecraft identifier string.
+     *
+     * @param values
+     * the values to write to the identifier.
+     * @return the built identifier text.
+     * @throws NullPointerException
+     * if `values` is `null`.
+     */
+    @Throws(NullPointerException::class)
+    private fun createBuildString(vararg values: Any?): String {
+        if (values == null) {
+            throw NullPointerException("Values cannot be null")
+        }
+        val identifierBuilder = StringBuilder()
+        identifierBuilder.append(HEADER + SEPARATOR)
+        for (i in 0 until values.size) {
+            identifierBuilder.append(if (values[i] != null) values[i] else "")
+            identifierBuilder.append(if (i + 1 < values.size) SEPARATOR else "")
+        }
+        return identifierBuilder.toString()
+    }
 
-	/**
-	 * Returns the version tag.
-	 *
-	 * @return the version tag.
-	 */
-	public String getVersionTag() {
-		return this.versionTag;
-	}
+    override fun hashCode(): Int {
+        return Objects.hash(
+            serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount, globallyUniqueId, worldName,
+            gamemode, isLegacyMode
+        )
+    }
 
-	/**
-	 * Returns the online player count.
-	 *
-	 * @return the online player count.
-	 */
-	public int getOnlinePlayerCount() {
-		return this.onlinePlayerCount;
-	}
+    override fun equals(o: Any?): Boolean {
+        if (o === this) {
+            return true
+        } else if (o !is MinecraftIdentifier) {
+            return false
+        }
+        val mi = o
+        return (serverName == mi.serverName && serverProtocol == mi.serverProtocol
+                && versionTag == mi.versionTag && onlinePlayerCount == mi.onlinePlayerCount
+                && maxPlayerCount == mi.maxPlayerCount && globallyUniqueId == mi.globallyUniqueId
+                && worldName == mi.worldName && gamemode == mi.gamemode
+                && isLegacyMode == mi.isLegacyMode)
+    }
 
-	/**
-	 * Returns the max player count.
-	 *
-	 * @return the max player count.
-	 */
-	public int getMaxPlayerCount() {
-		return this.maxPlayerCount;
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException
+     * if the version tag is invalid.
+     */
+    @Throws(IllegalArgumentException::class)
+    override fun build(): String {
+        require(verifyVersionTag(versionTag)) { "Invalid version tag" }
+        return if (isLegacyMode == true) {
+            createBuildString(serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount)
+        } else createBuildString(
+            serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount, globallyUniqueId,
+            worldName, gamemode
+        )
+    }
 
-	/**
-	 * Returns the globally unique ID.
-	 *
-	 * @return the globally unique ID.
-	 */
-	public long getGloballyUniqueId() {
-		return this.guid;
-	}
+    companion object {
+        /**
+         * The header found at the beginning of a Minecraft identifier.
+         *
+         *
+         * This allows for easy indication that the identifier is actually a
+         * Minecraft identifier, rather than that of another game.
+         */
+        private const val HEADER = "MCPE"
 
-	/**
-	 * Returns the world name.
-	 *
-	 * @return the world name.
-	 */
-	public String getWorldName() {
-		return this.worldName;
-	}
+        /**
+         * The separator character used to easily split data from it into parseable
+         * chunks.
+         */
+        private const val SEPARATOR = ";"
 
-	/**
-	 * Returns the gamemode.
-	 *
-	 * @return the gamemode.
-	 */
-	public String getGamemode() {
-		return this.gamemode;
-	}
+        /**
+         * The amount of fields found in a Minecraft identifier when it is in legacy
+         * mode.
+         */
+        private const val DATA_COUNT_LEGACY = 6
 
-	/**
-	 * Sets the server name.
-	 *
-	 * @param serverName
-	 *            the new server name.
-	 * @throws IllegalArgumentException
-	 *             if the <code>serverName</code> contains the separator
-	 *             character {@value #SEPARATOR}.
-	 */
-	public void setServerName(String serverName) throws IllegalArgumentException {
-		if (serverName != null) {
-			if (serverName.contains(SEPARATOR)) {
-				throw new IllegalArgumentException("Server name cannot contain contain separator character");
-			}
-		}
-		this.serverName = serverName;
-	}
+        /**
+         * The amount of fields found in a Minecraft identifier.
+         */
+        private const val DATA_COUNT = 9
 
-	/**
-	 * Sets the server protocol.
-	 *
-	 * @param serverProtocol
-	 *            the new server protocol.
-	 */
-	public void setServerProtocol(int serverProtocol) {
-		this.serverProtocol = serverProtocol;
-	}
+        /**
+         * Returns whether or not the version tag is valid.
+         *
+         *
+         * In order for a version tag to be valid, it can only have numbers or
+         * periods. A `null` value is also valid, seeing as when the
+         * identifier is being built no version will be placed inside the identifier
+         * string.
+         *
+         * @param versionTag
+         * the version tag.
+         * @return `true` if the version tag is valid, `false`
+         * otherwise.
+         */
+        private fun verifyVersionTag(versionTag: String?): Boolean {
+            if (versionTag != null) {
+                for (c in versionTag.toCharArray()) {
+                    if ((c < '0' || c > '9') && c != '.') {
+                        return false
+                    }
+                }
+            }
+            return true
+        }
 
-	/**
-	 * Sets the version tag.
-	 *
-	 * @param versionTag
-	 *            the new version tag.
-	 * @throws IllegalArgumentException
-	 *             if the version tag is invalid.
-	 */
-	public void setVersionTag(String versionTag) throws IllegalArgumentException {
-		if (!verifyVersionTag(versionTag)) {
-			throw new IllegalArgumentException("Invalid version tag");
-		}
-		this.versionTag = versionTag;
-	}
-
-	/**
-	 * Sets the online player count.
-	 *
-	 * @param onlinePlayerCount
-	 *            the new online player count.
-	 */
-	public void setOnlinePlayerCount(int onlinePlayerCount) {
-		this.onlinePlayerCount = onlinePlayerCount;
-	}
-
-	/**
-	 * Sets the max player count.
-	 *
-	 * @param maxPlayerCount
-	 *            the new max player count.
-	 */
-	public void setMaxPlayerCount(int maxPlayerCount) {
-		this.maxPlayerCount = maxPlayerCount;
-	}
-
-	/**
-	 * Sets the globally unique ID.
-	 *
-	 * @param guid
-	 *            the new globally unique ID.
-	 */
-	public void setServerGloballyUniqueId(long guid) {
-		this.guid = guid;
-	}
-
-	/**
-	 * Sets the world name.
-	 *
-	 * @param worldName
-	 *            the new world name.
-	 * @throws IllegalArgumentException
-	 *             if the <code>worldName</code> contains the separator
-	 *             character {@value #SEPARATOR}.
-	 */
-	public void setWorldName(String worldName) throws IllegalArgumentException {
-		if (worldName != null) {
-			if (worldName.contains(SEPARATOR)) {
-				throw new IllegalArgumentException("World name cannot contain contain separator character");
-			}
-		}
-		this.worldName = worldName;
-	}
-
-	/**
-	 * Sets the gamemode.
-	 *
-	 * @param gamemode
-	 *            the new gamemode.
-	 * @throws IllegalArgumentException
-	 *             if the <code>gamemode</code> contains the separator character
-	 *             {@value #SEPARATOR}.
-	 */
-	public void setGamemode(String gamemode) throws IllegalArgumentException {
-		if (gamemode != null) {
-			if (gamemode.contains(SEPARATOR)) {
-				throw new IllegalArgumentException("Gamemode cannot contain contain separator character");
-			}
-		}
-		this.gamemode = gamemode;
-	}
-
-	/**
-	 * Enables/Disables the legacy builder.
-	 *
-	 * @param legacy
-	 *            <code>true</code> to enable the legacy builder,
-	 *            <code>false</code> to use the regular builder.
-	 */
-	public void setLegacyMode(boolean legacy) {
-		this.legacy = legacy;
-	}
-
-	/**
-	 * Returns whether or not the identifier is using the legacy builder.
-	 *
-	 * @return <code>true</code> if the identifier is using the legacy builder,
-	 *         <code>false</code> if the identifier is using the regular
-	 *         builder.
-	 */
-	public boolean isLegacyMode() {
-		return this.legacy;
-	}
-
-	/**
-	 * Converts the values to a Minecraft identifier string.
-	 *
-	 * @param values
-	 *            the values to write to the identifier.
-	 * @return the built identifier text.
-	 * @throws NullPointerException
-	 *             if <code>values</code> is <code>null</code>.
-	 */
-	private String createBuildString(Object... values) throws NullPointerException {
-		if (values == null) {
-			throw new NullPointerException("Values cannot be null");
-		}
-		StringBuilder identifierBuilder = new StringBuilder();
-		identifierBuilder.append(HEADER + SEPARATOR);
-		for (int i = 0; i < values.length; i++) {
-			identifierBuilder.append(values[i] != null ? values[i] : "");
-			identifierBuilder.append(i + 1 < values.length ? SEPARATOR : "");
-		}
-		return identifierBuilder.toString();
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount, guid, worldName,
-				gamemode, legacy);
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o == this) {
-			return true;
-		} else if (!(o instanceof MinecraftIdentifier)) {
-			return false;
-		}
-		MinecraftIdentifier mi = (MinecraftIdentifier) o;
-		return Objects.equals(serverName, mi.serverName) && Objects.equals(serverProtocol, mi.serverProtocol)
-				&& Objects.equals(versionTag, mi.versionTag) && Objects.equals(onlinePlayerCount, mi.onlinePlayerCount)
-				&& Objects.equals(maxPlayerCount, mi.maxPlayerCount) && Objects.equals(guid, mi.guid)
-				&& Objects.equals(worldName, mi.worldName) && Objects.equals(gamemode, mi.gamemode)
-				&& Objects.equals(legacy, mi.legacy);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws IllegalArgumentException
-	 *             if the version tag is invalid.
-	 */
-	@Override
-	public String build() throws IllegalArgumentException {
-		if (!verifyVersionTag(versionTag)) {
-			throw new IllegalArgumentException("Invalid version tag");
-		} else if (legacy == true) {
-			return this.createBuildString(serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount);
-		}
-		return this.createBuildString(serverName, serverProtocol, versionTag, onlinePlayerCount, maxPlayerCount, guid,
-				worldName, gamemode);
-	}
-
+        /**
+         * Returns whether or not the the identifier is a Minecraft identifier.
+         *
+         * @param identifier
+         * the identifier to check.
+         * @return `true` if the identifier is a Minecraft identifier,
+         * `false` otherwise.
+         */
+        fun isMinecraftIdentifier(identifier: Identifier?): Boolean {
+            return identifier?.build()?.startsWith(HEADER) ?: false
+        }
+    }
 }

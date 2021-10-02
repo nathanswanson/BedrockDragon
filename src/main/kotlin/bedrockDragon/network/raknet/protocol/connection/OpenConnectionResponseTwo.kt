@@ -27,134 +27,144 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetException;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.ConnectionType;
-import bedrockDragon.network.raknet.protocol.Failable;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.Failable
+import java.net.InetSocketAddress
+import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.RakNetException
+import java.io.IOException
 
 /**
- * An <code>OPEN_CONNECTION_REQUEST_2</code> packet.
- * <p>
+ * An `OPEN_CONNECTION_REQUEST_2` packet.
+ *
+ *
  * This is sent by the server to the client after receiving a
- * {@link OpenConnectionRequestTwo OPEN_CONNECTION_REQUEST_2} packet.
- * 
+ * [OPEN_CONNECTION_REQUEST_2][OpenConnectionRequestTwo] packet.
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class OpenConnectionResponseTwo extends RakNetPacket implements Failable {
+class OpenConnectionResponseTwo : RakNetPacket, Failable {
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+    var magic = false
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The server's globally unique ID.
+     */
+    var serverGuid: Long = 0
 
-	/**
-	 * The server's globally unique ID.
-	 */
-	public long serverGuid;
+    /**
+     * The address of the client.
+     */
+    var clientAddress: InetSocketAddress? = null
 
-	/**
-	 * The address of the client.
-	 */
-	public InetSocketAddress clientAddress;
+    /**
+     * The maximum transfer unit size the server and the client have agreed
+     * upon.
+     */
+    var maximumTransferUnit = 0
 
-	/**
-	 * The maximum transfer unit size the server and the client have agreed
-	 * upon.
-	 */
-	public int maximumTransferUnit;
+    /**
+     * Whether or not encryption is enabled.
+     *
+     *
+     * Since JRakNet does not have this feature implemented, `false`
+     * will always be the value used when sending this value. However, this
+     * value can be `true` if it is being set through decoding.
+     */
+    var encryptionEnabled = false
 
-	/**
-	 * Whether or not encryption is enabled.
-	 * <p>
-	 * Since JRakNet does not have this feature implemented, <code>false</code>
-	 * will always be the value used when sending this value. However, this
-	 * value can be <code>true</code> if it is being set through decoding.
-	 */
-	public boolean encryptionEnabled;
+    /**
+     * The server connection type.
+     */
+    var connectionType: ConnectionType? = null
 
-	/**
-	 * The server connection type.
-	 */
-	public ConnectionType connectionType;
+    /**
+     * Whether or not the packet failed to encode/decode.
+     */
+    private var failed = false
 
-	/**
-	 * Whether or not the packet failed to encode/decode.
-	 */
-	private boolean failed;
+    /**
+     * Creates an `OPEN_CONNECTION_RESPONSE_2` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_OPEN_CONNECTION_REPLY_2.toInt()) {}
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_RESPONSE_2</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public OpenConnectionResponseTwo() {
-		super(ID_OPEN_CONNECTION_REPLY_2);
-	}
+    /**
+     * Creates an `OPEN_CONNECTION_RESPONSE_2` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_RESPONSE_2</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public OpenConnectionResponseTwo(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        try {
+            encryptionEnabled = false // TODO: Not supported
+            writeMagic()
+            writeLong(serverGuid)
+            this.writeAddress(clientAddress)
+            writeUnsignedShort(maximumTransferUnit)
+            writeBoolean(encryptionEnabled)
+            this.writeConnectionType(connectionType)
+        } catch (e: IOException) {
+            magic = false
+            serverGuid = 0
+            clientAddress = null
+            maximumTransferUnit = 0
+            encryptionEnabled = false
+            connectionType = null
+            this.clear()
+            failed = true
+        } catch (e: RakNetException) {
+            magic = false
+            serverGuid = 0
+            clientAddress = null
+            maximumTransferUnit = 0
+            encryptionEnabled = false
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void encode() {
-		try {
-			this.encryptionEnabled = false; // TODO: Not supported
-			this.writeMagic();
-			this.writeLong(serverGuid);
-			this.writeAddress(clientAddress);
-			this.writeUnsignedShort(maximumTransferUnit);
-			this.writeBoolean(encryptionEnabled);
-			this.writeConnectionType(connectionType);
-		} catch (IOException | RakNetException e) {
-			this.magic = false;
-			this.serverGuid = 0;
-			this.clientAddress = null;
-			this.maximumTransferUnit = 0;
-			this.encryptionEnabled = false;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
+    override fun decode() {
+        try {
+            magic = readMagic()
+            serverGuid = readLong()
+            clientAddress = readAddress()
+            maximumTransferUnit = readUnsignedShort().toInt()
+            encryptionEnabled = readBoolean()
+            connectionType = readConnectionType()
+        } catch (e: IOException) {
+            magic = false
+            serverGuid = 0
+            clientAddress = null
+            maximumTransferUnit = 0
+            encryptionEnabled = false
+            connectionType = null
+            this.clear()
+            failed = true
+        } catch (e: RakNetException) {
+            magic = false
+            serverGuid = 0
+            clientAddress = null
+            maximumTransferUnit = 0
+            encryptionEnabled = false
+            connectionType = null
+            this.clear()
+            failed = true
+        }
+    }
 
-	@Override
-	public void decode() {
-		try {
-			this.magic = this.readMagic();
-			this.serverGuid = this.readLong();
-			this.clientAddress = this.readAddress();
-			this.maximumTransferUnit = this.readUnsignedShort();
-			this.encryptionEnabled = this.readBoolean();
-			this.connectionType = this.readConnectionType();
-		} catch (IOException | RakNetException e) {
-			this.magic = false;
-			this.serverGuid = 0;
-			this.clientAddress = null;
-			this.maximumTransferUnit = 0;
-			this.encryptionEnabled = false;
-			this.connectionType = null;
-			this.clear();
-			this.failed = true;
-		}
-	}
-
-	@Override
-	public boolean failed() {
-		return this.failed;
-	}
-
+    override fun failed(): Boolean {
+        return failed
+    }
 }

@@ -41,7 +41,6 @@ import bedrockDragon.network.raknet.protocol.login.ConnectionRequestAccepted;
 import bedrockDragon.network.raknet.protocol.login.NewIncomingConnection;
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket;
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record;
-import bedrockDragon.network.raknet.server.RakNetServer;
 
 import io.netty.channel.Channel;
 

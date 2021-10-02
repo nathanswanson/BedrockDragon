@@ -27,65 +27,60 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.status;
+package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * A <code>CONNECTED_PONG</code> packet.
- * <p>
- * This packet is sent in response of a {@link ConnectedPing CONNECTED_PING}
+ * A `CONNECTED_PONG` packet.
+ *
+ *
+ * This packet is sent in response of a [CONNECTED_PING][ConnectedPing]
  * packet ensuring the sender that the connection is still active.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class ConnectedPong extends RakNetPacket {
+class ConnectedPong : RakNetPacket {
+    /**
+     * The timestamp of the sender of the ping.
+     */
+    @JvmField
+    var timestamp: Long = 0
 
-	/**
-	 * The timestamp of the sender of the ping.
-	 */
-	public long timestamp;
+    /**
+     * The timestamp of the sender of the pong.
+     */
+    @JvmField
+    var timestampPong: Long = 0
 
-	/**
-	 * The timestamp of the sender of the pong.
-	 */
-	public long timestampPong;
+    /**
+     * Creates a `CONNECTED_PONG` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_CONNECTED_PONG.toInt()) {}
 
-	/**
-	 * Creates a <code>CONNECTED_PONG</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public ConnectedPong() {
-		super(ID_CONNECTED_PONG);
-	}
+    /**
+     * Creates a `CONNECTED_PONG` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>CONNECTED_PONG</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public ConnectedPong(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        writeLong(timestamp)
+        writeLong(timestampPong)
+    }
 
-	@Override
-	public void encode() {
-		this.writeLong(timestamp);
-		this.writeLong(timestampPong);
-	}
-
-	@Override
-	public void decode() {
-		this.timestamp = this.readLong();
-		this.timestampPong = -1L;
-		if (this.remaining() >= Long.BYTES) {
-			this.timestampPong = this.readLong();
-		}
-	}
-
+    override fun decode() {
+        timestamp = readLong()
+        timestampPong = -1L
+        if (remaining() >= java.lang.Long.BYTES) {
+            timestampPong = readLong()
+        }
+    }
 }

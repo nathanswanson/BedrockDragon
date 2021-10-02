@@ -27,74 +27,71 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.login;
+package bedrockDragon.network.raknet.protocol.login
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * A <code>CONNECTION_REQUEST</code> packet.
- * <p>
+ * A `CONNECTION_REQUEST` packet.
+ *
+ *
  * This is the first packet sent by the client during login after initial
  * connection has succeeded.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class ConnectionRequest extends RakNetPacket {
+class ConnectionRequest : RakNetPacket {
+    /**
+     * The client's globally unique ID.
+     */
+	@JvmField
+	var clientGuid: Long = 0
 
-	/**
-	 * The client's globally unique ID.
-	 */
-	public long clientGuid;
+    /**
+     * The client's timestamp.
+     */
+	@JvmField
+	var timestamp: Long = 0
 
-	/**
-	 * The client's timestamp.
-	 */
-	public long timestamp;
+    /**
+     * Whether or not security should be used.
+     *
+     *
+     * Since JRakNet does not have this feature implemented, `false`
+     * will always be the value used when sending this value. However, this
+     * value can be `true` if it is being set through decoding.
+     */
+	@JvmField
+	var useSecurity = false
 
-	/**
-	 * Whether or not security should be used.
-	 * <p>
-	 * Since JRakNet does not have this feature implemented, <code>false</code>
-	 * will always be the value used when sending this value. However, this
-	 * value can be <code>true</code> if it is being set through decoding.
-	 */
-	public boolean useSecurity;
+    /**
+     * Creates a `CONNECTION_REQUEST` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_CONNECTION_REQUEST.toInt()) {}
 
-	/**
-	 * Creates a <code>CONNECTION_REQUEST</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public ConnectionRequest() {
-		super(ID_CONNECTION_REQUEST);
-	}
+    /**
+     * Creates a `CONNECTION_REQUEST` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates a <code>CONNECTION_REQUEST</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public ConnectionRequest(Packet packet) {
-		super(packet);
-	}
+    override fun encode() {
+        useSecurity = false // TODO: Not supported
+        writeLong(clientGuid)
+        writeLong(timestamp)
+        writeBoolean(useSecurity)
+    }
 
-	@Override
-	public void encode() {
-		this.useSecurity = false; // TODO: Not supported
-		this.writeLong(clientGuid);
-		this.writeLong(timestamp);
-		this.writeBoolean(useSecurity);
-	}
-
-	@Override
-	public void decode() {
-		this.clientGuid = this.readLong();
-		this.timestamp = this.readLong();
-		this.useSecurity = this.readBoolean();
-	}
-
+    override fun decode() {
+        clientGuid = readLong()
+        timestamp = readLong()
+        useSecurity = readBoolean()
+    }
 }

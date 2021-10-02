@@ -27,42 +27,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.status;
+package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet;
+import bedrockDragon.network.raknet.Packet
 
 /**
- * An <code>UNCONNECTED_PING_OPEN_CONNECTIONS</code> packet.
- * <p>
- * This packet is the exact same as {@link UnconnectedPing UNCONNECTED_PING}
+ * An `UNCONNECTED_PING_OPEN_CONNECTIONS` packet.
+ *
+ *
+ * This packet is the exact same as [UNCONNECTED_PING][UnconnectedPing]
  * with the exception that the server will only respond if it has open
  * connections available.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class UnconnectedPingOpenConnections extends UnconnectedPing {
+class UnconnectedPingOpenConnections : UnconnectedPing {
+    /**
+     * Creates an `UNCONNECTED_PING_OPEN_CONNECTIONS` packet to be
+     * encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(true) {}
 
-	/**
-	 * Creates an <code>UNCONNECTED_PING_OPEN_CONNECTIONS</code> packet to be
-	 * encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public UnconnectedPingOpenConnections() {
-		super(true);
-	}
-
-	/**
-	 * Creates an <code>UNCONNECTED_PING_OPEN_CONNECTIONS</code> packet to be
-	 * decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public UnconnectedPingOpenConnections(Packet packet) {
-		super(packet);
-	}
-
+    /**
+     * Creates an `UNCONNECTED_PING_OPEN_CONNECTIONS` packet to be
+     * decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet) {}
 }

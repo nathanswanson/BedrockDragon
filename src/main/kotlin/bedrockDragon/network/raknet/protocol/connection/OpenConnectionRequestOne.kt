@@ -27,78 +27,74 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.connection;
+package bedrockDragon.network.raknet.protocol.connection
 
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 
 /**
- * An <code>OPEN_CONNECTION_REQUEST_1</code> packet.
- * <p>
+ * An `OPEN_CONNECTION_REQUEST_1` packet.
+ *
+ *
  * This is the first packet sent by the client to the server during connection.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class OpenConnectionRequestOne extends RakNetPacket {
+class OpenConnectionRequestOne : RakNetPacket {
+    /**
+     * Whether or not the magic bytes read in the packet are valid.
+     */
+    var magic = false
 
-	/**
-	 * At the end of this packet in particular, the client pads the packet with
-	 * the remaining data left according the <code>maximumTransferUnit</code>.
-	 * <p>
-	 * This value is equivalent to the size of the IP header (20 bytes) and the
-	 * size of the UDP header (8 bytes) combined.
-	 */
-	private static final int MTU_PADDING = 28;
+    /**
+     * The client's network protocol version.
+     */
+    var networkProtocol = 0
 
-	/**
-	 * Whether or not the magic bytes read in the packet are valid.
-	 */
-	public boolean magic;
+    /**
+     * The client's maximum transfer unit size.
+     */
+    var maximumTransferUnit = 0
 
-	/**
-	 * The client's network protocol version.
-	 */
-	public int networkProtocol;
+    /**
+     * Creates an `OPEN_CONNECTION_REQUEST_1` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(ID_OPEN_CONNECTION_REQUEST_1.toInt()) {}
 
-	/**
-	 * The client's maximum transfer unit size.
-	 */
-	public int maximumTransferUnit;
+    /**
+     * Creates an `OPEN_CONNECTION_REQUEST_1` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_REQUEST_1</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public OpenConnectionRequestOne() {
-		super(ID_OPEN_CONNECTION_REQUEST_1);
-	}
+    override fun encode() {
+        writeMagic()
+        writeUnsignedByte(networkProtocol)
+        pad(maximumTransferUnit - MTU_PADDING)
+    }
 
-	/**
-	 * Creates an <code>OPEN_CONNECTION_REQUEST_1</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public OpenConnectionRequestOne(Packet packet) {
-		super(packet);
-	}
+    override fun decode() {
+        magic = readMagic()
+        networkProtocol = readUnsignedByte().toInt()
+        maximumTransferUnit = remaining() + MTU_PADDING
+        skip(remaining())
+    }
 
-	@Override
-	public void encode() {
-		this.writeMagic();
-		this.writeUnsignedByte(networkProtocol);
-		this.pad(maximumTransferUnit - MTU_PADDING);
-	}
-
-	@Override
-	public void decode() {
-		this.magic = this.readMagic();
-		this.networkProtocol = this.readUnsignedByte();
-		this.maximumTransferUnit = this.remaining() + MTU_PADDING;
-		this.skip(this.remaining());
-	}
-
+    companion object {
+        /**
+         * At the end of this packet in particular, the client pads the packet with
+         * the remaining data left according the `maximumTransferUnit`.
+         *
+         *
+         * This value is equivalent to the size of the IP header (20 bytes) and the
+         * size of the UDP header (8 bytes) combined.
+         */
+        private const val MTU_PADDING = 28
+    }
 }

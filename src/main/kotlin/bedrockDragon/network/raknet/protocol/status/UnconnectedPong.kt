@@ -101,7 +101,8 @@ class UnconnectedPong : RakNetPacket, Failable {
             writeLong(timestamp)
             writeLong(pongId)
             writeMagic()
-            writeString(identifier!!.build())
+            //TODO add IDENTIFIER
+            writeString("MCPE;Dedicated Server;390;1.14.60;0;10;13253860892328930865;Bedrock level;Survival;1;19132;19133;")
             this.writeConnectionType(connectionType)
         } catch (e: RakNetException) {
             timestamp = 0

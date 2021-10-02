@@ -28,14 +28,14 @@
  * SOFTWARE.
  */
 /**
- * Components used to allow a {@link bedrockDragon.network.raknet.Packet Packet} to be
- * used as an {@link java.io.InputStream InputStream} or
- * {@link java.io.OutputStream OutputStream} using its'
- * {@link bedrockDragon.network.raknet.Packet#getInputStream() getInputStream()} and
- * {@link bedrockDragon.network.raknet.Packet#getOutputStream() getOutputStream()}
+ * Components used to allow a [Packet][bedrockDragon.network.raknet.Packet] to be
+ * used as an [InputStream][java.io.InputStream] or
+ * [OutputStream][java.io.OutputStream] using its'
+ * [getInputStream()][bedrockDragon.network.raknet.Packet.getInputStream] and
+ * [getOutputStream()][bedrockDragon.network.raknet.Packet.getOutputStream]
  * methods.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.1.0
  */
-package bedrockDragon.network.raknet.stream;
+package bedrockDragon.network.raknet.stream
