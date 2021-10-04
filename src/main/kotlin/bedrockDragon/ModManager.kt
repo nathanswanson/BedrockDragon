@@ -1,0 +1,4 @@
+package bedrockDragon
+
+class ModManager {
+}
