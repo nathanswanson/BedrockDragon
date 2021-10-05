@@ -27,23 +27,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.message;
+package bedrockDragon.network.raknet.protocol.message
 
 /**
- * A <code>CUSTOM_4</code> packet.
+ * A `CUSTOM_4` packet.
  *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.11.0
  */
-public final class CustomFourPacket extends CustomPacket {
-
-	/**
-	 * Creates a <code>CUSTOM_4</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public CustomFourPacket() {
-		super(ID_CUSTOM_4);
-	}
-
-}
+class CustomFourPacket
+/**
+ * Creates a `CUSTOM_4` packet to be encoded.
+ *
+ * @see .encode
+ */
+    : CustomPacket(ID_CUSTOM_4.toInt())

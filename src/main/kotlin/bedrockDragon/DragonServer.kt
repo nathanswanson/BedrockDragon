@@ -54,7 +54,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     fun start() {
 
-        var uuid = UUID.randomUUID()
+        val uuid = UUID.randomUUID()
 
         guid = uuid.mostSignificantBits
         pongId = uuid.leastSignificantBits
@@ -87,14 +87,12 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     }
 
     private fun tick() {
-        //var lastTick = System.currentTimeMillis()
         while(isRunning) {
             for (peer in clients.values) {
                 if (peer.status == Status.CONNECTED) {
                     peer.update()
                 }
             }
-
         }
     }
 

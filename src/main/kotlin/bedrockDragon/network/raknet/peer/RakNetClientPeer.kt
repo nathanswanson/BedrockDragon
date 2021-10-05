@@ -9,6 +9,7 @@ import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CUSTOM_0
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CUSTOM_F
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_NACK
 import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
@@ -25,6 +26,7 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
 
     private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
     private var recieveSequenceNumber = -1
+
     fun update() {
 
     }
@@ -93,7 +95,7 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
     }
 
     private fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
-        logger.info { packet.splitId }
+        //logger.info { packet.splitId }
     }
 
     private fun sendAcknowledge(acknowledge: Boolean, vararg records: Record) {

@@ -30,8 +30,8 @@
 /**
  * The internal packets necessary in order for basic messaging to occur after
  * login.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package bedrockDragon.network.raknet.protocol.message;
+package bedrockDragon.network.raknet.protocol.message
