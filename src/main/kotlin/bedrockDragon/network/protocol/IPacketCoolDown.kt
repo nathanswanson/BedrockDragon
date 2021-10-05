@@ -1,4 +1,4 @@
-package bedrockDragon.network.bedrockprotocol
+package bedrockDragon.network.protocol
 
 interface IPacketCoolDown {
     val coolDownTime: Int

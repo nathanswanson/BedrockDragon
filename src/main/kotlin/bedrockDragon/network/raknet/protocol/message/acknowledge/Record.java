@@ -29,12 +29,13 @@
  */
 package bedrockDragon.network.raknet.protocol.message.acknowledge;
 
+import bedrockDragon.network.raknet.map.IntMap;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import bedrockDragon.network.raknet.map.IntMap;
 
 /**
  * Represents a packet record which is used in acknowledgement packets to

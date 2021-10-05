@@ -27,13 +27,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.windows;
+package bedrockDragon.network.raknet.windows
 
-import java.util.Objects;
+import kotlin.Throws
+import java.io.IOException
+import java.io.BufferedReader
+import kotlin.jvm.JvmStatic
+import java.lang.StringBuilder
+import bedrockDragon.network.raknet.windows.PowerShellAdministrativeClient
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.lang.Process
+import java.util.HashMap
+import java.lang.IllegalArgumentException
+import bedrockDragon.network.raknet.windows.PowerShellCommand
+import kotlin.jvm.Synchronized
+import bedrockDragon.network.raknet.windows.PowerShellException
+import java.lang.InterruptedException
+import java.net.ServerSocket
+import java.nio.charset.Charset
+import java.io.File
+import java.net.URISyntaxException
+import java.lang.NullPointerException
+import java.lang.RuntimeException
+import bedrockDragon.network.raknet.windows.UniversalWindowsProgram
+import java.util.Objects
 
 /**
  * A universal Windows program.
- * <p>
+ *
+ *
  * Mainly meant to be used to give universal Windows programs loopback exemption
  * so users can connect to JRakNet servers on the same machine. This class can
  * safely be used on other machines that are not running on the Windows 10
@@ -41,130 +64,123 @@ import java.util.Objects;
  * if the machine is not running Windows 10 then this class is guaranteed to
  * behave differently with code intentionally not running or giving different
  * results.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.10.0
  */
-public final class UniversalWindowsProgram {
+class UniversalWindowsProgram
+/**
+ * Creates a Universal Windows Program.
+ *
+ * @param applicationId
+ * the application ID.
+ */(
+    /**
+     * Returns the application ID.
+     *
+     * @return the application ID.
+     */
+    val applicationId: String
+) {
 
-	/**
-	 * The Minecraft Universal Windows Program.
-	 */
-	public static final UniversalWindowsProgram MINECRAFT = new UniversalWindowsProgram(
-			"Microsoft.MinecraftUWP_8wekyb3d8bbwe");
+    /**
+     * Returns whether or not the application is loopback exempt.
+     *
+     *
+     * The term "loopback exempt" means that an application is exempt from the
+     * rule that it cannot connect to a server running on the same machine as it
+     * is.
+     *
+     * @return `true` if the application is loopback exempt,
+     * `false` otherwise.
+     * @throws PowerShellException
+     * if a PowerShell error occurs.
+     */
+    @get:Throws(PowerShellException::class)
+    val isLoopbackExempt: Boolean
+        get() = if (!isWindows10) {
+            true // Already exempted on non-Windows 10 machine
+        } else CHECKNETISOLATION_LOOPBACKEXEMPT_SHOW.execute().toLowerCase()
+            .contains(applicationId.toLowerCase())
 
-	private static final String APPLICATION_ARGUMENT = PowerShellCommand.ARGUMENT_PREFIX + "application";
-	private static final PowerShellCommand CHECKNETISOLATION_LOOPBACKEXEMPT_ADD = new PowerShellCommand(
-			"CheckNetIsolation LoopbackExempt -a -n=\"" + APPLICATION_ARGUMENT + "\"");
-	private static final PowerShellCommand CHECKNETISOLATION_LOOPBACKEXEMPT_DELETE = new PowerShellCommand(
-			"CheckNetIsolation LoopbackExempt -d -n=\"" + APPLICATION_ARGUMENT + "\"");
-	private static final PowerShellCommand CHECKNETISOLATION_LOOPBACKEXEMPT_SHOW = new PowerShellCommand(
-			"CheckNetIsolation LoopbackExempt -s");
+    /**
+     * Sets whether or not the application is loopback exempt.
+     *
+     *
+     * The term "loopback exempt" means that an application is exempt from the
+     * rule that it cannot connect to a server running on the same machine as it
+     * is.
+     *
+     * @param exempt
+     * `true` if the application is loopback exempt,
+     * `false` otherwise.
+     * @return `true` if making the application loopback exempt was
+     * successful, `false` otherwise. A success means that
+     * the machine is not running on Windows 10 (no code needed to be
+     * executed), the exemption status was successfully changed, or that
+     * the `exempt` value is already what is now.
+     * @throws PowerShellException
+     * if a PowerShell error occurs.
+     */
+    @Throws(PowerShellException::class)
+    fun setLoopbackExempt(exempt: Boolean): Boolean {
+        if (!isWindows10) {
+            return true // Not running on Windows 10
+        }
+        val exempted = isLoopbackExempt
+        if (exempt == true && exempted == false) {
+            return CHECKNETISOLATION_LOOPBACKEXEMPT_ADD.setArgument(APPLICATION_ARGUMENT, applicationId)
+                .execute(true) == PowerShellCommand.Companion.RESULT_OK
+        } else if (exempt == false && exempted == true) {
+            return CHECKNETISOLATION_LOOPBACKEXEMPT_DELETE.setArgument(APPLICATION_ARGUMENT, applicationId)
+                .execute(true) == PowerShellCommand.Companion.RESULT_OK
+        }
+        return true // No operation executed
+    }
 
-	/**
-	 * Returns whether or not the machine is currently running on the Windows 10
-	 * operating system.
-	 * 
-	 * @return <code>true</code> if the machine is currently running on the
-	 *         Windows 10 operating system, <code>false</code> otherwise.
-	 */
-	public static boolean isWindows10() {
-		return System.getProperty("os.name").equalsIgnoreCase("Windows 10");
-	}
+    override fun hashCode(): Int {
+        return Objects.hash(applicationId)
+    }
 
-	private final String applicationId;
+    override fun equals(o: Any?): Boolean {
+        if (o === this) {
+            return true
+        } else if (o !is UniversalWindowsProgram) {
+            return false
+        }
+        return applicationId == o.applicationId
+    }
 
-	/**
-	 * Creates a Universal Windows Program.
-	 * 
-	 * @param applicationId
-	 *            the application ID.
-	 */
-	public UniversalWindowsProgram(String applicationId) {
-		this.applicationId = applicationId;
-	}
+    override fun toString(): String {
+        return "UniversalWindowsProgram [applicationId=$applicationId]"
+    }
 
-	/**
-	 * Returns the application ID.
-	 * 
-	 * @return the application ID.
-	 */
-	public String getApplicationId() {
-		return this.applicationId;
-	}
+    companion object {
+        /**
+         * The Minecraft Universal Windows Program.
+         */
+        val MINECRAFT = UniversalWindowsProgram(
+            "Microsoft.MinecraftUWP_8wekyb3d8bbwe"
+        )
+        private val APPLICATION_ARGUMENT: String = PowerShellCommand.Companion.ARGUMENT_PREFIX + "application"
+        private val CHECKNETISOLATION_LOOPBACKEXEMPT_ADD = PowerShellCommand(
+            "CheckNetIsolation LoopbackExempt -a -n=\"" + APPLICATION_ARGUMENT + "\""
+        )
+        private val CHECKNETISOLATION_LOOPBACKEXEMPT_DELETE = PowerShellCommand(
+            "CheckNetIsolation LoopbackExempt -d -n=\"" + APPLICATION_ARGUMENT + "\""
+        )
+        private val CHECKNETISOLATION_LOOPBACKEXEMPT_SHOW = PowerShellCommand(
+            "CheckNetIsolation LoopbackExempt -s"
+        )
 
-	/**
-	 * Returns whether or not the application is loopback exempt.
-	 * <p>
-	 * The term "loopback exempt" means that an application is exempt from the
-	 * rule that it cannot connect to a server running on the same machine as it
-	 * is.
-	 * 
-	 * @return <code>true</code> if the application is loopback exempt,
-	 *         <code>false</code> otherwise.
-	 * @throws PowerShellException
-	 *             if a PowerShell error occurs.
-	 */
-	public boolean isLoopbackExempt() throws PowerShellException {
-		if (!isWindows10()) {
-			return true; // Already exempted on non-Windows 10 machine
-		}
-		return CHECKNETISOLATION_LOOPBACKEXEMPT_SHOW.execute().toLowerCase()
-				.contains(this.getApplicationId().toLowerCase());
-	}
-
-	/**
-	 * Sets whether or not the application is loopback exempt.
-	 * <p>
-	 * The term "loopback exempt" means that an application is exempt from the
-	 * rule that it cannot connect to a server running on the same machine as it
-	 * is.
-	 * 
-	 * @param exempt
-	 *            <code>true</code> if the application is loopback exempt,
-	 *            <code>false</code> otherwise.
-	 * @return <code>true</code> if making the application loopback exempt was
-	 *         successful, <code>false</code> otherwise. A success means that
-	 *         the machine is not running on Windows 10 (no code needed to be
-	 *         executed), the exemption status was successfully changed, or that
-	 *         the <code>exempt</code> value is already what is now.
-	 * @throws PowerShellException
-	 *             if a PowerShell error occurs.
-	 */
-	public boolean setLoopbackExempt(boolean exempt) throws PowerShellException {
-		if (!isWindows10()) {
-			return true; // Not running on Windows 10
-		}
-		boolean exempted = isLoopbackExempt();
-		if (exempt == true && exempted == false) {
-			return CHECKNETISOLATION_LOOPBACKEXEMPT_ADD.setArgument(APPLICATION_ARGUMENT, this.getApplicationId())
-					.execute(true).equals(PowerShellCommand.RESULT_OK);
-		} else if (exempt == false && exempted == true) {
-			return CHECKNETISOLATION_LOOPBACKEXEMPT_DELETE.setArgument(APPLICATION_ARGUMENT, this.getApplicationId())
-					.execute(true).equals(PowerShellCommand.RESULT_OK);
-		}
-		return true; // No operation executed
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(applicationId);
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o == this) {
-			return true;
-		} else if (!(o instanceof UniversalWindowsProgram)) {
-			return false;
-		}
-		UniversalWindowsProgram uwp = (UniversalWindowsProgram) o;
-		return Objects.equals(applicationId, uwp.applicationId);
-	}
-
-	@Override
-	public String toString() {
-		return "UniversalWindowsProgram [applicationId=" + applicationId + "]";
-	}
-
+        /**
+         * Returns whether or not the machine is currently running on the Windows 10
+         * operating system.
+         *
+         * @return `true` if the machine is currently running on the
+         * Windows 10 operating system, `false` otherwise.
+         */
+        val isWindows10: Boolean
+            get() = System.getProperty("os.name").equals("Windows 10", ignoreCase = true)
+    }
 }

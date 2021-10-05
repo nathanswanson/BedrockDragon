@@ -27,38 +27,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.peer;
-
 /**
- * Signals that a {@link RakNetPeer} has timed out.
+ * Components used to create [HashMap][java.util.HashMap] objects with the
+ * keys being native types such as `byte`, `short`,
+ * `int`, and `long`.
  *
  * @author "Whirvis" Trent Summerlin
- * @since JRakNet v1.0.0
+ * @since JRakNet v2.6.0
  */
-public final class TimeoutException extends RuntimeException {
+package bedrockDragon.network.raknet.map
 
-	private static final long serialVersionUID = 4216977972114486611L;
-
-	private final RakNetPeer peer;
-
-	/**
-	 * Constructs a <code>TimeoutException</code>.
-	 * 
-	 * @param peer
-	 *            the peer that has timed out.
-	 */
-	public TimeoutException(RakNetPeer peer) {
-		super("Peer timeout");
-		this.peer = peer;
-	}
-
-	/**
-	 * Returns the peer that timed out.
-	 * 
-	 * @return the peer that tiemd out.
-	 */
-	public RakNetPeer getPeer() {
-		return this.peer;
-	}
-
-}
+import java.util.HashMap
+import bedrockDragon.network.raknet.map.DynamicKey
+import kotlin.Throws
+import java.lang.NullPointerException

@@ -29,6 +29,7 @@
  */
 package bedrockDragon.network.raknet.protocol.status
 
+import bedrockDragon.DragonServer
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Failable
@@ -102,7 +103,7 @@ class UnconnectedPong : RakNetPacket, Failable {
             writeLong(pongId)
             writeMagic()
             //TODO add IDENTIFIER
-            writeString("MCPE;Dedicated Server;390;1.14.60;0;10;13253860892328930865;Bedrock level;Survival;1;19132;19133;")
+            writeString("MCPE;Dedicated Server;465;1.17.30;0;10;${DragonServer.guid};Bedrock level;Survival;1;19132;19133;")
             this.writeConnectionType(connectionType)
         } catch (e: RakNetException) {
             timestamp = 0

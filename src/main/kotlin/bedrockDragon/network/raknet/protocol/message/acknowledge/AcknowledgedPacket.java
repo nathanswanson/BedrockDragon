@@ -43,7 +43,7 @@ import bedrockDragon.network.raknet.RakNetPacket;
  * 
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
- * @see Record
+ * @see java.lang.Record
  */
 public class AcknowledgedPacket extends RakNetPacket {
 

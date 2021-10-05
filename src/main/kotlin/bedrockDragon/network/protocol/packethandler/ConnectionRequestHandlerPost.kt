@@ -1,4 +1,4 @@
-package bedrockDragon.network.bedrockprotocol.packethandler
+package bedrockDragon.network.protocol.packethandler
 
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequest

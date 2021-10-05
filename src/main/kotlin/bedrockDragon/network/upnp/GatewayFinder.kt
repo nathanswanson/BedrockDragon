@@ -16,21 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package bedrockDragon.network.UPnP
+package bedrockDragon.network.upnp
 
-import kotlin.Throws
-import java.util.HashMap
-import javax.xml.parsers.DocumentBuilderFactory
-import org.w3c.dom.traversal.DocumentTraversal
-import java.lang.IllegalArgumentException
-import java.util.StringTokenizer
 import java.util.LinkedList
-import java.util.Enumeration
-import bedrockDragon.network.UPnP.GatewayFinder
-import bedrockDragon.network.UPnP.Gateway
-import bedrockDragon.network.UPnP.GatewayFinder.GatewayListener
-import bedrockDragon.network.UPnP.UPnP
-import java.lang.InterruptedException
 import java.net.*
 
 /**

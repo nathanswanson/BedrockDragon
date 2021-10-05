@@ -29,22 +29,17 @@
  */
 package bedrockDragon.network.raknet
 
-import kotlin.jvm.JvmOverloads
-import io.netty.buffer.ByteBuf
+import bedrockDragon.network.protocol.packethandler.logger
 import bedrockDragon.network.raknet.stream.PacketDataInputStream
 import bedrockDragon.network.raknet.stream.PacketDataOutputStream
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.EmptyByteBuf
 import io.netty.buffer.Unpooled
-import kotlin.Throws
-import java.lang.IndexOutOfBoundsException
-import java.math.BigInteger
-import java.lang.RuntimeException
+import io.netty.channel.socket.DatagramPacket
 import java.io.EOFException
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
-import java.lang.NullPointerException
-import java.lang.IllegalArgumentException
-import io.netty.buffer.EmptyByteBuf
-import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.*
@@ -171,7 +166,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      */
     @Throws(IndexOutOfBoundsException::class)
     fun readUnsignedByte(): Short {
-        return (buffer.readByte() and 0xFF.toByte()).toShort()
+        return (buffer.readUnsignedByte())
     }
 
     /**
@@ -1196,7 +1191,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      * `short` to the packet.
      *
      * @param s
-     * the string.
+     * the strin.
      * @return the packet.
      * @throws NullPointerException
      * if `s` is `null`.

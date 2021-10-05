@@ -34,4 +34,4 @@
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package com.whirvis.jraknet.protocol.message.acknowledge;
+package bedrockDragon.network.raknet.protocol.message.acknowledge;

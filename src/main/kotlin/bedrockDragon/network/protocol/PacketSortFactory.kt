@@ -1,6 +1,7 @@
-package bedrockDragon.network.bedrockprotocol
+package bedrockDragon.network.protocol
 
-import bedrockDragon.network.bedrockprotocol.packethandler.*
+import bedrockDragon.network.protocol.packethandler.*
+import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
 import io.netty.channel.Channel
 import java.lang.IllegalArgumentException
@@ -9,9 +10,7 @@ import java.net.InetSocketAddress
 class PacketSortFactory {
     companion object {
         fun createPacketHandle(sender: InetSocketAddress, packet: RakNetPacket, channel: Channel) : PacketHandler {
-            val id = packet.id.toInt()
-
-            return when(id) {
+            return when(packet.id.toInt()) {
 
                 PacketConstants.LOGIN_PACKET -> LoginHandler(sender, packet, channel)
                 PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_1 -> ConnectionRequestHandlerOne(sender, packet, channel)

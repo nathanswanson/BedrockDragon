@@ -53,7 +53,7 @@ open class RakNetException
      * @param cause
      * the `Throwable` that was thrown.
      */
-    constructor(cause: Throwable) : this(cause.message) {}
+    constructor(cause: Throwable?) : this(cause?.message) {}
 
     companion object {
         private const val serialVersionUID = -685945306592443928L

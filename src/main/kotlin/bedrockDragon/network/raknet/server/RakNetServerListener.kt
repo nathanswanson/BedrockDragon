@@ -32,10 +32,10 @@ package bedrockDragon.network.raknet.server
 import bedrockDragon.DragonServer
 import java.net.InetSocketAddress
 import bedrockDragon.network.raknet.protocol.ConnectionType
-import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import java.net.InetAddress
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import io.netty.buffer.ByteBuf
 

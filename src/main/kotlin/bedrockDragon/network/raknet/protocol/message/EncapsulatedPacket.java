@@ -29,13 +29,13 @@
  */
 package bedrockDragon.network.raknet.protocol.message;
 
-import java.util.Arrays;
-
 import bedrockDragon.network.raknet.Packet;
 import bedrockDragon.network.raknet.map.IntMap;
-import bedrockDragon.network.raknet.peer.RakNetPeer;
+import bedrockDragon.network.raknet.peer.RakNetClientPeer;
 import bedrockDragon.network.raknet.protocol.Reliability;
-import bedrockDragon.network.raknet.protocol.message.acknowledge.Record;
+
+import java.util.Arrays;
+
 
 /**
  * An encapsulated packet.
@@ -72,7 +72,7 @@ public final class EncapsulatedPacket implements Cloneable {
 		 * @throws IllegalArgumentException
 		 *             if the <code>encapsulated</code> is already split.
 		 */
-		public static boolean needsSplit(RakNetPeer peer, EncapsulatedPacket encapsulated)
+		public static boolean needsSplit(RakNetClientPeer peer, EncapsulatedPacket encapsulated)
 				throws NullPointerException, IllegalArgumentException {
 			if (peer == null) {
 				throw new NullPointerException("Peer cannot be null");
@@ -101,7 +101,7 @@ public final class EncapsulatedPacket implements Cloneable {
 		 *             the packet is too small to be split according to
 		 *             {@link #needsSplit(RakNetPeer, EncapsulatedPacket)}.
 		 */
-		public static EncapsulatedPacket[] split(RakNetPeer peer, EncapsulatedPacket encapsulated)
+		public static EncapsulatedPacket[] split(RakNetClientPeer peer, EncapsulatedPacket encapsulated)
 				throws NullPointerException, IllegalArgumentException {
 			if (peer == null) {
 				throw new NullPointerException("Peer cannot be null");
@@ -174,8 +174,8 @@ public final class EncapsulatedPacket implements Cloneable {
 		public Split(int splitId, int splitCount, Reliability reliability) {
 			if (splitId < 0) {
 				throw new IllegalArgumentException("Split ID cannot be negative");
-			} else if (splitCount > RakNetPeer.MAX_SPLIT_COUNT) {
-				throw new IllegalArgumentException("Split count can be no greater than " + RakNetPeer.MAX_SPLIT_COUNT);
+			} else if (splitCount > RakNetClientPeer.MAX_SPLIT_COUNT) {
+				throw new IllegalArgumentException("Split count can be no greater than " + RakNetClientPeer.MAX_SPLIT_COUNT);
 			} else if (reliability == null) {
 				throw new NullPointerException("Reliability cannot be null");
 			}
@@ -316,18 +316,16 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * <p>
 	 * This is <i>not</i> used for packet encoding. Rather, when a sender gets
 	 * an
-	 * {@link com.whirvis.jraknet.protocol.message.acknowledge.AcknowledgedPacket
+	 * {@link bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 	 * ACK} packet, the event method
-	 * {@link com.whirvis.jraknet.client.RakNetClientListener#onAcknowledge(com.whirvis.jraknet.client.RakNetClient, com.whirvis.jraknet.peer.RakNetServerPeer, Record, EncapsulatedPacket)
 	 * onAcknowledge(RakNetClient, RakNetServerPeer, Record,
 	 * EncapsulatedPacket)} is called. Likewise, the same occurs when a
-	 * {@link com.whirvis.jraknet.protocol.message.acknowledge.NotAcknowledgedPacket
+	 * {@link bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 	 * NACK} packet is received with the exception of
-	 * {@link com.whirvis.jraknet.client.RakNetClientListener#onLoss(com.whirvis.jraknet.client.RakNetClient, com.whirvis.jraknet.peer.RakNetServerPeer, Record, EncapsulatedPacket)
 	 * onLoss(RakNetClient, RakNetServerPeer, Record, EncapsulatedPacket)} being
 	 * called instead.
 	 */
-	public Record ackRecord;
+	public bedrockDragon.network.raknet.protocol.message.acknowledge.Record ackRecord;
 
 	/**
 	 * The packet reliability.
@@ -358,7 +356,7 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * <li>5. Sender sends reliable packet three to receiver.</li>
 	 * <li>6. Receiver receives reliable packet three, and realizes that it has
 	 * lost reliable packet two, causing it to send a
-	 * {@link com.whirvis.jraknet.protocol.message.acknowledge.NotAcknowledgedPacket
+	 * {@link bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 	 * NACK} packet.</li>
 	 * <li>7. Sender sends reliable packet two again.</li>
 	 * <li>8. Receiver receives reliable packet two and communication continues
@@ -367,11 +365,11 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * <p>
 	 * When a receiver receives a reliable packet, it is also always supposed to
 	 * send an
-	 * {@link com.whirvis.jraknet.protocol.message.acknowledge.AcknowledgedPacket
+	 * {@link bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 	 * ACK} packet back to the sender. This lets the sender know that the packet
 	 * has been received so it can be removed from its cache. It is assumed that
 	 * the receiver sent an
-	 * {@link com.whirvis.jraknet.protocol.message.acknowledge.AcknowledgedPacket
+	 * {@link bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 	 * ACK} packet in each step describing the fact that it received a reliable
 	 * packet.
 	 */
@@ -395,7 +393,7 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * {@link Reliability#UNRELIABLE_SEQUENCED SEQUENCED} type.
 	 * <p>
 	 * In total, there are a total of
-	 * {@value com.whirvis.jraknet.RakNet#CHANNEL_COUNT} channels that can be
+	 * {@value bedrockDragon.network.raknet.RakNet#CHANNEL_COUNT} channels that can be
 	 * used to send {@link Reliability#RELIABLE_ORDERED ORDERED} and
 	 * {@link Reliability#UNRELIABLE_SEQUENCED SEQUENCED} packets on. Both have
 	 * their own set of these channels. It is good to make use of this if there
@@ -530,7 +528,7 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * @throws NullPointerException
 	 *             if the <code>peer</code> is <code>null</code>.
 	 */
-	public boolean needsSplit(RakNetPeer peer) throws NullPointerException {
+	public boolean needsSplit(RakNetClientPeer peer) throws NullPointerException {
 		return Split.needsSplit(peer, this);
 	}
 
@@ -543,11 +541,10 @@ public final class EncapsulatedPacket implements Cloneable {
 	 * @throws IllegalStateException
 	 *             if the <code>encapsulated</code> is already split or if the
 	 *             packet is too small to be split according to
-	 *             {@link #needsSplit(RakNetPeer)}.
 	 * @throws NullPointerException
 	 *             if the <code>peer</code> is <code>null</code>.
 	 */
-	public EncapsulatedPacket[] split(RakNetPeer peer) throws IllegalStateException, NullPointerException {
+	public EncapsulatedPacket[] split(RakNetClientPeer peer) throws IllegalStateException, NullPointerException {
 		if (split == true) {
 			throw new IllegalStateException("Already split");
 		} else if (!needsSplit(peer)) {

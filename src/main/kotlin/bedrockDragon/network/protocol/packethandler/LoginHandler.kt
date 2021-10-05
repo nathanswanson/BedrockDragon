@@ -1,6 +1,7 @@
-package bedrockDragon.network.bedrockprotocol.packethandler
+package bedrockDragon.network.protocol.packethandler
 
-import bedrockDragon.network.bedrockprotocol.IPacketCoolDown
+import bedrockDragon.DragonServer
+import bedrockDragon.network.protocol.IPacketCoolDown
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.identifier.Identifier
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPing
@@ -22,13 +23,15 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
             val identifier = Identifier("bedrockdragon")
             val pingEvent = ServerPing(sender, unconnectedPing.connectionType!!, identifier)
 
+
             val pong = UnconnectedPong()
             pong.timestamp = unconnectedPing.timestamp
-            pong.pongId = pongId
+            pong.pongId = DragonServer.pongId
             pong.identifier = pingEvent.identifier
             pong.encode()
             if(!pong.failed()) {
                 sendNettyMessage(pong, sender)
+                finished = true
             } else {
                 logger.info { "Failed to send back response Packet" }
             }
@@ -44,8 +47,5 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
         return "Login Handle"
     }
 
-    companion object {
-        val pongId = UUID.randomUUID().leastSignificantBits
-    }
 }
 

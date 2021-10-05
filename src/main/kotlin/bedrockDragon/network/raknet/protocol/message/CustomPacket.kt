@@ -27,134 +27,128 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.message;
+package bedrockDragon.network.raknet.protocol.message
 
-import java.util.ArrayList;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
-import bedrockDragon.network.raknet.protocol.message.acknowledge.Record;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import java.lang.IllegalArgumentException
+import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
+import java.util.ArrayList
 
 /**
- * A <code>CUSTOM_0</code>, <code>CUSTOM_1</code>, <code>CUSTOM_2</code>,
- * <code>CUSTOM_3</code>, <code>CUSTOM_4</code>, <code>CUSTOM_5</code>,
- * <code>CUSTOM_6</code>, <code>CUSTOM_7</code>, <code>CUSTOM_8</code>,
- * <code>CUSTOM_9</code>, <code>CUSTOM_A</code>, <code>CUSTOM_B</code>,
- * <code>CUSTOM_C</code>, <code>CUSTOM_D</code>, <code>CUSTOM_E</code>, or
- * <code>CUSTOM_F</code> packet.
- * <p>
- * This packet is used to send {@link EncapsulatedPacket encapsulated packets}
- * that are in the send queue. This is where {@link EncapsulatedPacket
- * encapsulated packets} get their name from, as they are encapsulated within
+ * A `CUSTOM_0`, `CUSTOM_1`, `CUSTOM_2`,
+ * `CUSTOM_3`, `CUSTOM_4`, `CUSTOM_5`,
+ * `CUSTOM_6`, `CUSTOM_7`, `CUSTOM_8`,
+ * `CUSTOM_9`, `CUSTOM_A`, `CUSTOM_B`,
+ * `CUSTOM_C`, `CUSTOM_D`, `CUSTOM_E`, or
+ * `CUSTOM_F` packet.
+ *
+ *
+ * This packet is used to send [encapsulated packets][EncapsulatedPacket]
+ * that are in the send queue. This is where [ encapsulated packets][EncapsulatedPacket] get their name from, as they are encapsulated within
  * another container packet. The way these are used is by storing as many
  * packets in the send queue as possible into one packet before sending them off
  * all at once.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public class CustomPacket extends RakNetPacket {
+open class CustomPacket : RakNetPacket {
+    /**
+     * The sequence ID of the packet.
+     */
+    var sequenceId = 0
 
-	/**
-	 * The minimum size of a custom packet.
-	 */
-	public static final int MINIMUM_SIZE = size((EncapsulatedPacket[]) null);
+    /**
+     * If encoding, these are the packets that will be encoded into the packet.
+     * <br></br>
+     * If decoding, these are the packets decoded from the packet.
+     */
+    var messages: Array<EncapsulatedPacket>? = null
 
-	/**
-	 * Calculates the size of the packet if it had been encoded.
-	 * 
-	 * @param packets
-	 *            the packets inside the custom packet.
-	 * @return the size of the packet if it had been encoded.
-	 */
-	public static int size(EncapsulatedPacket... packets) {
-		int size = 4;
-		if (packets != null) {
-			for (EncapsulatedPacket packet : packets) {
-				size += packet.size();
-			}
-		}
-		return size;
-	}
+    /**
+     * The encapsulated packets that require acknowledgement.
+     */
+    lateinit var ackMessages: Array<EncapsulatedPacket>
 
-	/**
-	 * The sequence ID of the packet.
-	 */
-	public int sequenceId;
+    /**
+     * Creates a custom packet to be encoded.
+     *
+     * @param type
+     * the type of custom packet being in between
+     * `ID_CUSTOM_0` and `ID_CUSTOM_F`.
+     * @throws IllegalArgumentException
+     * if the `type` is not in between code
+     * `ID_CUSTOM_0` and `ID_CUSTOM_F`.
+     * @see .encode
+     */
+    protected constructor(type: Int) : super(type) {
+        require(!(type < ID_CUSTOM_0 || type > ID_CUSTOM_F)) { "Custom packet ID must be in between ID_CUSTOM_0 and ID_CUSTOM_F" }
+    }
 
-	/**
-	 * If encoding, these are the packets that will be encoded into the packet.
-	 * <br>
-	 * If decoding, these are the packets decoded from the packet.
-	 */
-	public EncapsulatedPacket[] messages;
+    /**
+     * Creates a `CUSTOM` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * The encapsulated packets that require acknowledgement.
-	 */
-	public EncapsulatedPacket[] ackMessages;
+    override fun encode() {
+        writeTriadLE(sequenceId)
+        if (messages != null) {
+            val ackMessages = ArrayList<EncapsulatedPacket>()
+            for (packet in messages!!) {
+                if (packet.reliability.requiresAck()) {
+                    packet.ackRecord = Record(sequenceId)
+                    ackMessages.add(packet)
+                }
+                packet.encode(this)
+            }
+            this.ackMessages = ackMessages.toTypedArray()
+        }
+    }
 
-	/**
-	 * Creates a custom packet to be encoded.
-	 * 
-	 * @param type
-	 *            the type of custom packet being in between
-	 *            <code>ID_CUSTOM_0</code> and <code>ID_CUSTOM_F</code>.
-	 * @throws IllegalArgumentException
-	 *             if the <code>type</code> is not in between code
-	 *             <code>ID_CUSTOM_0</code> and <code>ID_CUSTOM_F</code>.
-	 * @see #encode()
-	 */
-	protected CustomPacket(int type) throws IllegalArgumentException {
-		super(type);
-		if (type < ID_CUSTOM_0 || type > ID_CUSTOM_F) {
-			throw new IllegalArgumentException("Custom packet ID must be in between ID_CUSTOM_0 and ID_CUSTOM_F");
-		}
-	}
+    override fun decode() {
+        sequenceId = readTriadLE()
+        val messages = ArrayList<EncapsulatedPacket>()
+        val ackMessages = ArrayList<EncapsulatedPacket>()
+        while (remaining() >= EncapsulatedPacket.MINIMUM_SIZE) {
+            val packet = EncapsulatedPacket()
+            packet.decode(this)
+            if (packet.reliability.requiresAck()) {
+                packet.ackRecord = Record(sequenceId)
+                ackMessages.add(packet)
+            }
+            messages.add(packet)
+        }
+        this.ackMessages = ackMessages.toTypedArray()
+        this.messages = messages.toTypedArray()
+    }
 
-	/**
-	 * Creates a <code>CUSTOM</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public CustomPacket(Packet packet) {
-		super(packet);
-	}
+    companion object {
+        /**
+         * The minimum size of a custom packet.
+         */
+        const val MINIMUM_SIZE = 4
 
-	@Override
-	public void encode() {
-		this.writeTriadLE(sequenceId);
-		if (messages != null) {
-			ArrayList<EncapsulatedPacket> ackMessages = new ArrayList<EncapsulatedPacket>();
-			for (EncapsulatedPacket packet : messages) {
-				if (packet.reliability.requiresAck()) {
-					packet.ackRecord = new Record(sequenceId);
-					ackMessages.add(packet);
-				}
-				packet.encode(this);
-			}
-			this.ackMessages = ackMessages.toArray(new EncapsulatedPacket[ackMessages.size()]);
-		}
-	}
+        /**
+         * Calculates the size of the packet if it had been encoded.
+         *
+         * @param packets
+         * the packets inside the custom packet.
+         * @return the size of the packet if it had been encoded.
+         */
+        fun size(vararg packets: EncapsulatedPacket): Int {
+            var size = 4
+            if (packets != null) {
+                for (packet in packets) {
+                    size += packet.size()
+                }
+            }
+            return size
+        }
 
-	@Override
-	public void decode() {
-		this.sequenceId = this.readTriadLE();
-		ArrayList<EncapsulatedPacket> messages = new ArrayList<EncapsulatedPacket>();
-		ArrayList<EncapsulatedPacket> ackMessages = new ArrayList<EncapsulatedPacket>();
-		while (this.remaining() >= EncapsulatedPacket.MINIMUM_SIZE) {
-			EncapsulatedPacket packet = new EncapsulatedPacket();
-			packet.decode(this);
-			if (packet.reliability.requiresAck()) {
-				packet.ackRecord = new Record(sequenceId);
-				ackMessages.add(packet);
-			}
-			messages.add(packet);
-		}
-		this.ackMessages = ackMessages.toArray(new EncapsulatedPacket[ackMessages.size()]);
-		this.messages = messages.toArray(new EncapsulatedPacket[messages.size()]);
-	}
-
+    }
 }

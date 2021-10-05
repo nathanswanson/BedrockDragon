@@ -29,20 +29,12 @@
  */
 package bedrockDragon.network.raknet
 
-import java.lang.IllegalArgumentException
+import bedrockDragon.network.protocol.packethandler.logger
+import bedrockDragon.network.raknet.map.ShortMap
+import bedrockDragon.network.raknet.protocol.ConnectionType
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import kotlin.Throws
-import bedrockDragon.network.raknet.protocol.ConnectionType
-import java.lang.RuntimeException
-import java.lang.UnsupportedOperationException
-import java.lang.IndexOutOfBoundsException
-import java.lang.NullPointerException
-import bedrockDragon.network.raknet.map.ShortMap
-import java.lang.ReflectiveOperationException
 import io.netty.channel.socket.DatagramPacket
-import java.lang.NoSuchMethodException
-import java.lang.SecurityException
 import java.util.*
 
 /**
@@ -75,7 +67,6 @@ open class RakNetPacket : Packet {
      */
     constructor(id: Int) : super() {
         require(!(id < 0x00 || id > 0xFF)) { "ID must be in between 0-255" }
-        println(id)
         writeUnsignedByte(id)
         supportsEncoding = isMethodOverriden(this.javaClass, RakNetPacket::class.java, ENCODE_METHOD_NAME)
         supportsDecoding = isMethodOverriden(this.javaClass, RakNetPacket::class.java, DECODE_METHOD_NAME)
@@ -186,14 +177,14 @@ open class RakNetPacket : Packet {
                 val version = readString()
                 val metadata = HashMap<String, String>()
                 val metadataLength = readUnsignedByte().toInt()
-                for (i in 0 until metadataLength) {
-                    val key = readString()
-                    val value = readString()
-                    if (metadata.containsKey(key)) {
-                        throw RakNetException("Duplicate metadata key \"$key\"")
-                    }
-                    metadata[key] = value
-                }
+                //for (i in 0) {
+                //val key = readString()
+                //    val value = readString()
+                //    if (metadata.containsKey(key)) {
+                //        throw RakNetException("Duplicate metadata key \"$key\"")
+                 //   }
+                //    metadata[key] = value
+                //}
                 return ConnectionType(uuid, name, language, version, metadata)
             }
         }

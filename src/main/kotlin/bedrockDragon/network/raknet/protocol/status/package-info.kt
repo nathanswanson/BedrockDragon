@@ -27,23 +27,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.peer;
-
 /**
- * Signals that there are too many split packets in the queue at once.
+ * The packets that are sent between the server and the client to determine
+ * one's status and descriptors.
  *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-public final class SplitQueueOverflowException extends RuntimeException {
-
-	private static final long serialVersionUID = 969985052588965615L;
-
-	/**
-	 * Constructs a <code>SplitQueueOverloadException</code>.
-	 */
-	public SplitQueueOverflowException() {
-		super("Too many split packets in a single queue");
-	}
-
-}
+package bedrockDragon.network.raknet.protocol.status

@@ -1,4 +1,4 @@
-package bedrockDragon.network.bedrockprotocol.packethandler
+package bedrockDragon.network.protocol.packethandler
 
 import bedrockDragon.network.raknet.Packet
 import io.netty.buffer.ByteBuf
@@ -10,6 +10,8 @@ import java.net.InetSocketAddress
 val logger = KotlinLogging.logger {}
 
 abstract class PacketHandler(val channel : Channel) {
+
+    var finished: Boolean = false
 
     open fun responseToClient() {}
     open fun responseToServer() {}

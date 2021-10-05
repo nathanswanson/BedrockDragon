@@ -30,6 +30,7 @@
 package bedrockDragon.network.raknet.server
 
 import bedrockDragon.DragonServer
+import bedrockDragon.network.protocol.packethandler.logger
 import io.netty.channel.ChannelInboundHandlerAdapter
 import java.util.concurrent.ConcurrentHashMap
 import java.net.InetAddress
@@ -38,8 +39,10 @@ import kotlin.Throws
 import java.lang.NullPointerException
 import io.netty.channel.ChannelHandlerContext
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.VarInt
 import io.netty.channel.socket.DatagramPacket
 import java.lang.Exception
+import kotlin.math.log
 
 /**
  * Used by the [RakNetServer] with the sole purpose of sending received
@@ -78,9 +81,9 @@ class RakNetServerHandler(
             throw NullPointerException("Address cannot be null")
         }
         blocked[address] = BlockedAddress(time)
-        for (client in server.clients()) {
-            if (client.inetAddress == address) {
-                server.disconnect(client, reason ?: "Address blocked")
+        for (client in server.clients) {
+            if (client.key == address) {
+                server.disconnect(client.value, reason ?: "Address blocked")
             }
         }
         server.callEvent { listener: RakNetServerListener? ->
@@ -124,9 +127,12 @@ class RakNetServerHandler(
 
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+
+
         if (msg is DatagramPacket) {
             // Get packet and sender data
             val datagram = msg
+          //  logger.info { VarInt.readUnsignedVarInt(datagram.content().) }
             val sender = datagram.sender()
             val packet = RakNetPacket(datagram)
 
@@ -145,19 +151,21 @@ class RakNetServerHandler(
 
             // Handle the packet and release the buffer
             server.handleMessage(sender, packet)
-            //logger.debug("Sent packet to server and reset datagram buffer read position");
+            logger.debug("Sent packet to server and reset datagram buffer read position");
             server.callEvent { listener: RakNetServerListener? ->
                 datagram.content().readerIndex(0) // Reset index
                 listener!!.handleNettyMessage(server, sender, datagram.content())
             }
             if (datagram.release() /* No longer needed */) {
-                //	logger.trace("Released datagram");
+                	logger.trace("Released datagram");
             } else {
-                //	logger.error("Memory leak: Failed to deallocate datagram when releasing it");
+                	logger.error("Memory leak: Failed to deallocate datagram when releasing it");
             }
 
             // No exceptions occurred, release the suspect
             causeAddress = null
+        } else {
+            logger.info { "Message is not datagram" }
         }
     }
 

@@ -29,10 +29,11 @@
  */
 package bedrockDragon.network.raknet.map.concurrent;
 
+import bedrockDragon.network.raknet.map.DynamicKey;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import bedrockDragon.network.raknet.map.DynamicKey;
 
 /**
  * This class is used for using ints as keys in normal maps without having to

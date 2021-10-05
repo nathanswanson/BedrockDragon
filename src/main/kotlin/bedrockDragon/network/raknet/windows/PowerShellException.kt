@@ -27,27 +27,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.windows;
+package bedrockDragon.network.raknet.windows
+
+import kotlin.Throws
+import java.io.IOException
+import java.io.BufferedReader
+import kotlin.jvm.JvmStatic
+import java.lang.StringBuilder
+import bedrockDragon.network.raknet.windows.PowerShellAdministrativeClient
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.lang.Process
+import java.util.HashMap
+import java.lang.IllegalArgumentException
+import bedrockDragon.network.raknet.windows.PowerShellCommand
+import kotlin.jvm.Synchronized
+import bedrockDragon.network.raknet.windows.PowerShellException
+import java.lang.InterruptedException
+import java.net.ServerSocket
+import java.nio.charset.Charset
+import java.io.File
+import java.net.URISyntaxException
+import java.lang.NullPointerException
+import java.lang.RuntimeException
+import bedrockDragon.network.raknet.windows.UniversalWindowsProgram
+import java.util.Objects
 
 /**
  * Signals that an error has occurred when executing a Windows PowerShell
  * command.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.10.0
  */
-public final class PowerShellException extends RuntimeException {
-
-	private static final long serialVersionUID = 1662306011110232452L;
-
-	/**
-	 * Constructs a <code>PowerShellException</code>.
-	 * 
-	 * @param message
-	 *            the detail message.
-	 */
-	public PowerShellException(String message) {
-		super(message);
-	}
-
+class PowerShellException
+/**
+ * Constructs a `PowerShellException`.
+ *
+ * @param message
+ * the detail message.
+ */
+    (message: String?) : RuntimeException(message) {
+    companion object {
+        private const val serialVersionUID = 1662306011110232452L
+    }
 }

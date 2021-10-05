@@ -40,7 +40,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.jvm.Synchronized
 import java.lang.IllegalArgumentException
-import bedrockDragon.network.UPnP.UPnP
+import bedrockDragon.network.upnp.UPnP
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import bedrockDragon.network.raknet.identifier.Identifier
@@ -809,6 +809,47 @@ object RakNet {
         }
         return getServerIdentifier(InetAddress.getByName(host), port)
     }
+    /**
+     * Returns the maximum transfer unit of the network card with the specified
+     * address.
+     *
+     * @param address
+     * the IP address. A `null` value will have the lowest
+     * valid maximum transfer unit be returned instead.
+     * @return the maximum transfer unit of the network card with the specified
+     * address, `-1` if it could not be determined.
+     * @throws RuntimeException
+     * if an exception is caught when determining the lowest valid
+     * maximum transfer unit size despite the safe checks put in
+     * place.
+     */
+
+
+    @JvmName("getMaximumTransferUnit1")
+    fun getMaximumTransferUnit(): Int {
+        // Calculate lowest valid maximum transfer unit
+        if (_lowestMaximumTransferUnitSize < 0) {
+            try {
+                var lowestMaximumTransferUnitSize = Int.MAX_VALUE
+                val networkInterfaces = NetworkInterface.getNetworkInterfaces()
+                while (networkInterfaces.hasMoreElements()) {
+                    val networkInterface = networkInterfaces.nextElement()
+                    if (lowestMaximumTransferUnitSize > networkInterface.mtu && networkInterface.mtu >= 0) {
+                        lowestMaximumTransferUnitSize = networkInterface.mtu
+                    }
+                }
+                _lowestMaximumTransferUnitSize = lowestMaximumTransferUnitSize
+            } catch (e: SocketException) {
+                throw RuntimeException(e)
+            } catch (e: NullPointerException) {
+                throw RuntimeException(e)
+            }
+        }
+
+
+            return _lowestMaximumTransferUnitSize
+
+    }
 
     /**
      * Returns the maximum transfer unit of the network card with the specified
@@ -824,6 +865,7 @@ object RakNet {
      * maximum transfer unit size despite the safe checks put in
      * place.
      */
+
     @Throws(RuntimeException::class)
     fun getMaximumTransferUnit(address: InetAddress?): Int {
         // Calculate lowest valid maximum transfer unit
