@@ -1,4 +1,4 @@
 package bedrockDragon.block
 
-open class Block {
+class Anvil : Transparent() {
 }

@@ -1,4 +1,4 @@
 package bedrockDragon.item
 
-open class Item {
+class Shovel {
 }
