@@ -10,16 +10,20 @@ import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CUSTOM_F
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_NACK
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
+import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 
 class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionType,val clientGuid: Long,val maximumTransferUnit: Int,val channel: Channel,val sender: InetSocketAddress) {
 
-    val KEEP_ALIVE_PING_INTERVAL = 2500L
+    val KEEP_ALIVE_PING_INTERVAL = 2500
 
     var status: Status = Status.DISCONNECTED
+
+    private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
     private var recieveSequenceNumber = -1
     fun update() {
 
@@ -40,11 +44,17 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
                 acknowledgedPacket.decode()
 
                 for (record in acknowledgedPacket.records) {
+                    var ackReceiptPacketsI = ackReceiptPackets.keys().iterator()
 
+                    while(ackReceiptPacketsI.hasNext()) {
+                        var encapsultated = ackReceiptPacketsI.next()
+
+                    }
                 }
             }
             else -> {
                 if(packet.id in ID_CUSTOM_0..ID_CUSTOM_F) {
+                    logger.info { "Custom Packet" }
                     val custom = CustomPacket(packet)
                     custom.decode()
 
@@ -65,7 +75,7 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
 			        * will have been overwritten.
 			        */
 
-                    var skipped = custom.sequenceId - recieveSequenceNumber - 1
+                    val skipped = custom.sequenceId - recieveSequenceNumber - 1
                     if(skipped > 0) {
                         this.sendAcknowledge(false, if (skipped == 1)
                             Record(custom.sequenceId - 1) else
@@ -73,11 +83,17 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
                     }
                     if (custom.sequenceId > recieveSequenceNumber - 1) {
                         recieveSequenceNumber = custom.sequenceId
-
+                        for(encapsulated in custom.messages!!) {
+                            handleEncapsulatedPacket(encapsulated)
+                        }
                     }
                 }
             }
         }
+    }
+
+    private fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
+        logger.info { packet.splitId }
     }
 
     private fun sendAcknowledge(acknowledge: Boolean, vararg records: Record) {
