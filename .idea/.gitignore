@@ -1,12 +1,19 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+/vcs.xml
+/uiDesigner.xml
+/runConfigurations.xml
+/misc.xml
+/libraries-with-intellij-classes.xml
+/jarRepositories.xml
+/gradle.xml
+/compiler.xml
+
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
 
-# Gradle
-/vcs.xml
-../.gradle/
+
