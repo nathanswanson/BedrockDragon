@@ -50,7 +50,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         var mtu = RakNet.getMaximumTransferUnit()
     }
 
-    fun start() {
+    fun start(): Boolean {
 
         val uuid = UUID.randomUUID()
 
@@ -84,7 +84,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         //Main thread deals with packets received and sent to client. packets received are converted into objects and sent to the related lightThread
         isRunning = true
         tick()
-
+        return true
     }
 
     private fun tick() {
@@ -97,8 +97,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
     }
 
-    fun stop() {
+    fun stop(): Boolean {
         isRunning = false
+        return true
     }
 
     private fun entityLightThread() {
