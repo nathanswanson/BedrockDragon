@@ -9,6 +9,7 @@ import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.peer.Status
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
+import bedrockDragon.ticking.ChunkTicker
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
 import io.netty.bootstrap.Bootstrap
@@ -31,9 +32,6 @@ import kotlin.collections.HashMap
 private val logger = KotlinLogging.logger {}
 
 class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
-
-
-    val AUTOMATIC_MTU = -1
 
     private var eventThreadCount = 0
     private var isRunning = false
@@ -79,6 +77,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         //Coroutine World
         logger.info { "Starting World Thread" }
         scope.launch { worldLightThread() }
+        //Coroutine Chunk
+        logger.info { "Starting Chunk Thread" }
+        scope.launch { chunkLightThread() }
         //Start server tick.
         //Main thread deals with packets received and sent to client. packets received are converted into objects and sent to the related lightThread
         isRunning = true
@@ -108,6 +109,11 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private fun worldLightThread() {
         val worldTicker = WorldTicker()
         worldTicker.initialize()
+    }
+
+    private fun chunkLightThread() {
+        val chunkTicker = ChunkTicker()
+        chunkTicker.tick()
     }
 
     fun disconnect(client: RakNetClientPeer, s: String) {

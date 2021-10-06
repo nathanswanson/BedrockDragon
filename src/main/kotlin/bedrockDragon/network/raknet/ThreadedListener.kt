@@ -29,9 +29,6 @@
  */
 package bedrockDragon.network.raknet
 
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-
 /**
  * Denotes that either a [ RakNetServerListener][com.whirvis.jraknet.server.RakNetServerListener], [ RakNetClientListener][com.whirvis.jraknet.client.RakNetClientListener], or a
  * [DiscoveryListener][com.whirvis.jraknet.discovery.DiscoveryListener]
@@ -40,7 +37,7 @@ import java.lang.annotation.RetentionPolicy
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.11.0
  */
-@Retention(RetentionPolicy.RUNTIME)
+@kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
 @Target(
     AnnotationTarget.ANNOTATION_CLASS,
     AnnotationTarget.CLASS,
