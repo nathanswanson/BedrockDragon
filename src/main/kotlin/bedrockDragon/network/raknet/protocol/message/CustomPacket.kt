@@ -99,7 +99,7 @@ open class CustomPacket : RakNetPacket {
         writeTriadLE(sequenceId)
         if (messages != null) {
             val ackMessages = ArrayList<EncapsulatedPacket>()
-            for (packet in messages!!) { //TODO
+            for (packet in messages!!) {
                 if (packet.reliability.requiresAck()) {
                     packet.ackRecord = Record(sequenceId)
                     ackMessages.add(packet)

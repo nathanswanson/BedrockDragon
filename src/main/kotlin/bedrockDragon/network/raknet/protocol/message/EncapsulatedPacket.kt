@@ -11,9 +11,9 @@ class EncapsulatedPacket : Cloneable {
 
     private var isClone = false
     private var clone: EncapsulatedPacket? = null
-    var reliability: Reliability = TODO()
-    var ackRecord: Record = TODO()
-    var payload: Packet = TODO()
+    lateinit var reliability: Reliability
+    lateinit var ackRecord: Record
+    lateinit var payload: Packet
     var split = false
 
     /**
@@ -130,8 +130,28 @@ class EncapsulatedPacket : Cloneable {
 
     fun encode(buffer: Packet) {
         var flags = 0x00
-        flags |= reliability.get
+        flags = flags or (reliability.id.toInt() shl FLAG_RELIABILITY_INDEX)
+        flags = flags or if (split) FLAG_SPLIT else 0
+        buffer.write(flags)
+        buffer.writeUnsignedShort(payload.size() * Byte.SIZE_BITS)
 
+        if(ackRecord.isRanged) {
+            throw IllegalArgumentException("ACK record cannot be ranged")
+        }
+
+        if(reliability.isReliable) {
+            buffer.writeTriadLE(messageIndex)
+        }
+        if(reliability.isOrdered || reliability.isSequenced) {
+            buffer.writeTriadLE(orderIndex)
+            buffer.writeUnsignedShort(orderChannel.toInt())
+        }
+        if(split) {
+            buffer.writeInt(splitCount)
+            buffer.writeUnsignedShort(splitId)
+            buffer.writeInt(splitIndex)
+        }
+        payload.array()?.let { buffer.writeB(*it) }
     }
 
     /**
@@ -157,7 +177,7 @@ class EncapsulatedPacket : Cloneable {
 
     fun decode(buffer: Packet) {
         val flags: Short = buffer.readUnsignedByte()
-        reliability = Reliability.lookup((flags.toInt() and FLAG_RELIABILITY) shl FLAG_RELIABILITY_INDEX)!!//TODO
+        reliability = Reliability.lookup((flags.toInt() and FLAG_RELIABILITY) shr FLAG_RELIABILITY_INDEX)!!
 
         split = flags and FLAG_SPLIT.toShort() > 0
         val length = buffer.readUnsignedShort() / Byte.SIZE_BITS.toUInt()

@@ -670,12 +670,9 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      * if the `data` is `null`.
      */
     @Throws(NullPointerException::class)
-    fun write(vararg data: Byte): Packet {
-        if (data == null) {
-            throw NullPointerException("Data cannot be null")
-        }
-        for (i in 0 until data.size) {
-            buffer.writeByte(data[i].toInt())
+    fun writeB(vararg data: Byte): Packet {
+        for (element in data) {
+            buffer.writeByte(element.toInt())
         }
         return this
     }
@@ -703,9 +700,10 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         for (i in 0 until data.size) {
             bData[i] = data[i].toByte()
         }
-        return this.write(*bData)
+        return this.writeB(*bData)
     }
 
+    
     /**
      * Writes the specified amount of `null` (`0x00`)
      * bytes to the packet.
@@ -1182,7 +1180,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         }
         val data = s.toByteArray()
         writeUnsignedShort(data.size)
-        this.write(*data)
+        this.writeB(*data)
         return this
     }
 
@@ -1203,7 +1201,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         }
         val data = s.toByteArray()
         writeUnsignedShortLE(data.size)
-        this.write(*data)
+        this.writeB(*data)
         return this
     }
 
@@ -1243,7 +1241,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
             writeShortLE(RakNet.AF_INET6)
             writeShort(address.port)
             writeInt(0x00) // Flow info
-            this.write(*ipAddress)
+            this.writeB(*ipAddress)
             writeInt(0x00) // Scope ID
         } else {
             throw UnknownHostException(

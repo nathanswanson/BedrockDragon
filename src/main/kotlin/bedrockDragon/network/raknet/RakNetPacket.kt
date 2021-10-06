@@ -197,7 +197,7 @@ open class RakNetPacket : Packet {
      * @return the packet.
      */
     fun writeMagic(): RakNetPacket {
-        this.write(*MAGIC)
+        this.writeB(*MAGIC)
         return this
     }
 
@@ -216,7 +216,7 @@ open class RakNetPacket : Packet {
     fun writeConnectionType(connectionType: ConnectionType?): Packet {
         var connectionType = connectionType
         connectionType = connectionType ?: ConnectionType.JRAKNET
-        this.write(*ConnectionType.MAGIC)
+        this.writeB(*ConnectionType.MAGIC)
         writeUUID(connectionType.uuid)
         writeString(connectionType.name)
         writeString(connectionType.language)
