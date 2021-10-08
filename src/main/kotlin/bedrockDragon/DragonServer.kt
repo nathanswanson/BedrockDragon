@@ -1,12 +1,11 @@
 package bedrockDragon
 
-import bedrockDragon.network.protocol.PacketSortFactory
-import bedrockDragon.network.protocol.packethandler.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
+import bedrockDragon.network.raknet.protocol.packet.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
-import bedrockDragon.network.raknet.peer.Status
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
 import bedrockDragon.ticking.ChunkTicker
@@ -28,7 +27,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
-import kotlin.collections.HashMap
 
 private val logger = KotlinLogging.logger {}
 

@@ -32,7 +32,7 @@ package bedrockDragon.debug.clientSimulator
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import com.whirvis.jraknet.peer.RakNetServerPeer
+import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import io.netty.buffer.ByteBuf
 import java.net.InetSocketAddress
 

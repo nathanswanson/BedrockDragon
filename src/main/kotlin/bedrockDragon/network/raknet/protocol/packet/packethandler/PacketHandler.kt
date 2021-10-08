@@ -1,8 +1,6 @@
-package bedrockDragon.network.protocol.packethandler
+package bedrockDragon.network.raknet.protocol.packet.packethandler
 
 import bedrockDragon.network.raknet.Packet
-import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
-import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket

@@ -1,14 +1,16 @@
-package bedrockDragon.network.protocol
+package bedrockDragon.network.raknet.protocol.packet
 
-import bedrockDragon.network.protocol.packethandler.*
-import bedrockDragon.network.protocol.packethandler.connect.ConnectionRequestHandlerPost
-import bedrockDragon.network.protocol.packethandler.connect.IncomingConnectionHandler
-import bedrockDragon.network.protocol.packethandler.login.ConnectionRequestHandlerOne
-import bedrockDragon.network.protocol.packethandler.login.ConnectionRequestHandlerTwo
-import bedrockDragon.network.protocol.packethandler.login.LoginHandler
+import bedrockDragon.network.raknet.protocol.packet.packethandler.connect.ConnectionRequestHandlerPost
+import bedrockDragon.network.raknet.protocol.packet.packethandler.connect.IncomingConnectionHandler
+import bedrockDragon.network.raknet.protocol.packet.packethandler.login.ConnectionRequestHandlerOne
+import bedrockDragon.network.raknet.protocol.packet.packethandler.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.protocol.packet.packethandler.login.LoginHandler
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
+import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
+import bedrockDragon.network.raknet.protocol.packet.packethandler.PacketHandler
+import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import io.netty.channel.Channel
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
@@ -25,7 +27,7 @@ class PacketSortFactory {
             }
         }
 
-        fun createClientPacketHandle(sender: RakNetClientPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
+        fun createClientPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
             logger.info { packet.payload.buffer().getUnsignedByte(0).toInt() }
             return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
                 PacketConstants.CONNECTION_REQUEST -> ConnectionRequestHandlerPost(sender, packet, channel)

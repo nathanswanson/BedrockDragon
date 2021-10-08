@@ -31,11 +31,13 @@ package bedrockDragon.debug.clientSimulator
 
 import bedrockDragon.debug.clientSimulator.peer.PeerFactory
 import bedrockDragon.network.raknet.*
+import bedrockDragon.network.raknet.RakNet.getMaximumTransferUnit
+import bedrockDragon.network.raknet.peer.Status
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequest
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import com.whirvis.jraknet.peer.RakNetServerPeer
 import io.netty.bootstrap.Bootstrap
+import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
@@ -49,6 +51,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+
 
 /**
  * Used to connect to servers using the RakNet protocol.
@@ -259,7 +262,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
             if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
                 val threadedListener: ThreadedListener = listener.javaClass.getAnnotation(ThreadedListener::class.java)
                 object : Thread(
-                    RakNetClient::class.java.simpleName + (if (threadedListener.name.length() > 0) "-" else "")
+                    RakNetClient::class.java.simpleName + (if (threadedListener.name.isNotEmpty()) "-" else "")
                             + threadedListener.name + "-Thread-" + ++eventThreadCount
                 ) {
                     override fun run() {
@@ -320,7 +323,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
      * @return the IP address the client is bound to.
      */
     val inetAddress: InetAddress
-        get() = bindAddress?.getAddress()
+        get() = bindAddress?.getAddress()!!
 
     /**
      * Returns the port the client is bound to based on the address returned
@@ -371,9 +374,9 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
 
             // Determine valid maximum transfer units
             var foundTransferUnit = false
-            val networkCardMaximumTransferUnit: Int = RakNet.getMaximumTransferUnit(bindAddress.getAddress())
+            val networkCardMaximumTransferUnit: Int = RakNet.getMaximumTransferUnit(bindAddress!!.getAddress())
             if (networkCardMaximumTransferUnit < 0) {
-                throw RuntimeException("Failed to determine maximum transfer unit" + if (bindAddress.getAddress() != null) " for network card with address " + bindAddress.getAddress() else "")
+                throw RuntimeException("Failed to determine maximum transfer unit" + if (bindAddress!!.getAddress() != null) " for network card with address " + bindAddress!!.getAddress() else "")
             }
             val maximumTransferUnits = ArrayList<MaximumTransferUnit>()
             for (i in 0 until maximumTransferUnitSizes.size) {
@@ -420,65 +423,15 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
         get() = peer// No peer
 
     /**
-     * Returns whether or not the client is connected.
-     *
-     *
-     * The client is considered connected if the current state is
-     * [RakNetState.CONNECTED] or has a higher order. This does not apply
-     * to the [.isHandshaking], [.isLoggedIn], or
-     * [.isDisconnected] methods.
-     *
-     * @return `true` if the client is connected, `false`
-     * otherwise.
-     */
-    val isConnected: Boolean
-        get() = if (peer == null) {
-            false // No peer
-        } else peer.isConnected()// No peer
-
-    /**
-     * Returns whether or not the client is handshaking.
-     *
-     * @return `true` if the client is handshaking,
-     * `false` otherwise.
-     */
-    val isHandshaking: Boolean
-        get() = if (peer == null) {
-            false // No peer
-        } else peer.isHandshaking()// No peer
-
-    /**
-     * Returns whether or not the client is logged in.
-     *
-     * @return `true` if the client is logged in, `false`
-     * otherwise.
-     */
-    val isLoggedIn: Boolean
-        get() = if (peer == null) {
-            false // No peer
-        } else peer.isLoggedIn()// No peer
-
-    /**
-     * Returns whether or not the client is disconnected.
-     *
-     * @return `true` if the client is disconnected,
-     * `false` otherwise.
-     */
-    val isDisconnected: Boolean
-        get() = if (peer == null) {
-            true // No peer
-        } else peer.isDisconnected()
-
-    /**
      * {@inheritDoc}
      *
      * @throws IllegalStateException
      * if the client is not connected to a server.
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(reliability: Reliability?, channel: Int, packet: Packet?): EncapsulatedPacket {
-        check(isConnected) { "Cannot send messages while not connected to a server" }
-        return peer.sendMessage(reliability, channel, packet)
+    fun sendMessage(reliability: Reliability?, channel: Int, packet: Packet?): EncapsulatedPacket? {
+        check(peer!!.status == Status.CONNECTED) { "Cannot send messages while not connected to a server" }
+        return reliability?.let { peer!!.sendMessage(it, channel, packet!! as RakNetPacket) }
     }
 
     /**
@@ -576,16 +529,14 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
         } else if (packet == null) {
             throw NullPointerException("Packet cannot be null")
         } else if (peerFactory != null) {
-            if (sender == peerFactory.getAddress()) {
-                val peer: RakNetServerPeer = peerFactory.assemble(packet)
+            if (sender == peerFactory!!.getAddress()) {
+                val peer: RakNetServerPeer? = peerFactory!!.assemble(packet)
                 if (peer != null) {
                     this.peer = peer
                     peerFactory = null
                 }
             }
-        } else if (peer != null) {
-            peer.handleInternal(packet)
-        }
+        } else peer?.handleInternal(packet)
     }
 
     /**
@@ -607,11 +558,11 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
         } else if (cause == null) {
             throw NullPointerException("Cause cannot be null")
         } else if (peerFactory != null) {
-            if (address == peerFactory.getAddress()) {
-                peerFactory.exceptionCaught(NettyHandlerException(this, handler, address, cause))
+            if (address == peerFactory!!.getAddress()) {
+                peerFactory!!.exceptionCaught(NettyHandlerException(this, handler, address, cause))
             }
         } else if (peer != null) {
-            if (address == peer.getAddress()) {
+            if (address == peer!!.address) {
                 this.disconnect(cause)
             }
         }
@@ -635,9 +586,9 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
     fun connect(address: InetSocketAddress?) {
         if (address == null) {
             throw NullPointerException("Address cannot be null")
-        } else if (address.getAddress() == null) {
+        } else if (address.address == null) {
             throw NullPointerException("IP address cannot be null")
-        } else check(!isConnected) { "Client is currently connected to a server" }
+        }
 
         // Initiate networking
         serverAddress = address
@@ -647,33 +598,35 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
             handler = RakNetClientHandler(this)
             bootstrap!!.channel(NioDatagramChannel::class.java).group(group).handler(handler)
             bootstrap!!.option(ChannelOption.SO_BROADCAST, true).option(ChannelOption.SO_REUSEADDR, false)
-            channel = (if (bindingAddress != null) bootstrap.bind(bindingAddress) else bootstrap!!.bind(0)).sync()
+            channel = (if (bindingAddress != null) bootstrap!!.bind(bindingAddress) else bootstrap!!.bind(0)).sync()
                 .channel()
-            bindAddress = channel.localAddress() as InetSocketAddress
-            maximumTransferUnitSizes = * RakNetClient . Companion . DEFAULT_TRANSFER_UNIT_SIZES
+            bindAddress = channel!!.localAddress() as InetSocketAddress
+            setMaximumTransferUnitSizes(*DEFAULT_TRANSFER_UNIT_SIZES)
 
         } catch (e: InterruptedException) {
             throw RakNetException(e)
         }
 
         // Prepare connection
-        val units: Array<MaximumTransferUnit?> = MaximumTransferUnit.Companion.sort(*maximumTransferUnits)
+        val units: Array<MaximumTransferUnit?> = MaximumTransferUnit.sort(*maximumTransferUnits)
         for (unit in maximumTransferUnits) {
             unit.reset()
         }
-        peerFactory = PeerFactory(
-            this, address, bootstrap, channel, units[0].getSize(),
-            highestMaximumTransferUnitSize
-        )
-        peerFactory.startAssembly(units)
+        peerFactory = units[0]?.let {
+            PeerFactory(
+                this, address, bootstrap!!, channel!!, it.size,
+                highestMaximumTransferUnitSize
+            )
+        }
+        peerFactory?.startAssembly(*units)
 
         // Send connection packet
         val connectionRequest = ConnectionRequest()
         connectionRequest.clientGuid = globallyUniqueId
         connectionRequest.timestamp = System.currentTimeMillis() - timestamp
         connectionRequest.encode()
-        peer.sendMessage(Reliability.RELIABLE_ORDERED, connectionRequest)
-
+        peer!!.sendMessage(Reliability.RELIABLE_ORDERED, connectionRequest)
+        peer!!.status = Status.CONNECTED
         // Create and start peer update thread
         val client = this
         peerThread = object : Thread(
@@ -689,9 +642,9 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
                         continue
                     }
                     if (peer != null) {
-                        if (!peer.isDisconnected()) {
+                        if (peer!!.status != Status.DISCONNECTED) {
                             try {
-                                peer.update()
+                                peer!!.update()
                             } catch (throwable: Throwable) {
                                 client.callEvent { listener: RakNetClientListener ->
                                     listener.onPeerException(
@@ -700,7 +653,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
                                         throwable
                                     )
                                 }
-                                if (!peer.isDisconnected()) {
+                                if (peer!!.status != Status.DISCONNECTED) {
                                     client.disconnect(throwable)
                                 }
                             }
@@ -709,7 +662,61 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
                 }
             }
         }
-        peerThread.start()
+        (peerThread as Thread).start()
+    }
+
+    @JvmName("setMaximumTransferUnitSizes1")
+    @Throws(NullPointerException::class, IllegalArgumentException::class, RuntimeException::class)
+    fun setMaximumTransferUnitSizes(vararg maximumTransferUnitSizes: Int) {
+        if (maximumTransferUnitSizes.isEmpty()) {
+            throw IllegalArgumentException("At least one maximum transfer unit size must be specified")
+        }
+
+        // Determine valid maximum transfer units
+        var foundTransferUnit = false
+        val networkCardMaximumTransferUnit = getMaximumTransferUnit(bindAddress!!.address)
+        if (networkCardMaximumTransferUnit < 0) {
+            throw RuntimeException("Failed to determine maximum transfer unit" + if (bindAddress!!.address != null) " for network card with address " + bindAddress!!.address else "")
+        }
+        val maximumTransferUnits = ArrayList<MaximumTransferUnit>()
+        for (i in maximumTransferUnitSizes.indices) {
+            val maximumTransferUnitSize = maximumTransferUnitSizes[i]
+            if (maximumTransferUnitSize < RakNet.MINIMUM_MTU_SIZE) {
+                throw IllegalArgumentException(
+                    "Maximum transfer unit size must be higher than " + RakNet.MINIMUM_MTU_SIZE
+                )
+            }
+            if (networkCardMaximumTransferUnit >= maximumTransferUnitSize) {
+                maximumTransferUnits.add(
+                    MaximumTransferUnit(
+                        maximumTransferUnitSize,
+                        i * 2 + if (i + 1 < maximumTransferUnitSizes.size) 2 else 1
+                    )
+                )
+                foundTransferUnit = true
+            } else {
+
+            }
+        }
+        this.maximumTransferUnits = maximumTransferUnits.toTypedArray()
+
+        // Determine the highest maximum transfer unit
+        var highestMaximumTransferUnit = Int.MIN_VALUE
+        for (maximumTransferUnit: MaximumTransferUnit in maximumTransferUnits) {
+            if (maximumTransferUnit.size > highestMaximumTransferUnit) {
+                highestMaximumTransferUnit = maximumTransferUnit.size
+            }
+        }
+        highestMaximumTransferUnitSize = highestMaximumTransferUnit
+        if (foundTransferUnit == false) {
+            throw RuntimeException("No compatible maximum transfer unit found for machine network cards")
+        }
+        val registeredMaximumTransferUnitSizes = IntArray(maximumTransferUnits.size)
+        for (i in registeredMaximumTransferUnitSizes.indices) {
+            registeredMaximumTransferUnitSizes[i] = this.maximumTransferUnits[i].size
+        }
+        val registeredMaximumTransferUnitSizesStr = Arrays.toString(registeredMaximumTransferUnitSizes)
+
     }
 
     /**
@@ -802,7 +809,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
         peerThread!!.interrupt()
         peerThread = null
         val peer: RakNetServerPeer? = peer
-        if (!peer.isDisconnected()) {
+        if (peer!!.status != Status.DISCONNECTED) {
             peer.disconnect()
             this.peer = null
         }
@@ -846,7 +853,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
                 + ", bindAddress=" + bindAddress + ", maximumTransferUnits=" + Arrays.toString(maximumTransferUnits)
                 + ", highestMaximumTransferUnitSize=" + highestMaximumTransferUnitSize + ", getProtocolVersion()="
                 + protocolVersion + ", getTimestamp()=" + getTimestamp() + ", getAddress()=" + address
-                + ", isConnected()=" + isConnected + "]")
+                + ", status()=" + peer!!.status + "]")
     }
 
     companion object {

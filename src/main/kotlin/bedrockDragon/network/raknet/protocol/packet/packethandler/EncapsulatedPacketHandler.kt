@@ -1,13 +1,14 @@
-package bedrockDragon.network.protocol.packethandler
+package bedrockDragon.network.raknet.protocol.packet.packethandler
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
+import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
 
-open class EncapsulatedPacketHandler(open val sender: RakNetClientPeer, channel : Channel) : PacketHandler(channel) {
+open class EncapsulatedPacketHandler(open val sender: RakNetPeer, channel : Channel) : PacketHandler(channel) {
     private var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
     private var sequenceSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
     private var messageIndex = 0

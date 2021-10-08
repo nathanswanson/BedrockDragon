@@ -1,8 +1,10 @@
 package bedrockDragon.network.raknet.protocol.message
 
+import bedrockDragon.debug.clientSimulator.RakNetServerPeer
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
+import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import java.util.*
@@ -226,11 +228,11 @@ class EncapsulatedPacket : Cloneable {
             return size
         }
 
-        fun needsSplit(peer: RakNetClientPeer, encapsulatedPacket: EncapsulatedPacket) : Boolean {
+        fun needsSplit(peer: RakNetPeer, encapsulatedPacket: EncapsulatedPacket) : Boolean {
             return CustomPacket.MINIMUM_SIZE + encapsulatedPacket.size() > peer.maximumTransferUnit
         }
 
-        fun split(peer: RakNetClientPeer, encapsulatedPacket: EncapsulatedPacket): Array<EncapsulatedPacket> {
+        fun split(peer: RakNetPeer, encapsulatedPacket: EncapsulatedPacket): Array<EncapsulatedPacket> {
             val size = peer.maximumTransferUnit -
                     CustomPacket.MINIMUM_SIZE -
                     size(encapsulatedPacket.reliability, true)
@@ -266,6 +268,8 @@ class EncapsulatedPacket : Cloneable {
             }
             return splitPackets
         }
+
+
 
         const val FLAG_RELIABILITY_INDEX = 5
         const val FLAG_RELIABILITY = 0b11100000

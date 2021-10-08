@@ -1,4 +1,4 @@
-package bedrockDragon.network.protocol
+package bedrockDragon.network.raknet.protocol.packet
 
 object PacketConstants {
     const val CONNECTED_PING = 0x00

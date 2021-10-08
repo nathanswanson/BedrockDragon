@@ -42,7 +42,7 @@ import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_OPEN_CONNECTION_RE
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_OPEN_CONNECTION_REPLY_2
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.connection.*
-import com.whirvis.jraknet.peer.RakNetServerPeer
+import bedrockDragon.debug.clientSimulator.RakNetServerPeer
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
@@ -146,14 +146,16 @@ class PeerFactory(
         // Send open connection request one with a decreasing MTU
         var availableAttempts = 0
         for (unit in units) {
-            availableAttempts += unit.retries
-            while (unit.retry() > 0 && factoryState < STATE_SECOND_CONNECTION_REQUEST && throwable == null) {
-                val connectionRequestOne = OpenConnectionRequestOne()
-                connectionRequestOne.maximumTransferUnit = unit.size
-                connectionRequestOne.networkProtocol = client.protocolVersion
-                connectionRequestOne.encode()
-                client.sendNettyMessage(connectionRequestOne, address)
-                RakNet.sleep(500)
+            availableAttempts += unit!!.retries
+            if (unit != null) {
+                while (unit.retry() > 0 && factoryState < STATE_SECOND_CONNECTION_REQUEST && throwable == null) {
+                    val connectionRequestOne = OpenConnectionRequestOne()
+                    connectionRequestOne.maximumTransferUnit = unit.size
+                    connectionRequestOne.networkProtocol = client!!.protocolVersion
+                    connectionRequestOne.encode()
+                    client?.sendNettyMessage(connectionRequestOne, address)
+                    RakNet.sleep(500)
+                }
             }
         }
 
@@ -165,12 +167,12 @@ class PeerFactory(
         // Send open connection request two until a response is received
         while (availableAttempts-- > 0 && factoryState < STATE_PEER_ASSEMBLED && throwable == null) {
             val connectionRequestTwo = OpenConnectionRequestTwo()
-            connectionRequestTwo.clientGuid = client.globallyUniqueId
+            connectionRequestTwo.clientGuid = client!!.globallyUniqueId
             connectionRequestTwo.serverAddress = address
             connectionRequestTwo.maximumTransferUnit = maximumTransferUnit
             connectionRequestTwo.encode()
             if (!connectionRequestTwo.failed()) {
-                client.sendNettyMessage(connectionRequestTwo, address)
+                client?.sendNettyMessage(connectionRequestTwo, address)
 
                 RakNet.sleep(500)
             } else {
@@ -275,10 +277,12 @@ class PeerFactory(
                 client?.callEvent { listener -> listener.onConnect(client, address, connectionType) }
 
                 return client?.let {
-                    RakNetServerPeer(
-                        it, address, serverGuid, maximumTransferUnit, connectionType,
-                        channel
-                    )
+                    connectionType?.let { it1 ->
+                        RakNetServerPeer(
+                            it, address, serverGuid, maximumTransferUnit, it1,
+                            channel
+                        )
+                    }
                 }
             } else if (packet.id === ID_ALREADY_CONNECTED) {
                 throw AlreadyConnectedException(client, address)
@@ -297,7 +301,7 @@ class PeerFactory(
                 incompatibleProtocol.decode()
                 if (incompatibleProtocol.serverGuid === serverGuid) {
                     throw IncompatibleProtocolException(
-                        client, address, client.protocolVersion,
+                        client, address, client!!.protocolVersion,
                         incompatibleProtocol.networkProtocol
                     )
                 }

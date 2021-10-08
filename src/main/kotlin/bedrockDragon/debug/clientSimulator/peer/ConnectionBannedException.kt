@@ -29,7 +29,8 @@
  */
 package bedrockDragon.debug.clientSimulator.peer
 
-import com.whirvis.jraknet.client.RakNetClient
+import bedrockDragon.debug.clientSimulator.RakNetClient
+import java.net.InetSocketAddress
 
 /**
  * Signals that a [RakNetClient] has attempted to connect to a server that

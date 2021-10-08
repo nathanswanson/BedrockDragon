@@ -30,7 +30,7 @@
 package bedrockDragon.network.raknet.server
 
 import bedrockDragon.DragonServer
-import bedrockDragon.network.protocol.packethandler.logger
+import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import io.netty.channel.ChannelInboundHandlerAdapter
 import java.util.concurrent.ConcurrentHashMap
 import java.net.InetAddress
@@ -39,10 +39,8 @@ import kotlin.Throws
 import java.lang.NullPointerException
 import io.netty.channel.ChannelHandlerContext
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.VarInt
 import io.netty.channel.socket.DatagramPacket
 import java.lang.Exception
-import kotlin.math.log
 
 /**
  * Used by the [RakNetServer] with the sole purpose of sending received

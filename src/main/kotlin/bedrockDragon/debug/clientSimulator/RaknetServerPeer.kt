@@ -27,14 +27,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.whirvis.jraknet.peer
+package bedrockDragon.debug.clientSimulator
 
-import bedrockDragon.debug.clientSimulator.RakNetClient
-import bedrockDragon.debug.clientSimulator.RakNetClientListener
+import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
+import bedrockDragon.network.raknet.InvalidChannelException
+import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CONNECTION_REQUEST_ACCEPTED
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_DISCONNECTION_NOTIFICATION
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_USER_PACKET_ENUM
+import bedrockDragon.network.raknet.peer.RakNetPeer
+import bedrockDragon.network.raknet.peer.Status
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequestAccepted
@@ -43,6 +46,7 @@ import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * A server connection that handles login and other server related protocols.
@@ -51,11 +55,14 @@ import java.net.InetSocketAddress
  * @since JRakNet v1.0.0
  */
 class RakNetServerPeer(
-    private val client: RakNetClient,val address: InetSocketAddress?, guid: Long, maximumTransferUnit: Int,
-    connectionType: ConnectionType?, channel: Channel?
-) {
+    private val client: RakNetClient,address: InetSocketAddress, guid: Long,maximumTransferUnit: Int,
+    connectionType: ConnectionType, channel: Channel
+) : RakNetPeer(address, guid, maximumTransferUnit, connectionType, channel){
     private var loginRecord: EncapsulatedPacket? = null
     private var timestamp: Long = 0
+    private var messageIndex = 0
+    var status : Status = Status.DISCONNECTED
+
     fun getTimestamp(): Long {
         return System.currentTimeMillis() - timestamp
     }
@@ -66,12 +73,12 @@ class RakNetServerPeer(
             connectionRequestAccepted.decode()
             if (!connectionRequestAccepted.failed()) {
                 val newIncomingConnection = NewIncomingConnection()
-                newIncomingConnection.serverAddress = this.getAddress()
+                newIncomingConnection.serverAddress = this.address
                 newIncomingConnection.clientTimestamp = connectionRequestAccepted.clientTimestamp
                 newIncomingConnection.serverTimestamp = connectionRequestAccepted.serverTimestamp
                 newIncomingConnection.encode()
                 if (!newIncomingConnection.failed()) {
-                    loginRecord = this.sendMessage(
+                    loginRecord = sendMessage(
                         Reliability.RELIABLE_ORDERED_WITH_ACK_RECEIPT,
                         newIncomingConnection
                     )
@@ -104,6 +111,50 @@ class RakNetServerPeer(
         }
     }
 
+    fun sendMessage(reliability: Reliability, packet: RakNetPacket): EncapsulatedPacket? {
+        return sendMessage(reliability, 0, packet)
+    }
+
+    fun sendMessage(reliability: Reliability, channel: Int, packet: RakNetPacket): EncapsulatedPacket {
+
+            if (channel >= RakNet.CHANNEL_COUNT) {
+                throw InvalidChannelException(channel);
+            }
+
+            // Generate encapsulated packet
+            var encapsulated = EncapsulatedPacket();
+            encapsulated.reliability = reliability;
+            encapsulated.orderChannel = channel.toByte();
+            encapsulated.payload = packet;
+            if (reliability.isReliable) {
+                encapsulated.messageIndex = this.bumpMessageIndex()
+            }
+
+            if (reliability.isOrdered or reliability.isSequenced) {
+                encapsulated.orderIndex = if (reliability.isOrdered) orderSendIndex[channel]++ else
+                sequenceSendIndex[channel]++;
+            }
+
+            // Add to send queue
+            if (EncapsulatedPacket.needsSplit(this, encapsulated)) {
+                encapsulated.splitId = ++splitId % 65536;
+                for (split in EncapsulatedPacket.split(this, encapsulated)) {
+                    sendQueue.add(split);
+                }
+            } else {
+                sendQueue.add(encapsulated);
+            }
+
+
+            /*
+             * Return a copy of the encapsulated packet as if a single variable is
+             * modified in the encapsulated packet before it is sent, the
+             * communication with the peer could cease to function entirely.
+             */
+
+            return encapsulated
+    }
+
     fun onAcknowledge(record: Record, packet: EncapsulatedPacket?) {
         if ((record == loginRecord!!.ackRecord)) {
             timestamp = System.currentTimeMillis()
@@ -128,5 +179,18 @@ class RakNetServerPeer(
             )
         }
     }
+
+    fun update() {
+        logger.info { "Connected" }
+    }
+
+    fun disconnect() {
+
+    }
+
+    fun handleInternal(packet: RakNetPacket) {
+
+    }
+
 
 }

@@ -29,7 +29,6 @@
  */
 package bedrockDragon.network.raknet
 
-import bedrockDragon.network.protocol.packethandler.logger
 import bedrockDragon.network.raknet.stream.PacketDataInputStream
 import bedrockDragon.network.raknet.stream.PacketDataOutputStream
 import io.netty.buffer.ByteBuf

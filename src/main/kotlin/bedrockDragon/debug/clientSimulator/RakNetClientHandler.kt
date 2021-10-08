@@ -29,8 +29,11 @@
  */
 package bedrockDragon.debug.clientSimulator
 
+import bedrockDragon.network.raknet.RakNetPacket
+import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.DatagramPacket
-import org.apache.logging.log4j.LogManager
+import java.net.InetSocketAddress
 
 /**
  * Used by the [RakNetClient] with the sole purpose of sending received
@@ -41,7 +44,6 @@ import org.apache.logging.log4j.LogManager
  * @since JRakNet v1.0.0
  */
 class RakNetClientHandler(client: RakNetClient) : ChannelInboundHandlerAdapter() {
-    private val logger: Logger
     private val client: RakNetClient
     private var causeAddress: InetSocketAddress? = null
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -56,15 +58,12 @@ class RakNetClientHandler(client: RakNetClient) : ChannelInboundHandlerAdapter()
 
             // Handle the packet and release the buffer
             client.handleMessage(sender, packet)
-            logger.trace("Sent packet to client and reset datagram buffer read position")
             client.callEvent { listener: RakNetClientListener ->
                 datagram.content().readerIndex(0) // Reset position
                 listener.handleNettyMessage(client, sender, datagram.content())
             }
             if (datagram.release() /* No longer needed */) {
-                logger.trace("Released datagram")
             } else {
-                logger.error("Memory leak: Failed to deallocate datagram when releasing it")
             }
 
             // No exceptions occurred, release the suspect
@@ -83,10 +82,6 @@ class RakNetClientHandler(client: RakNetClient) : ChannelInboundHandlerAdapter()
      * the client to send received packets to.
      */
     init {
-        logger = LogManager.getLogger(
-            RakNetClientHandler::class.java.simpleName + "["
-                    + java.lang.Long.toHexString(client.globallyUniqueId).toUpperCase() + "]"
-        )
         this.client = client
     }
 }

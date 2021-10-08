@@ -43,9 +43,9 @@ package bedrockDragon.network.raknet.peer
  * SOFTWARE.
  */
 
-import bedrockDragon.DragonServer
-import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
-import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNet
+import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
@@ -53,48 +53,100 @@ import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
+import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
+import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
+import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
+import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
-class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
-    : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel){
+abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val maximumTransferUnit: Int,val connectionType: ConnectionType, val channel: Channel) {
+    protected var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
+    protected var sequenceSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
+    protected var splitId = 0
+    private var messageIndex = 0
+    private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
+    private var receiveSequenceNumber = -1
+    private var sendSequenceNumber = 0
+    val sendQueue = ConcurrentLinkedQueue<EncapsulatedPacket>()
 
-    private var lastAlivePing = System.currentTimeMillis()
-    var status: Status = Status.DISCONNECTED
+    /**
+     * When a registered client sends a packet this function is called with that packet
+     */
+    fun incomingPacket(packet: RakNetPacket) {
+        when(packet.id) {
+            RakNetPacket.ID_NACK -> {
+                val notAcknowledged = NotAcknowledgedPacket(packet)
+                notAcknowledged.decode()
+            }
+            RakNetPacket.ID_ACK -> {
+                val acknowledgedPacket = AcknowledgedPacket(packet)
+                acknowledgedPacket.decode()
 
+                for (record in acknowledgedPacket.records) {
+                    val ackReceiptPacketsI = ackReceiptPackets.keys().iterator()
 
-    fun update() {
-        val currentTime = System.currentTimeMillis()
-        //Tell client server is still alive
-        //if(currentTime - lastAlivePing >= KEEP_ALIVE_PING_INTERVAL) {
-
-        //}
-
-
-        if(sendQueue.isNotEmpty()) {
-            logger.info { "send packet" }
-            val sendQueueI = sendQueue.iterator()
-            val send = ArrayList<EncapsulatedPacket>()
-            var sendLength = CustomPacket.MINIMUM_SIZE
-            while (sendQueueI.hasNext()) {
-                val encapsulatedPacket = sendQueueI.next()
-                sendLength += encapsulatedPacket.size()
-                if (sendLength > maximumTransferUnit) {
-                    break
+                    while(ackReceiptPacketsI.hasNext()) {
+                        var encapsultated = ackReceiptPacketsI.next()
+                        //TODO()
+                    }
                 }
-                send.add(encapsulatedPacket)
-                sendQueueI.remove()
+            }
+            else -> {
+                if(packet.id in RakNetPacket.ID_CUSTOM_0..RakNetPacket.ID_CUSTOM_F) {
+                    val custom = CustomPacket(packet)
+                    custom.decode()
 
-                if(send.isNotEmpty()) {
-                    sendCustomPacket(true, send.toTypedArray())
+                    /*
+                     * We send an ACK packet as soon as we get the packet. This is
+                     * because sometimes handling a packet takes longer than expected
+                     * (or longer than the recovery send interval time). If this
+                     * happens, it will cause the other side to resend a packet that we
+                     * already got. If the resend time is too low, this can end up
+                     * causing the other side to also spam us without meaning to.
+                     */
+
+                    sendAcknowledge(true, Record(custom.sequenceId))
+
+                    /*
+                    * NACK must be generated first before the peer data is updated,
+                    * otherwise the data needed to know which packets have been lost
+			        * will have been overwritten.
+			        */
+
+                    val skipped = custom.sequenceId - receiveSequenceNumber - 1
+                    if(skipped > 0) {
+                        sendAcknowledge(false, if (skipped == 1)
+                            Record(custom.sequenceId - 1) else
+                            Record(receiveSequenceNumber + 1, custom.sequenceId - 1)
+                        )
+                    }
+                    if (custom.sequenceId > receiveSequenceNumber - 1) {
+                        receiveSequenceNumber = custom.sequenceId
+                        for(encapsulated in custom.messages!!) {
+                            handleEncapsulatedPacket(encapsulated)
+                        }
+                    }
                 }
             }
         }
     }
 
-    /**
-     * When a registered client sends a packet this function is called with that packet
-     */
+    @Throws(NullPointerException::class)
+    fun sendNettyMessage(buf: ByteBuf?) {
+
+        channel.writeAndFlush(DatagramPacket(buf, address))
+    }
+
+    @Throws(NullPointerException::class)
+    fun sendNettyMessage(packet: Packet?) {
+        if (packet == null) {
+            throw NullPointerException("Packet cannot be null")
+        }
+        sendNettyMessage(packet.buffer())
+    }
 
     private fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
         //Client has connected at this point
@@ -102,6 +154,16 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
         handler.responseToClient()
         handler.responseToServer()
+    }
+
+    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
+        val custom = CustomFourPacket()
+        custom.sequenceId = sendSequenceNumber++
+        custom.messages = message
+        custom.encode()
+        sendNettyMessage(custom)
+
+        return custom.sequenceId
     }
 
     private fun sendAcknowledge(acknowledge: Boolean, vararg records: Record) {
@@ -116,26 +178,13 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
     }
 
+    fun bumpMessageIndex(): Int {
+        return messageIndex++
+    }
+
     companion object {
         const val MAX_SPLIT_COUNT = 128
+        const val MAX_SPLIT_PER_QUEUE = 4
+        const val DETECTION_SEND_INTERVAL = 2500L
     }
-
-    private var sendSequenceNumber = 0
-
-
-    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
-        val custom = CustomFourPacket()
-        custom.sequenceId = sendSequenceNumber++
-        custom.messages = message
-        custom.encode()
-        sendNettyMessage(custom)
-
-        return custom.sequenceId
-    }
-}
-
-
-
-enum class Status {
-    CONNECTED, DISCONNECTED
 }
