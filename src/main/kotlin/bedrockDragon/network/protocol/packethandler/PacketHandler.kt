@@ -1,6 +1,8 @@
 package bedrockDragon.network.protocol.packethandler
 
 import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
+import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
@@ -12,7 +14,6 @@ val logger = KotlinLogging.logger {}
 abstract class PacketHandler(val channel : Channel) {
 
     var finished: Boolean = false
-
     open fun responseToClient() {}
     open fun responseToServer() {}
 
@@ -41,6 +42,23 @@ abstract class PacketHandler(val channel : Channel) {
         sendNettyMessage(packet.buffer(), address)
     }
 
+    /**
+     * Sends a Netty message over the channel raw.
+     *
+     *
+     * This should be used sparingly, as if it is used incorrectly it could
+     * break client peers entirely. In order to send a message to a peer, use
+     * one of the
+     * [ sendMessage()][bedrockDragon.network.raknet.peer.RakNetPeer.sendMessage] methods.
+     *
+     * @param packet
+     * the packet to send.
+     * @param address
+     * the address to send the packet to.
+     * @throws NullPointerException
+     * if the `packet`, `address`, or IP
+     * address of the `address` are `null`.
+     */
     @Throws(NullPointerException::class)
     fun sendNettyMessage(buf: ByteBuf?, address: InetSocketAddress?) {
         if (buf == null) {
@@ -54,5 +72,6 @@ abstract class PacketHandler(val channel : Channel) {
         logger.trace("Sent netty message with size of " + buf.capacity() + " bytes (" + (buf.capacity() * 8)
         		+ " bits) to " + address);
     }
+
 }
 

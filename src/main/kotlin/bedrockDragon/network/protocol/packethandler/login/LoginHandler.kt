@@ -1,7 +1,8 @@
-package bedrockDragon.network.protocol.packethandler
+package bedrockDragon.network.protocol.packethandler.login
 
 import bedrockDragon.DragonServer
-import bedrockDragon.network.protocol.IPacketCoolDown
+import bedrockDragon.network.protocol.packethandler.PacketHandler
+import bedrockDragon.network.protocol.packethandler.logger
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.identifier.Identifier
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPing
@@ -9,7 +10,6 @@ import bedrockDragon.network.raknet.protocol.status.UnconnectedPong
 import bedrockDragon.network.raknet.server.ServerPing
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
-import java.util.*
 
 class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
 

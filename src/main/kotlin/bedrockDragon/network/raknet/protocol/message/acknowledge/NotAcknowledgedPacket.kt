@@ -27,43 +27,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.message.acknowledge;
+package bedrockDragon.network.raknet.protocol.message.acknowledge
 
-import bedrockDragon.network.raknet.Packet;
-
+import bedrockDragon.network.raknet.Packet
 
 /**
- * A <code>NACK</code> packet.
- * <p>
+ * A `NACK` packet.
+ *
+ *
  * This packet is sent when a packet having a sequence ID that is higher by more
  * than one than the last is received. This enables for servers and clients to
  * know when the other side has lost their message in transmission, which can be
  * crucial during the login process.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v2.11.0
  * @see java.lang.Record
  */
-public final class NotAcknowledgedPacket extends AcknowledgedPacket {
+class NotAcknowledgedPacket : AcknowledgedPacket {
+    /**
+     * Creates a `NACK` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : super(false) {}
 
-	/**
-	 * Creates a <code>NACK</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public NotAcknowledgedPacket() {
-		super(false);
-	}
-
-	/**
-	 * Creates a <code>NACK</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public NotAcknowledgedPacket(Packet packet) {
-		super(packet);
-	}
-
+    /**
+     * Creates a `NACK` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet) {}
 }

@@ -1,41 +1,71 @@
 package bedrockDragon.network.raknet.peer
 
 import bedrockDragon.DragonServer
+import bedrockDragon.network.protocol.PacketSortFactory
 import bedrockDragon.network.protocol.packethandler.logger
+import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_ACK
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CUSTOM_0
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CUSTOM_F
 import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_NACK
 import bedrockDragon.network.raknet.protocol.ConnectionType
-import bedrockDragon.network.raknet.protocol.Reliability
+import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
+import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
+import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
+import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionType,val clientGuid: Long,val maximumTransferUnit: Int,val channel: Channel,val sender: InetSocketAddress) {
 
-    val KEEP_ALIVE_PING_INTERVAL = 2500
-
+    private val KEEP_ALIVE_PING_INTERVAL = 2500
+    private var lastAlivePing = System.currentTimeMillis()
+    val sendQueue = ConcurrentLinkedQueue<EncapsulatedPacket>()
     var status: Status = Status.DISCONNECTED
 
     private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
     private var recieveSequenceNumber = -1
 
     fun update() {
+        val currentTime = System.currentTimeMillis()
+        //Tell client server is still alive
+        //if(currentTime - lastAlivePing >= KEEP_ALIVE_PING_INTERVAL) {
 
+        //}
+
+
+        if(sendQueue.isNotEmpty()) {
+            logger.info { "send packet" }
+            val sendQueueI = sendQueue.iterator()
+            val send = ArrayList<EncapsulatedPacket>()
+            var sendLength = CustomPacket.MINIMUM_SIZE
+            while (sendQueueI.hasNext()) {
+                val encapsulatedPacket = sendQueueI.next()
+                sendLength += encapsulatedPacket.size()
+                if (sendLength > maximumTransferUnit) {
+                    break
+                }
+                send.add(encapsulatedPacket)
+                sendQueueI.remove()
+
+                if(send.isNotEmpty()) {
+                    sendCustomPacket(true, send.toTypedArray())
+                }
+            }
+        }
     }
 
     /**
      * When a registered client sends a packet this function is called with that packet
      */
     fun incomingPacket(packet: RakNetPacket) {
-        logger.info { packet.id }
         when(packet.id) {
             ID_NACK -> {
                 val notAcknowledged = NotAcknowledgedPacket(packet)
@@ -56,7 +86,6 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
             }
             else -> {
                 if(packet.id in ID_CUSTOM_0..ID_CUSTOM_F) {
-                    logger.info { "Custom Packet" }
                     val custom = CustomPacket(packet)
                     custom.decode()
 
@@ -95,11 +124,23 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
     }
 
     private fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
-        //logger.info { packet.splitId }
+        //Client has connected at this point
+        val handler = PacketSortFactory.createClientPacketHandle(this, packet, channel)
+
+        handler.responseToClient()
+        handler.responseToServer()
     }
 
     private fun sendAcknowledge(acknowledge: Boolean, vararg records: Record) {
+        val acknowledged = if (acknowledge) AcknowledgedPacket() else NotAcknowledgedPacket()
+        acknowledged.records = arrayOf(*records)
+        acknowledged.encode()
 
+        sendNettyMessage(acknowledged)
+        logger.info {
+            "Sent " + acknowledged.records.size + " record" + (if (acknowledged.records.size == 1) "" else "s")
+                .toString() + " in " + (if (acknowledged.isAcknowledgement) "ACK" else "NACK").toString() + " packet"
+        }
     }
 
     fun bumpMessageIndex(): Int {
@@ -108,6 +149,33 @@ class RakNetClientPeer(val server: DragonServer, val connectionType: ConnectionT
 
     companion object {
         const val MAX_SPLIT_COUNT = 128
+    }
+
+    private var sendSequenceNumber = 0
+
+
+    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
+        val custom = CustomFourPacket()
+        custom.sequenceId = sendSequenceNumber++
+        custom.messages = message
+        custom.encode()
+        sendNettyMessage(custom)
+
+        return custom.sequenceId
+    }
+
+    @Throws(NullPointerException::class)
+    fun sendNettyMessage(buf: ByteBuf?) {
+
+        channel.writeAndFlush(DatagramPacket(buf, sender))
+    }
+
+    @Throws(NullPointerException::class)
+    fun sendNettyMessage(packet: Packet?) {
+        if (packet == null) {
+            throw NullPointerException("Packet cannot be null")
+        }
+        sendNettyMessage(packet.buffer())
     }
 }
 

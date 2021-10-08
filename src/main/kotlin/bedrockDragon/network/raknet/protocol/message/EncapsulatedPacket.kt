@@ -1,9 +1,13 @@
 package bedrockDragon.network.raknet.protocol.message
 
 import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
+import java.util.*
 import kotlin.experimental.and
+import kotlin.math.ceil
 
 
 @OptIn(ExperimentalUnsignedTypes::class)
@@ -132,12 +136,12 @@ class EncapsulatedPacket : Cloneable {
         var flags = 0x00
         flags = flags or (reliability.id.toInt() shl FLAG_RELIABILITY_INDEX)
         flags = flags or if (split) FLAG_SPLIT else 0
-        buffer.write(flags)
+        buffer.writeByte(flags)
         buffer.writeUnsignedShort(payload.size() * Byte.SIZE_BITS)
 
-        if(ackRecord.isRanged) {
-            throw IllegalArgumentException("ACK record cannot be ranged")
-        }
+        //if(ackRecord.isRanged) {
+        //    throw IllegalArgumentException("ACK record cannot be ranged")
+        //}
 
         if(reliability.isReliable) {
             buffer.writeTriadLE(messageIndex)
@@ -220,6 +224,47 @@ class EncapsulatedPacket : Cloneable {
             size += if (split) 10 else 0
             size += payload?.size() ?: 0
             return size
+        }
+
+        fun needsSplit(peer: RakNetClientPeer, encapsulatedPacket: EncapsulatedPacket) : Boolean {
+            return CustomPacket.MINIMUM_SIZE + encapsulatedPacket.size() > peer.maximumTransferUnit
+        }
+
+        fun split(peer: RakNetClientPeer, encapsulatedPacket: EncapsulatedPacket): Array<EncapsulatedPacket> {
+            val size = peer.maximumTransferUnit -
+                    CustomPacket.MINIMUM_SIZE -
+                    size(encapsulatedPacket.reliability, true)
+            val src = encapsulatedPacket.payload.array()!!
+            var payloadIndex = 0
+            var splitIndex = 0
+            val split = Array(ceil(src.size.toDouble() / size.toDouble()).toInt()) { ByteArray(size) }
+
+            while(payloadIndex < src.size) {
+                if(payloadIndex + size <= src.size) {
+                    split[splitIndex++] = src.copyOfRange(payloadIndex, payloadIndex + size)
+                    payloadIndex += size
+                } else {
+                    split[splitIndex++] = src.copyOfRange(payloadIndex, payloadIndex + src.size)
+                    payloadIndex = src.size
+                }
+            }
+
+            val splitPackets = Array(split.size) {EncapsulatedPacket()}
+
+            for(i in splitPackets.indices) {
+                splitPackets[i].reliability = encapsulatedPacket.reliability
+                splitPackets[i].payload = Packet(split[i])
+                splitPackets[i].messageIndex = if (encapsulatedPacket.reliability.isReliable) peer.bumpMessageIndex() else 0
+                if(encapsulatedPacket.reliability.isOrdered or encapsulatedPacket.reliability.isSequenced) {
+                    splitPackets[i].orderChannel = encapsulatedPacket.orderChannel
+                    splitPackets[i].orderIndex = encapsulatedPacket.orderIndex
+                }
+                splitPackets[i].split = true
+                splitPackets[i].splitCount = split.size
+                splitPackets[i].splitId = encapsulatedPacket.splitId
+                splitPackets[i].splitIndex = i
+            }
+            return splitPackets
         }
 
         const val FLAG_RELIABILITY_INDEX = 5

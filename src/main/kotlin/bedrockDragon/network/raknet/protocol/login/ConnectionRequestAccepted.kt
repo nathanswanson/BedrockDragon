@@ -30,7 +30,6 @@
 package bedrockDragon.network.raknet.protocol.login
 
 import bedrockDragon.network.raknet.Packet
-import bedrockDragon.network.raknet.RakNet.systemAddressCount
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Failable
 import java.net.InetSocketAddress
@@ -58,7 +57,7 @@ class ConnectionRequestAccepted : RakNetPacket, Failable {
     /**
      * The RakNet system addresses.
      */
-    lateinit var systemAddresses: Array<InetSocketAddress>
+    private var systemAddresses = Array(10) {InetSocketAddress("255.255.255.255", 19132)}
 
     /**
      * The client timestamp.
@@ -101,8 +100,8 @@ class ConnectionRequestAccepted : RakNetPacket, Failable {
         try {
             this.writeAddress(clientAddress)
             writeShort(0)
-            for (i in systemAddresses.indices) {
-                this.writeAddress(systemAddresses[i])
+            for (i in 1..10) {
+                this.writeAddress(InetSocketAddress("0.0.0.0", 0))
             }
             writeLong(clientTimestamp)
             writeLong(serverTimestamp)
@@ -118,7 +117,7 @@ class ConnectionRequestAccepted : RakNetPacket, Failable {
     override fun decode() {
         try {
             clientAddress = readAddress()
-            readShort() // TODO: Discover usage
+            readShort()
             for (i in systemAddresses.indices) {
                 if (remaining() >= 16) {
                     systemAddresses[i] = readAddress()

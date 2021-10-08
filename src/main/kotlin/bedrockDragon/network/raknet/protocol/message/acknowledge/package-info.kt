@@ -27,11 +27,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 /**
  * The packets used to notify a peer of a packet either being received or lost
  * in transmission.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-package bedrockDragon.network.raknet.protocol.message.acknowledge;
+package bedrockDragon.network.raknet.protocol.message.acknowledge
+

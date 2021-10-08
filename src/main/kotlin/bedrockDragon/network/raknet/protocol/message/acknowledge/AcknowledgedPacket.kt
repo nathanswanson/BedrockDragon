@@ -27,127 +27,123 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.raknet.protocol.message.acknowledge;
+package bedrockDragon.network.raknet.protocol.message.acknowledge
 
-import java.util.ArrayList;
-
-import bedrockDragon.network.raknet.Packet;
-import bedrockDragon.network.raknet.RakNetPacket;
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.protocol.message.acknowledge.Record.Companion.simplify
+import bedrockDragon.network.raknet.RakNetPacket
+import java.util.ArrayList
 
 /**
- * An <code>ACK</code> packet.
- * <p>
+ * An `ACK` packet.
+ *
+ *
  * This packet is sent when a packet that requires an acknowledgement receipt is
  * received. This enables for servers and clients to know when the other side
  * has received their message, which can be crucial during the login process.
- * 
+ *
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  * @see java.lang.Record
  */
-public class AcknowledgedPacket extends RakNetPacket {
 
-	/**
-	 * The record is unranged.
-	 */
-	public static final int RANGED = 0x00;
+@OptIn(ExperimentalUnsignedTypes::class)
+open class AcknowledgedPacket : RakNetPacket {
+    /**
+     * The records containing the sequence IDs.
+     */
+    lateinit var records: Array<Record>
 
-	/**
-	 * The record is ranged.
-	 */
-	public static final int UNRANGED = 0x01;
+    /**
+     * Creates an `ACK` packet to be encoded.
+     *
+     * @param acknowledge
+     * `true` if the records inside the packet are
+     * acknowledged, `false` if the records are not
+     * acknowledged.
+     * @see .encode
+     */
+    protected constructor(acknowledge: Boolean) : super(if (acknowledge) ID_ACK.toInt() else ID_NACK.toInt()) {}
 
-	/**
-	 * The records containing the sequence IDs.
-	 */
-	public Record[] records;
+    /**
+     * Creates an `ACK` packet to be encoded.
+     *
+     * @see .encode
+     */
+    constructor() : this(true) {}
 
-	/**
-	 * Creates an <code>ACK</code> packet to be encoded.
-	 * 
-	 * @param acknowledge
-	 *            <code>true</code> if the records inside the packet are
-	 *            acknowledged, <code>false</code> if the records are not
-	 *            acknowledged.
-	 * @see #encode()
-	 */
-	protected AcknowledgedPacket(boolean acknowledge) {
-		super(acknowledge ? ID_ACK : ID_NACK);
-	}
+    /**
+     * Creates an `ACK` packet to be decoded.
+     *
+     * @param packet
+     * the original packet whose data will be read from in the
+     * [.decode] method.
+     */
+    constructor(packet: Packet?) : super(packet!!) {}
 
-	/**
-	 * Creates an <code>ACK</code> packet to be encoded.
-	 * 
-	 * @see #encode()
-	 */
-	public AcknowledgedPacket() {
-		this(true);
-	}
+    /**
+     * Returns whether or not the records inside the packet are acknowledged.
+     *
+     * @return `true` if the records inside the packet are
+     * acknowledged, `false` if the records are not
+     * acknowledged.
+     */
+    val isAcknowledgement: Boolean
+        get() = id == ID_ACK
 
-	/**
-	 * Creates an <code>ACK</code> packet to be decoded.
-	 * 
-	 * @param packet
-	 *            the original packet whose data will be read from in the
-	 *            {@link #decode()} method.
-	 */
-	public AcknowledgedPacket(Packet packet) {
-		super(packet);
-	}
+    /**
+     * {@inheritDoc}
+     *
+     *
+     * Before encoding, all records will be condensed. This means that all
+     * records that can be converted to ranged records will be converted to
+     * ranged records, making them use less memory. The `records`
+     * field will be updated with these condensed records.
+     */
+    override fun encode() {
+        //this.records = Record.condense(records);
+        writeUnsignedShort(records.size)
+        for (record in records) {
+            writeUnsignedByte(if (record.isRanged) RANGED else UNRANGED)
+            writeTriadLE(record.getIndex())
+            if (record.isRanged) {
+                writeTriadLE(record.getEndIndex())
+            }
+        }
+    }
 
-	/**
-	 * Returns whether or not the records inside the packet are acknowledged.
-	 * 
-	 * @return <code>true</code> if the records inside the packet are
-	 *         acknowledged, <code>false</code> if the records are not
-	 *         acknowledged.
-	 */
-	public boolean isAcknowledgement() {
-		return this.getId() == ID_ACK;
-	}
+    /**
+     * {@inheritDoc}
+     *
+     *
+     * After decoding is finished, all records will be expanded. This means that
+     * all ranged records will be converted to single records, making it easier
+     * to cycle through them. The `records` field will be updated
+     * with these expanded records.
+     */
+    override fun decode() {
+        val records = ArrayList<Record>()
+        val size = readUnsignedShort().toInt()
+        for (i in 0 until size) {
+            val ranged = readUnsignedByte().toInt() == RANGED
+            if (!ranged) {
+                records.add(Record(readTriadLE()))
+            } else {
+                records.add(Record(readTriadLE(), readTriadLE()))
+            }
+        }
+        this.records = simplify(records)
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * Before encoding, all records will be condensed. This means that all
-	 * records that can be converted to ranged records will be converted to
-	 * ranged records, making them use less memory. The <code>records</code>
-	 * field will be updated with these condensed records.
-	 */
-	@Override
-	public void encode() {
-		this.records = Record.condense(records);
-		this.writeUnsignedShort(records.length);
-		for (Record record : records) {
-			this.writeUnsignedByte(record.isRanged() ? RANGED : UNRANGED);
-			this.writeTriadLE(record.getIndex());
-			if (record.isRanged()) {
-				this.writeTriadLE(record.getEndIndex());
-			}
-		}
-	}
+    companion object {
+        /**
+         * The record is unranged.
+         */
+        const val RANGED = 0x00
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * After decoding is finished, all records will be expanded. This means that
-	 * all ranged records will be converted to single records, making it easier
-	 * to cycle through them. The <code>records</code> field will be updated
-	 * with these expanded records.
-	 */
-	@Override
-	public void decode() {
-		ArrayList<Record> records = new ArrayList<Record>();
-		int size = this.readUnsignedShort();
-		for (int i = 0; i < size; i++) {
-			boolean ranged = this.readUnsignedByte() == RANGED;
-			if (ranged == false) {
-				records.add(new Record(this.readTriadLE()));
-			} else {
-				records.add(new Record(this.readTriadLE(), this.readTriadLE()));
-			}
-		}
-		this.records = Record.simplify(records);
-	}
-
+        /**
+         * The record is ranged.
+         */
+        const val UNRANGED = 0x01
+    }
 }

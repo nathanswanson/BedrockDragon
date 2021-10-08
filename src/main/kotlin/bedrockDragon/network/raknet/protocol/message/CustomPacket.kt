@@ -64,7 +64,7 @@ open class CustomPacket : RakNetPacket {
      * <br></br>
      * If decoding, these are the packets decoded from the packet.
      */
-    var messages: Array<EncapsulatedPacket>? = null
+    lateinit var messages: Array<EncapsulatedPacket>
 
     /**
      * The encapsulated packets that require acknowledgement.

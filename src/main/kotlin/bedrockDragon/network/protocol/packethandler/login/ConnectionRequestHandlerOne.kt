@@ -1,12 +1,12 @@
-package bedrockDragon.network.protocol.packethandler
+package bedrockDragon.network.protocol.packethandler.login
 
 import bedrockDragon.DragonServer
+import bedrockDragon.network.protocol.packethandler.PacketHandler
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionRequestOne
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionResponseOne
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
-import java.util.*
 
 class ConnectionRequestHandlerOne(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
     override fun responseToClient() {

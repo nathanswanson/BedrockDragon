@@ -1,7 +1,7 @@
 package bedrockDragon
 
 import bedrockDragon.network.protocol.PacketSortFactory
-import bedrockDragon.network.protocol.packethandler.ConnectionRequestHandlerTwo
+import bedrockDragon.network.protocol.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.net.InetSocketAddress
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
 import kotlin.collections.HashMap
@@ -39,7 +40,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
     private var group: NioEventLoopGroup = NioEventLoopGroup()
-    var clients: HashMap<InetSocketAddress, RakNetClientPeer> = HashMap()
+    var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
     private lateinit var channel: Channel
     private lateinit var handle : RakNetServerHandler
     private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
@@ -51,6 +52,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     }
 
     fun start(): Boolean {
+
 
         val uuid = UUID.randomUUID()
 
@@ -90,9 +92,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private fun tick() {
         while(isRunning) {
             for (peer in clients.values) {
-                if (peer.status == Status.CONNECTED) {
+                //if (peer.status == Status.CONNECTED) {
                     peer.update()
-                }
+               // }
             }
         }
     }
