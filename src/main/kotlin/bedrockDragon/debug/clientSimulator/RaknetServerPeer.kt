@@ -47,6 +47,7 @@ import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.math.log
 
 /**
  * A server connection that handles login and other server related protocols.
@@ -142,6 +143,7 @@ class RakNetServerPeer(
                     sendQueue.add(split);
                 }
             } else {
+                logger.info { encapsulated.payload.buffer().getByte(0) }
                 sendQueue.add(encapsulated);
             }
 
@@ -181,7 +183,11 @@ class RakNetServerPeer(
     }
 
     fun update() {
-        logger.info { "Connected" }
+        //logger.info { sendQueue.size }
+        if(sendQueue.isNotEmpty()) {
+            sendCustomPacket(true, sendQueue.toTypedArray())
+            sendQueue.clear()
+        }
     }
 
     fun disconnect() {

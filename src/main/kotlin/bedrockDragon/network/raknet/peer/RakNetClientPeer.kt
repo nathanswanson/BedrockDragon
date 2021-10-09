@@ -47,7 +47,6 @@ import bedrockDragon.DragonServer
 import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
 import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import bedrockDragon.network.raknet.protocol.ConnectionType
-import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
@@ -116,22 +115,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
     }
 
-    companion object {
-        const val MAX_SPLIT_COUNT = 128
-    }
-
-    private var sendSequenceNumber = 0
 
 
-    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
-        val custom = CustomFourPacket()
-        custom.sequenceId = sendSequenceNumber++
-        custom.messages = message
-        custom.encode()
-        sendNettyMessage(custom)
-
-        return custom.sequenceId
-    }
 }
 
 

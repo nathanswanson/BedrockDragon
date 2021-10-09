@@ -156,7 +156,7 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
         handler.responseToServer()
     }
 
-    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
+    protected fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
         val custom = CustomFourPacket()
         custom.sequenceId = sendSequenceNumber++
         custom.messages = message
@@ -177,6 +177,7 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
                 .toString() + " in " + (if (acknowledged.isAcknowledgement) "ACK" else "NACK").toString() + " packet"
         }
     }
+
 
     fun bumpMessageIndex(): Int {
         return messageIndex++
