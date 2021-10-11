@@ -22,7 +22,7 @@ class ConnectionRequestHandlerPost(override val sender: RakNetPeer, val packet: 
             connectionRequestPong.serverTimestamp = sender.server.timeStamp()
             connectionRequestPong.encode()
             sender.status = Status.CONNECTED
-            sendNettyMessage(Reliability.RELIABLE_ORDERED, 0, connectionRequestPong)
+            sender.sendMessage(Reliability.RELIABLE_ORDERED, 0, connectionRequestPong)
 
         }
     }

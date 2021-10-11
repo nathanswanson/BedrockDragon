@@ -9,6 +9,7 @@ import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionRequestTwo
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionResponseTwo
 import io.netty.channel.Channel
+import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
 class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
@@ -35,7 +36,7 @@ class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: Rak
             connectionType = connectionRequestPing.connectionType!!
             connectionRequestPong.encode()
 
-            sendNettyMessage(connectionRequestPong, sender)
+            channel.writeAndFlush(DatagramPacket(connectionRequestPong.buffer(), sender))
             finished = true
         } else {
             logger.info { "Failed MTU too small for response" }

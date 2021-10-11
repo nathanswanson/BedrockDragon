@@ -53,7 +53,7 @@ class PacketDataOutputStream(private val packet: Packet) : OutputStream(), DataO
 
     @Throws(IOException::class)
     override fun write(b: ByteArray) {
-        packet.writeB(*b)
+        packet.write(*b)
     }
 
     @Throws(IOException::class)
@@ -105,7 +105,7 @@ class PacketDataOutputStream(private val packet: Packet) : OutputStream(), DataO
 
     @Throws(IOException::class)
     override fun writeBytes(s: String) {
-        packet.writeB(*s.toByteArray())
+        packet.write(*s.toByteArray())
     }
 
     @Throws(IOException::class)

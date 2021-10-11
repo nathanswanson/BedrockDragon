@@ -8,7 +8,7 @@ import java.util.*
 private val logger = KotlinLogging.logger {}
 
 fun main() {
-    val bindAddress = InetSocketAddress("0.0.0.0", 19132)
+    val bindAddress = InetSocketAddress("0.0.0.0", 19142)
     val server = DragonServer(bindAddress)
 
     logger.info { "Starting Bedrock Dragon." }

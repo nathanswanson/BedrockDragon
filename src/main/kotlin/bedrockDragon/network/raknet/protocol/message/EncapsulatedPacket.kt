@@ -150,14 +150,14 @@ class EncapsulatedPacket : Cloneable {
         }
         if(reliability.isOrdered || reliability.isSequenced) {
             buffer.writeTriadLE(orderIndex)
-            buffer.writeUnsignedShort(orderChannel.toInt())
+            buffer.writeByte(orderChannel.toInt())
         }
         if(split) {
             buffer.writeInt(splitCount)
             buffer.writeUnsignedShort(splitId)
             buffer.writeInt(splitIndex)
         }
-        payload.array()?.let { buffer.writeB(*it) }
+        payload.array()?.let { buffer.write(*it) }
     }
 
     /**
@@ -182,11 +182,11 @@ class EncapsulatedPacket : Cloneable {
      */
 
     fun decode(buffer: Packet) {
-        val flags: Short = buffer.readUnsignedByte()
+        val flags: Byte = buffer.readByte()
         reliability = Reliability.lookup((flags.toInt() and FLAG_RELIABILITY) shr FLAG_RELIABILITY_INDEX)!!
 
-        split = flags and FLAG_SPLIT.toShort() > 0
-        val length = buffer.readUnsignedShort() / Byte.SIZE_BITS.toUInt()
+        split = flags and FLAG_SPLIT.toByte() > 0
+        val length = buffer.readUnsignedShort()
         if(reliability.isReliable) {
             messageIndex = buffer.readTriadLE()
         }
@@ -199,7 +199,7 @@ class EncapsulatedPacket : Cloneable {
             splitId = buffer.readUnsignedShort().toInt()
             splitIndex = buffer.readInt()
         }
-        payload = Packet(buffer.read(length.toInt()))
+        payload = Packet(buffer.read(ceil((length.toInt()/8).toDouble()).toInt()))
     }
 
     companion object {

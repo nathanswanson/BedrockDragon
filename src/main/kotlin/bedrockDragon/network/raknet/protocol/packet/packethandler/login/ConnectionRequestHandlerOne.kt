@@ -6,6 +6,7 @@ import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionRequestOne
 import bedrockDragon.network.raknet.protocol.connection.OpenConnectionResponseOne
 import io.netty.channel.Channel
+import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
 class ConnectionRequestHandlerOne(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
@@ -20,7 +21,7 @@ class ConnectionRequestHandlerOne(val sender: InetSocketAddress, val packet: Rak
         connectionRequestPong.maximumTransferUnit = connectionRequestPing.maximumTransferUnit
         connectionRequestPong.encode()
 
-        sendNettyMessage(connectionRequestPong, sender)
+        channel.writeAndFlush(DatagramPacket(connectionRequestPong.buffer(), sender))
         finished = true
 
     }

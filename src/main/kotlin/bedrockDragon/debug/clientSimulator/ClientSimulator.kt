@@ -39,5 +39,5 @@ fun main() {
 
     //scope.launch { bedrockDragon.main() }
 
-    client.connect(InetSocketAddress("play.lbsg.net", 19132))
+    client.connect(InetSocketAddress("localhost", 19142))
 }

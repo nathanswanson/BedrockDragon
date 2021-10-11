@@ -57,7 +57,6 @@ class RakNetClientHandler(client: RakNetClient) : ChannelInboundHandlerAdapter()
             // If an exception happens it's because of this address
             causeAddress = sender
             // Handle the packet and release the buffer
-            logger.info { packet.id }
             client.handleMessage(sender, packet)
             client.callEvent { listener: RakNetClientListener ->
                 datagram.content().readerIndex(0) // Reset position

@@ -670,7 +670,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      * if the `data` is `null`.
      */
     @Throws(NullPointerException::class)
-    fun writeB(vararg data: Byte): Packet {
+    fun write(vararg data: Byte): Packet {
         for (element in data) {
             buffer.writeByte(element.toInt())
         }
@@ -700,7 +700,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         for (i in 0 until data.size) {
             bData[i] = data[i].toByte()
         }
-        return this.writeB(*bData)
+        return this.write(*bData)
     }
 
     
@@ -1204,7 +1204,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         }
         val data = s.toByteArray()
         writeUnsignedShort(data.size)
-        this.writeB(*data)
+        this.write(*data)
         return this
     }
 
@@ -1225,7 +1225,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         }
         val data = s.toByteArray()
         writeUnsignedShortLE(data.size)
-        this.writeB(*data)
+        this.write(*data)
         return this
     }
 
@@ -1265,7 +1265,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
             writeShortLE(RakNet.AF_INET6)
             writeShort(address.port)
             writeInt(0x00) // Flow info
-            this.writeB(*ipAddress)
+            this.write(*ipAddress)
             writeInt(0x00) // Scope ID
         } else {
             throw UnknownHostException(

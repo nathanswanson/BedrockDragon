@@ -9,6 +9,7 @@ import bedrockDragon.network.raknet.protocol.status.UnconnectedPing
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPong
 import bedrockDragon.network.raknet.server.ServerPing
 import io.netty.channel.Channel
+import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
 class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
@@ -30,7 +31,7 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
             pong.identifier = pingEvent.identifier
             pong.encode()
             if(!pong.failed()) {
-                sendNettyMessage(pong, sender)
+                channel.writeAndFlush(DatagramPacket(pong.buffer(), sender))
                 finished = true
             } else {
                 logger.info { "Failed to send back response Packet" }

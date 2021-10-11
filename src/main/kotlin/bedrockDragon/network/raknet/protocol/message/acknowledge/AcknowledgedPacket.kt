@@ -63,15 +63,14 @@ open class AcknowledgedPacket : RakNetPacket {
      * acknowledged.
      * @see .encode
      */
-    protected constructor(acknowledge: Boolean) : super(if (acknowledge) ID_ACK.toInt() else ID_NACK.toInt()) {}
 
     /**
      * Creates an `ACK` packet to be encoded.
      *
      * @see .encode
      */
-    constructor() : this(true) {}
-
+    protected constructor(id : Int) : super(id) {}
+    constructor() : super(0xC0)
     /**
      * Creates an `ACK` packet to be decoded.
      *

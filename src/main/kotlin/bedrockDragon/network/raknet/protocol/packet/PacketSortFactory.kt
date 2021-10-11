@@ -1,5 +1,6 @@
 package bedrockDragon.network.raknet.protocol.packet
 
+import bedrockDragon.debug.clientSimulator.packet.ConnectionRequestAcceptedHandler
 import bedrockDragon.network.raknet.protocol.packet.packethandler.connect.ConnectionRequestHandlerPost
 import bedrockDragon.network.raknet.protocol.packet.packethandler.connect.IncomingConnectionHandler
 import bedrockDragon.network.raknet.protocol.packet.packethandler.login.ConnectionRequestHandlerOne
@@ -28,13 +29,21 @@ class PacketSortFactory {
         }
 
         fun createClientPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
-            logger.info { packet.payload.buffer().getUnsignedByte(0).toInt() }
             return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
                 PacketConstants.CONNECTION_REQUEST -> ConnectionRequestHandlerPost(sender, packet, channel)
                 PacketConstants.NEW_INCOMING_CONNECTION -> IncomingConnectionHandler(sender, packet, channel)
                 else -> throw IllegalArgumentException("Unknown packet sent to factory.")
             }
 
+        }
+
+        //CLIENT PACKETS FOR CLIENT SIMULATION
+
+        fun createOutboundClientHandler(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
+            return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
+                PacketConstants.CONNECTION_REQUEST_ACCEPTED -> ConnectionRequestAcceptedHandler(sender, packet, channel)
+                else -> throw IllegalArgumentException("Unknown packet sent to factory.")
+            }
         }
     }
 }

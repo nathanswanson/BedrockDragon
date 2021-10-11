@@ -50,7 +50,7 @@ class NotAcknowledgedPacket : AcknowledgedPacket {
      *
      * @see .encode
      */
-    constructor() : super(false) {}
+    constructor() : super(0xA0){}
 
     /**
      * Creates a `NACK` packet to be decoded.
@@ -59,5 +59,5 @@ class NotAcknowledgedPacket : AcknowledgedPacket {
      * the original packet whose data will be read from in the
      * [.decode] method.
      */
-    constructor(packet: Packet?) : super(packet) {}
+    constructor(packet: Packet?) : super(packet!!) {}
 }

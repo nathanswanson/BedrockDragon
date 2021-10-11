@@ -47,6 +47,7 @@ import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
 import bedrockDragon.network.raknet.protocol.message.CustomPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -61,11 +62,12 @@ import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.math.log
 
 abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val maximumTransferUnit: Int,val connectionType: ConnectionType, val channel: Channel) {
-    protected var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
-    protected var sequenceSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
-    protected var splitId = 0
+    private var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
+    private var sequenceSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
+    private var splitId = 0
     private var messageIndex = 0
     private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
     private var receiveSequenceNumber = -1
@@ -76,7 +78,6 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
      * When a registered client sends a packet this function is called with that packet
      */
     fun incomingPacket(packet: RakNetPacket) {
-        logger.info { packet.id }
         when(packet.id) {
             RakNetPacket.ID_NACK -> {
                 val notAcknowledged = NotAcknowledgedPacket(packet)
@@ -97,8 +98,11 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
             }
             else -> {
                 if(packet.id in RakNetPacket.ID_CUSTOM_0..RakNetPacket.ID_CUSTOM_F) {
+
                     val custom = CustomPacket(packet)
                     custom.decode()
+
+
                     /*
                      * We send an ACK packet as soon as we get the packet. This is
                      * because sometimes handling a packet takes longer than expected
@@ -148,15 +152,12 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
         sendNettyMessage(packet.buffer())
     }
 
-    private fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
+    open fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
         //Client has connected at this point
-        val handler = PacketSortFactory.createClientPacketHandle(this, packet, channel)
 
-        handler.responseToClient()
-        handler.responseToServer()
     }
 
-    protected fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
+    private fun sendCustomPacket(updateRecoveryQue: Boolean, message: Array<EncapsulatedPacket>) : Int {
         val custom = CustomFourPacket()
         custom.sequenceId = sendSequenceNumber++
         custom.messages = message
@@ -174,10 +175,77 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
         sendNettyMessage(acknowledged)
         logger.info {
             "Sent " + acknowledged.records.size + " record" + (if (acknowledged.records.size == 1) "" else "s")
-                .toString() + " in " + (if (acknowledged.isAcknowledgement) "ACK" else "NACK").toString() + " packet"
+                .toString() + " in " + (if (acknowledge) "ACK" else "NACK").toString() + " packet"
         }
     }
 
+    fun update() {
+        val currentTime = System.currentTimeMillis()
+        //Tell client server is still alive
+        //if(currentTime - lastAlivePing >= KEEP_ALIVE_PING_INTERVAL) {
+
+        //}
+
+
+        if(sendQueue.isNotEmpty()) {
+            val sendQueueI = sendQueue.iterator()
+            val send = ArrayList<EncapsulatedPacket>()
+            var sendLength = CustomPacket.MINIMUM_SIZE
+            while (sendQueueI.hasNext()) {
+                val encapsulatedPacket = sendQueueI.next()
+                sendLength += encapsulatedPacket.size()
+                if (sendLength > maximumTransferUnit) {
+                    break
+                }
+                send.add(encapsulatedPacket)
+                sendQueueI.remove()
+
+                if(send.isNotEmpty()) {
+                    sendCustomPacket(true, send.toTypedArray())
+                }
+            }
+        }
+    }
+
+
+    fun sendMessage(reliability: Reliability, channel: Int = RakNet.DEFAULT_CHANNEL.toInt(), packet: Packet) {
+        val encapsulatedPacket = EncapsulatedPacket()
+        encapsulatedPacket.reliability = reliability
+        encapsulatedPacket.orderChannel = channel.toByte()
+        encapsulatedPacket.payload = packet
+        if(reliability.isReliable) {
+            encapsulatedPacket.messageIndex = bumpMessageIndex()
+            logger.info("Bumped message index from ${encapsulatedPacket.messageIndex} to $messageIndex")
+        }
+        if(reliability.isOrdered or reliability.isSequenced) {
+            encapsulatedPacket.orderIndex = if (reliability.isOrdered) orderSendIndex[channel]++
+            else sequenceSendIndex[channel]++
+
+            logger.info(
+                "Bumped " + (if (reliability.isOrdered) "order" else "sequence") + " index from "
+                        + ((if (reliability.isOrdered) orderSendIndex[channel] else sequenceSendIndex[channel]) - 1) + " to "
+                        + (if (reliability.isOrdered) orderSendIndex[channel] else sequenceSendIndex[channel]) + " on channel "
+                        + channel
+            )
+        }
+
+        //Split packet if needed
+        if(EncapsulatedPacket.needsSplit(this, encapsulatedPacket)) {
+            encapsulatedPacket.splitId = ++splitId % 65536
+            for (split in EncapsulatedPacket.split(this, encapsulatedPacket)) {
+                sendQueue.add(split)
+            }
+            logger.info {"Split encapsulated packet and added it to the send queue" }
+        } else {
+                sendQueue.add(encapsulatedPacket)
+            logger.info {"Added encapsulated packet to the send queue" }
+        }
+
+        logger.info {
+            "Sent packet with size of " + packet.size().toString() + " bytes (" + (packet.size() * 8)
+                .toString() + " bits) with reliability " + reliability.toString() + " on channel " + channel
+        }
+    }
 
     fun bumpMessageIndex(): Int {
         return messageIndex++

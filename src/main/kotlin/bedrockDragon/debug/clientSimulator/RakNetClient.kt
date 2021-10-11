@@ -431,7 +431,8 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
     @Throws(IllegalStateException::class)
     fun sendMessage(reliability: Reliability?, channel: Int, packet: Packet?): EncapsulatedPacket? {
         check(peer!!.status == Status.CONNECTED) { "Cannot send messages while not connected to a server" }
-        return reliability?.let { peer!!.sendMessage(it, channel, packet!! as RakNetPacket) }
+        //return reliability?.let { peer!!.sendMessage(it, channel, packet!! as RakNetPacket) }
+        return TODO()
     }
 
     /**
@@ -536,7 +537,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
                     peerFactory = null
                 }
             }
-        } else peer?.handleInternal(packet)
+        } else peer?.incomingPacket(packet)
     }
 
     /**
@@ -625,7 +626,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
         connectionRequest.clientGuid = globallyUniqueId
         connectionRequest.timestamp = System.currentTimeMillis() - timestamp
         connectionRequest.encode()
-        peer!!.sendMessage(Reliability.RELIABLE_ORDERED, connectionRequest)
+        peer!!.sendMessage(Reliability.RELIABLE_ORDERED, 0 ,connectionRequest)
         peer!!.status = Status.CONNECTED
         // Create and start peer update thread
         val client = this
@@ -890,7 +891,7 @@ class RakNetClient @JvmOverloads constructor(address: InetSocketAddress? =  /* S
      */
     init {
         bindingAddress = address
-        globallyUniqueId = UUID.randomUUID().getMostSignificantBits()
+        globallyUniqueId = UUID.randomUUID().mostSignificantBits
         timestamp = System.currentTimeMillis()
         listeners = ConcurrentLinkedQueue<RakNetClientListener>()
         if (this.javaClass != RakNetClient::class.java && RakNetClientListener::class.java.isAssignableFrom(this.javaClass)) {
