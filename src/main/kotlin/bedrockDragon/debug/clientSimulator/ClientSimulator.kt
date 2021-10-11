@@ -1,5 +1,6 @@
 package bedrockDragon.debug.clientSimulator
 
+import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import kotlinx.coroutines.CoroutineScope
@@ -32,10 +33,11 @@ fun main() {
         ) {
             println("Successfully disconnected from server with address $address for reason \"$reason\"")
         }
+
+
     })
 
     //scope.launch { bedrockDragon.main() }
 
     client.connect(InetSocketAddress("play.lbsg.net", 19132))
-    logger.info { "client Connect" }
 }

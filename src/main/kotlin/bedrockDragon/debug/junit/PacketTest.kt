@@ -27,6 +27,12 @@ internal class PacketTest {
 
     @Test
     fun readBoolean() {
+        val packet = Packet()
+        val bool = generateBoolean()
+        packet.buffer().writeBoolean(bool)
+
+        assert(packet.readBoolean() == bool)
+
     }
 
     @Test
@@ -150,9 +156,13 @@ internal class PacketTest {
     fun readAddress() {
         val address = generateIPAddress()
         val packet = Packet()
-        println(address)
-        packet.writeAddress(address)
-        println(packet.readAddress())
+        packet.writeUnsignedByte(4)
+        for(component in address.address.address) {
+            packet.writeUnsignedByte(component.toUByte())
+        }
+
+        packet.writeUnsignedShort(address.port)
+
         assert(packet.readAddress() == address)
     }
 
@@ -373,6 +383,10 @@ internal class PacketTest {
     BEGIN HELPER FUNCTIONS
      */
     private val RAKNET_VERSION = 10
+
+    private fun generateBoolean(): Boolean {
+        return Random.nextBoolean()
+    }
 
     private fun generateSignedByte() : Byte {
         return Random.nextInt(-128,127).toByte()

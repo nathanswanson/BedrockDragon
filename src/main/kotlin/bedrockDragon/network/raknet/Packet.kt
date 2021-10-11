@@ -626,7 +626,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         return if (version.toInt() == RakNet.IPV4) {
             val ipAddress = ByteArray(RakNet.IPV4_ADDRESS_LENGTH)
             for (i in ipAddress.indices) {
-                ipAddress[i] = (readByte().inv() and 0xFF.toByte()) as Byte
+                ipAddress[i] = readUnsignedByte().toByte()
             }
             val port = readUnsignedShort()
             InetSocketAddress(InetAddress.getByAddress(ipAddress), port.toInt())

@@ -76,6 +76,7 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
      * When a registered client sends a packet this function is called with that packet
      */
     fun incomingPacket(packet: RakNetPacket) {
+        logger.info { packet.id }
         when(packet.id) {
             RakNetPacket.ID_NACK -> {
                 val notAcknowledged = NotAcknowledgedPacket(packet)
@@ -98,7 +99,6 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
                 if(packet.id in RakNetPacket.ID_CUSTOM_0..RakNetPacket.ID_CUSTOM_F) {
                     val custom = CustomPacket(packet)
                     custom.decode()
-
                     /*
                      * We send an ACK packet as soon as we get the packet. This is
                      * because sometimes handling a packet takes longer than expected

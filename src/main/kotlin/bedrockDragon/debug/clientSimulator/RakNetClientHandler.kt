@@ -30,6 +30,7 @@
 package bedrockDragon.debug.clientSimulator
 
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.DatagramPacket
@@ -55,8 +56,8 @@ class RakNetClientHandler(client: RakNetClient) : ChannelInboundHandlerAdapter()
 
             // If an exception happens it's because of this address
             causeAddress = sender
-
             // Handle the packet and release the buffer
+            logger.info { packet.id }
             client.handleMessage(sender, packet)
             client.callEvent { listener: RakNetClientListener ->
                 datagram.content().readerIndex(0) // Reset position

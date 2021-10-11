@@ -66,7 +66,8 @@ class RakNetServerPeer(
         return System.currentTimeMillis() - timestamp
     }
 
-    fun handleMessage(packet: RakNetPacket, channel: Int) {
+    private fun handleMessage(packet: RakNetPacket, channel: Int) {
+        logger.info { packet.id }
         if (packet.id == ID_CONNECTION_REQUEST_ACCEPTED) {
             val connectionRequestAccepted = ConnectionRequestAccepted(packet)
             connectionRequestAccepted.decode()
@@ -141,7 +142,6 @@ class RakNetServerPeer(
                     sendQueue.add(split);
                 }
             } else {
-                logger.info { encapsulated.payload.buffer().getByte(0) }
                 sendQueue.add(encapsulated);
             }
 
@@ -193,7 +193,7 @@ class RakNetServerPeer(
     }
 
     fun handleInternal(packet: RakNetPacket) {
-
+        handleMessage(packet, 0)
     }
 
 
