@@ -46,8 +46,6 @@ import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.math.log
 
 /**
  * A server connection that handles login and other server related protocols.
