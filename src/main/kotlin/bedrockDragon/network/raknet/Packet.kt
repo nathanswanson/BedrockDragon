@@ -168,6 +168,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         return (buffer.readUnsignedByte())
     }
 
+
     /**
      * Reads a `boolean`.
      *
@@ -730,6 +731,11 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         return this
     }
 
+    fun writeByte(b: Byte): Packet {
+        buffer.writeByte(b.toInt())
+        return this
+    }
+
     /**
      * Writes an unsigned `byte` to the packet.
      *
@@ -745,6 +751,13 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         require(!(b < 0x00 || b > 0xFF)) { "Value must be in between 0-255" }
         //println(b)
         buffer.writeByte(b and 0xFF)
+        return this
+    }
+
+    @Throws(IllegalArgumentException::class)
+    fun writeUnsignedByte(b: UByte): Packet {
+
+        buffer.writeByte(b.toInt())
         return this
     }
 
@@ -769,6 +782,11 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      */
     fun writeShort(s: Int): Packet {
         buffer.writeShort(s)
+        return this
+    }
+
+    fun writeShort(s: Short): Packet {
+        buffer.writeShort(s.toInt())
         return this
     }
 
@@ -898,6 +916,13 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         buffer.writeInt(i.toInt() and -0x1)
         return this
     }
+
+    @Throws(IllegalArgumentException::class)
+    fun writeUnsignedInt(i: UInt): Packet {
+        buffer.writeInt(i.toInt() and -0x1)
+        return this
+    }
+
 
     /**
      * Writes a little-endian `int` to the packet.
@@ -1232,7 +1257,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         if (version == RakNet.IPV4) {
             writeUnsignedByte(RakNet.IPV4)
             for (i in ipAddress.indices) {
-                writeByte((ipAddress[i].inv() and 0xFF.toByte()).toInt())
+                writeUnsignedByte(ipAddress[i].toUByte())
             }
             writeUnsignedShort(address.port)
         } else if (version == RakNet.IPV6) {

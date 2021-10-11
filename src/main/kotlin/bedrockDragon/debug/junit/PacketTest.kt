@@ -148,6 +148,12 @@ internal class PacketTest {
 
     @Test
     fun readAddress() {
+        val address = generateIPAddress()
+        val packet = Packet()
+        println(address)
+        packet.writeAddress(address)
+        println(packet.readAddress())
+        assert(packet.readAddress() == address)
     }
 
     @Test
@@ -336,19 +342,27 @@ internal class PacketTest {
         val address = generateIPAddress()
         println(address.address)
         packet.writeAddress(address)
-        println(packet.buffer().readUnsignedByte().toInt())
-        println(packet.buffer().readUnsignedByte().toInt())
+        when(packet.buffer().readUnsignedByte().toInt()) {
+            4 -> {
+                assert(
+                    InetSocketAddress(
+                        "${packet.buffer().readUnsignedByte()}.${
+                            packet.buffer().readUnsignedByte()
+                        }.${packet.buffer().readUnsignedByte()}.${packet.buffer().readUnsignedByte()}",
+                        packet.buffer().readUnsignedShort()
+                    ) == address
+                )
+            }
+            6 -> {
 
+            }
+            else -> {
+                assert(false)
+            }
 
-        assert(packet.buffer().readUnsignedShort() == address.port)
-    }
+        }
 
-    @Test
-    fun testWriteAddress() {
-    }
-
-    @Test
-    fun testWriteAddress1() {
+        //assert("${packet.buffer().readUnsignedByte()}.${packet.buffer().readUnsignedByte()}")
     }
 
     @Test
