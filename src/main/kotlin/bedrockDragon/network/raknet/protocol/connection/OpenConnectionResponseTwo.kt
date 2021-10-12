@@ -35,6 +35,7 @@ import bedrockDragon.network.raknet.protocol.Failable
 import java.net.InetSocketAddress
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.RakNetException
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.io.IOException
 
 /**
@@ -94,7 +95,7 @@ class OpenConnectionResponseTwo : RakNetPacket, Failable {
      *
      * @see .encode
      */
-    constructor() : super(ID_OPEN_CONNECTION_REPLY_2.toInt()) {}
+    constructor() : super(PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_2) {}
 
     /**
      * Creates an `OPEN_CONNECTION_RESPONSE_2` packet to be decoded.

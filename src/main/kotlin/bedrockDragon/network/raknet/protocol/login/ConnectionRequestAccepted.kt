@@ -34,6 +34,7 @@ import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Failable
 import java.net.InetSocketAddress
 import bedrockDragon.network.raknet.RakNet
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.net.UnknownHostException
 
 /**
@@ -81,7 +82,7 @@ class ConnectionRequestAccepted : RakNetPacket, Failable {
      *
      * @see .encode
      */
-    constructor() : super(ID_CONNECTION_REQUEST_ACCEPTED.toInt()) {
+    constructor() : super(PacketConstants.CONNECTION_REQUEST_ACCEPTED) {
         for (i in systemAddresses.indices) {
             systemAddresses[i] = RakNet.SYSTEM_ADDRESS
         }

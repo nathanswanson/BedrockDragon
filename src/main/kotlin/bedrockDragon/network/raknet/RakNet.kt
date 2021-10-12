@@ -30,6 +30,7 @@
 package bedrockDragon.network.raknet
 
 
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.util.UUID
 import java.util.HashMap
 
@@ -587,7 +588,7 @@ object RakNet {
         connectionRequestOne.encode()
         val packet = createBootstrapAndSend(address, connectionRequestOne, 1000, PING_RETRIES)
         if (packet != null) {
-            if (packet.id == RakNetPacket.ID_OPEN_CONNECTION_REPLY_1) {
+            if (packet.id.toInt() == PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_1) {
                 val connectionResponseOne = OpenConnectionResponseOne(packet)
                 connectionResponseOne.decode()
                 if (connectionResponseOne.magic == true) {
@@ -667,13 +668,13 @@ object RakNet {
         connectionRequestOne.encode()
         val packet = createBootstrapAndSend(address, connectionRequestOne, 1000L, PING_RETRIES)
         if (packet != null) {
-            if (packet.id == RakNetPacket.ID_OPEN_CONNECTION_REPLY_1) {
+            if (packet.id.toInt() == PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_1) {
                 val connectionResponseOne = OpenConnectionResponseOne(packet)
                 connectionResponseOne.decode()
                 if (connectionResponseOne.magic == true) {
                     return true
                 }
-            } else if (packet.id == RakNetPacket.ID_INCOMPATIBLE_PROTOCOL_VERSION) {
+            } else if (packet.id.toInt() == PacketConstants.INCOMPATIBLE_PROTOCOL) {
                 val incompatibleProtocol = IncompatibleProtocolVersion(packet)
                 incompatibleProtocol.decode()
                 return false
@@ -755,10 +756,10 @@ object RakNet {
         }
         val packet = createBootstrapAndSend(address, ping, 1000, IDENTIFIER_RETRIES)
         if (packet != null) {
-            if (packet.id == RakNetPacket.ID_UNCONNECTED_PONG) {
+            if (packet.id.toInt() == PacketConstants.UNCONNECTED_PONG) {
                 val pong = UnconnectedPong(packet)
                 pong.decode()
-                if (!pong.failed() && pong.magic == true) {
+                if (!pong.failed() && pong.magic) {
                     return pong.identifier
                 }
             }

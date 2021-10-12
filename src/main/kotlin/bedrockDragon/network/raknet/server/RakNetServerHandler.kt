@@ -30,7 +30,7 @@
 package bedrockDragon.network.raknet.server
 
 import bedrockDragon.DragonServer
-import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
+import bedrockDragon.network.raknet.handler.packethandler.logger
 import io.netty.channel.ChannelInboundHandlerAdapter
 import java.util.concurrent.ConcurrentHashMap
 import java.net.InetAddress

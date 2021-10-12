@@ -35,6 +35,7 @@ import bedrockDragon.network.raknet.protocol.Failable
 import java.net.InetSocketAddress
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.RakNetException
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.net.UnknownHostException
 
 /**
@@ -84,7 +85,7 @@ class OpenConnectionRequestTwo : RakNetPacket, Failable {
      *
      * @see .encode
      */
-    constructor() : super(ID_OPEN_CONNECTION_REQUEST_2.toInt()) {}
+    constructor() : super(PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_2) {}
 
     /**
      * Creates an `OPEN_CONNECTION_REQUEST_2` packet to be decoded.

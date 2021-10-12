@@ -31,6 +31,7 @@ package bedrockDragon.network.raknet.protocol.connection
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 
 /**
  * An `OPEN_CONNECTION_RESPONSE_1` packet.
@@ -73,7 +74,7 @@ class OpenConnectionResponseOne : RakNetPacket {
      *
      * @see .encode
      */
-    constructor() : super(ID_OPEN_CONNECTION_REPLY_1.toInt()) {}
+    constructor() : super(PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_1) {}
 
     /**
      * Creates a `OPEN_CONNECTION_RESPONSE_1` packet to be decoded.

@@ -44,7 +44,7 @@
 package bedrockDragon.debug.junit
 
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequest
-import bedrockDragon.network.raknet.protocol.packet.PacketConstants
+import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPing
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -86,7 +86,7 @@ internal class PacketHandlerTest {
         connect.encode()
 
         //Strip and check ID before decode
-        assert(connect.buffer().readByte() == PacketConstants.LOGIN_PACKET.toByte())
+        assert(connect.buffer().readByte() == PacketConstants.UNCONNECTED_PING.toByte())
         connect.decode()
 
         assert(timestamp == connect.timestamp)

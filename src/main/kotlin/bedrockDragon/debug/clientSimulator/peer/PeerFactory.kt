@@ -34,15 +34,10 @@ import bedrockDragon.debug.clientSimulator.RakNetClient
 import bedrockDragon.network.raknet.PacketBufferException
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_ALREADY_CONNECTED
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_CONNECTION_BANNED
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_INCOMPATIBLE_PROTOCOL_VERSION
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_NO_FREE_INCOMING_CONNECTIONS
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_OPEN_CONNECTION_REPLY_1
-import bedrockDragon.network.raknet.RakNetPacket.Companion.ID_OPEN_CONNECTION_REPLY_2
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.connection.*
 import bedrockDragon.debug.clientSimulator.RakNetServerPeer
+import bedrockDragon.network.raknet.handler.PacketConstants
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
@@ -222,7 +217,7 @@ class PeerFactory(
         */
             kotlin.check(factoryState < PeerFactory.Companion.STATE_PEER_ASSEMBLED) { "Peer has already been assembled" }
         try {
-            if (packet.id === ID_OPEN_CONNECTION_REPLY_1 && factoryState == STATE_FIRST_CONNECTION_REQUEST) {
+            if (packet.id.toInt() == PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_1 && factoryState == STATE_FIRST_CONNECTION_REQUEST) {
                 val connectionResponseOne = OpenConnectionResponseOne(packet)
                 connectionResponseOne.decode()
                 if (connectionResponseOne.magic === false) {
@@ -246,7 +241,7 @@ class PeerFactory(
                 serverGuid = connectionResponseOne.serverGuid
                 factoryState = STATE_SECOND_CONNECTION_REQUEST
 
-            } else if (packet.id === ID_OPEN_CONNECTION_REPLY_2
+            } else if (packet.id.toInt() == PacketConstants.SERVER_TO_CLIENT_HANDSHAKE_2
                 && factoryState == STATE_SECOND_CONNECTION_REQUEST
             ) {
                 val connectionResponseTwo = OpenConnectionResponseTwo(packet)
@@ -284,11 +279,11 @@ class PeerFactory(
                         )
                     }
                 }
-            } else if (packet.id === ID_ALREADY_CONNECTED) {
+            } else if (packet.id.toInt() == PacketConstants.ALREADY_CONNECTED) {
                 throw AlreadyConnectedException(client, address)
-            } else if (packet.id === ID_NO_FREE_INCOMING_CONNECTIONS) {
+            } else if (packet.id.toInt() == PacketConstants.NO_FREE_INCOMING_CONNECTIONS) {
                 throw NoFreeIncomingConnectionsException(client, address)
-            } else if (packet.id === ID_CONNECTION_BANNED) {
+            } else if (packet.id.toInt() == PacketConstants.CONNECTION_BANNED) {
                 val connectionBanned = ConnectionBanned(packet)
                 connectionBanned.decode()
                 if (connectionBanned.magic !== true) {
@@ -296,7 +291,7 @@ class PeerFactory(
                 } else if (connectionBanned.serverGuid === serverGuid) {
                     throw ConnectionBannedException(client, address)
                 }
-            } else if (packet.id === ID_INCOMPATIBLE_PROTOCOL_VERSION) {
+            } else if (packet.id.toInt() == PacketConstants.INCOMPATIBLE_PROTOCOL) {
                 val incompatibleProtocol = IncompatibleProtocolVersion(packet)
                 incompatibleProtocol.decode()
                 if (incompatibleProtocol.serverGuid === serverGuid) {

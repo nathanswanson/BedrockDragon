@@ -46,6 +46,7 @@ package bedrockDragon.network.raknet.peer
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
@@ -54,15 +55,13 @@ import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
-import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
-import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
+import bedrockDragon.network.raknet.handler.packethandler.logger
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.math.log
 
 abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val maximumTransferUnit: Int,val connectionType: ConnectionType, val channel: Channel) {
     private var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
@@ -78,12 +77,12 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
      * When a registered client sends a packet this function is called with that packet
      */
     fun incomingPacket(packet: RakNetPacket) {
-        when(packet.id) {
-            RakNetPacket.ID_NACK -> {
+        when(packet.id.toInt()) {
+            PacketConstants.NACK -> {
                 val notAcknowledged = NotAcknowledgedPacket(packet)
                 notAcknowledged.decode()
             }
-            RakNetPacket.ID_ACK -> {
+            PacketConstants.ACK -> {
                 val acknowledgedPacket = AcknowledgedPacket(packet)
                 acknowledgedPacket.decode()
 
@@ -97,7 +96,7 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
                 }
             }
             else -> {
-                if(packet.id in RakNetPacket.ID_CUSTOM_0..RakNetPacket.ID_CUSTOM_F) {
+                if(packet.id in PacketConstants.CUSTOM_PACKET_RANGE) {
 
                     val custom = CustomPacket(packet)
                     custom.decode()
@@ -173,7 +172,7 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
         acknowledged.encode()
 
         sendNettyMessage(acknowledged)
-        logger.info {
+        logger.trace {
             "Sent " + acknowledged.records.size + " record" + (if (acknowledged.records.size == 1) "" else "s")
                 .toString() + " in " + (if (acknowledge) "ACK" else "NACK").toString() + " packet"
         }

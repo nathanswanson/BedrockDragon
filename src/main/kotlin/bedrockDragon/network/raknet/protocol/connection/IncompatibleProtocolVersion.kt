@@ -31,6 +31,8 @@ package bedrockDragon.network.raknet.protocol.connection
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
+
 /**
  * An `INCOMPATIBLE_PROTOCOL_VERSION` packet.
  *
@@ -64,7 +66,7 @@ class IncompatibleProtocolVersion : RakNetPacket {
      *
      * @see .encode
      */
-    constructor() : super(ID_INCOMPATIBLE_PROTOCOL_VERSION.toInt()) {}
+    constructor() : super(PacketConstants.INCOMPATIBLE_PROTOCOL) {}
 
     /**
      * Creates an `INCOMPATIBLE_PROTOCOL_VERSION` packet to be

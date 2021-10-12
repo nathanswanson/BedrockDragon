@@ -33,7 +33,7 @@ import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.peer.Status
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
+import bedrockDragon.network.raknet.handler.PacketSortFactory
 import io.netty.channel.Channel
 import java.net.InetSocketAddress
 

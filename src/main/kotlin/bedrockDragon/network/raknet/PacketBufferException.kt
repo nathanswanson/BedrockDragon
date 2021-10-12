@@ -49,7 +49,7 @@ class PacketBufferException
      * @return the packet that failed to encode/decode.
      */
     val packet: RakNetPacket
-) : RakNetException(RakNetPacket.getName(packet.id.toInt()).toString() + " packet failed to encode/decode") {
+) : RakNetException("RakNetPacket packet failed to encode/decode") {
 
     companion object {
         private const val serialVersionUID = -3730545025991834599L

@@ -31,6 +31,7 @@ package bedrockDragon.network.raknet.protocol.status
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 
 /**
  * A `CONNECTED_PONG` packet.
@@ -60,7 +61,7 @@ class ConnectedPong : RakNetPacket {
      *
      * @see .encode
      */
-    constructor() : super(ID_CONNECTED_PONG.toInt()) {}
+    constructor() : super(PacketConstants.CONNECTED_PONG) {}
 
     /**
      * Creates a `CONNECTED_PONG` packet to be decoded.

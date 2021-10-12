@@ -31,6 +31,7 @@ package bedrockDragon.network.raknet.protocol.message
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.lang.IllegalArgumentException
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
 import java.util.ArrayList
@@ -69,7 +70,7 @@ open class CustomPacket : RakNetPacket {
     /**
      * The encapsulated packets that require acknowledgement.
      */
-    lateinit var ackMessages: Array<EncapsulatedPacket>
+    private lateinit var ackMessages: Array<EncapsulatedPacket>
 
     /**
      * Creates a custom packet to be encoded.
@@ -83,7 +84,7 @@ open class CustomPacket : RakNetPacket {
      * @see .encode
      */
     protected constructor(type: Int) : super(type) {
-        require(!(type < ID_CUSTOM_0 || type > ID_CUSTOM_F)) { "Custom packet ID must be in between ID_CUSTOM_0 and ID_CUSTOM_F" }
+        require(type in PacketConstants.CUSTOM_PACKET_RANGE) { "Custom packet ID must be in between ID_CUSTOM_0 and ID_CUSTOM_F" }
     }
 
     /**
@@ -97,17 +98,15 @@ open class CustomPacket : RakNetPacket {
 
     override fun encode() {
         writeTriadLE(sequenceId)
-        if (messages != null) {
-            val ackMessages = ArrayList<EncapsulatedPacket>()
-            for (packet in messages!!) {
-                if (packet.reliability.requiresAck()) {
-                    packet.ackRecord = Record(sequenceId)
-                    ackMessages.add(packet)
-                }
-                packet.encode(this)
+        val ackMessages = ArrayList<EncapsulatedPacket>()
+        for (packet in messages) {
+            if (packet.reliability.requiresAck()) {
+                packet.ackRecord = Record(sequenceId)
+                ackMessages.add(packet)
             }
-            this.ackMessages = ackMessages.toTypedArray()
+            packet.encode(this)
         }
+        this.ackMessages = ackMessages.toTypedArray()
     }
 
     override fun decode() {
@@ -142,10 +141,8 @@ open class CustomPacket : RakNetPacket {
          */
         fun size(vararg packets: EncapsulatedPacket): Int {
             var size = 4
-            if (packets != null) {
-                for (packet in packets) {
-                    size += packet.size()
-                }
+            for (packet in packets) {
+                size += packet.size()
             }
             return size
         }

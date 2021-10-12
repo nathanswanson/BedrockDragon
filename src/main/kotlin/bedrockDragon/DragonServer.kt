@@ -43,11 +43,12 @@
 
 package bedrockDragon
 
-import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
-import bedrockDragon.network.raknet.protocol.packet.packethandler.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.handler.PacketSortFactory
+import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
+import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
@@ -205,7 +206,10 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
         if(clients.containsKey(sender)) {
-            clients[sender]!!.incomingPacket(packet)
+                logger.info { packet.id }
+
+                clients[sender]!!.incomingPacket(packet)
+
         } else {
             val packetHandler = PacketSortFactory.createPacketHandle(sender, packet, channel)
             packetHandler.responseToClient()

@@ -1,4 +1,4 @@
-package bedrockDragon.network.raknet.protocol.packet
+package bedrockDragon.network.raknet.handler
 
 interface IPacketCoolDown {
     val coolDownTime: Int

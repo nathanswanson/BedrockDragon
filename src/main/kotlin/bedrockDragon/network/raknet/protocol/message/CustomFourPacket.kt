@@ -41,4 +41,4 @@ class CustomFourPacket
  *
  * @see .encode
  */
-    : CustomPacket(ID_CUSTOM_4.toInt())
+    : CustomPacket(0x84)

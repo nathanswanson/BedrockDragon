@@ -32,6 +32,7 @@ package bedrockDragon.network.raknet.protocol.message.acknowledge
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record.Companion.simplify
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 import java.util.ArrayList
 
 /**
@@ -88,7 +89,7 @@ open class AcknowledgedPacket : RakNetPacket {
      * acknowledged.
      */
     val isAcknowledgement: Boolean
-        get() = id == ID_ACK
+        get() = id.toInt() == PacketConstants.ACK
 
     /**
      * {@inheritDoc}

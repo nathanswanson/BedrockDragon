@@ -34,6 +34,7 @@ import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Failable
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.RakNetException
+import bedrockDragon.network.raknet.handler.PacketConstants
 
 /**
  * An `UNCONNECTED_PING` packet.
@@ -85,7 +86,7 @@ open class UnconnectedPing : RakNetPacket, Failable {
      * should unconditionally respond.
      * @see .encode
      */
-    protected constructor(requiresOpenConnections: Boolean) : super((if (requiresOpenConnections) ID_UNCONNECTED_PING_OPEN_CONNECTIONS else ID_UNCONNECTED_PING).toInt()) {}
+    protected constructor(requiresOpenConnections: Boolean) : super((if (requiresOpenConnections) PacketConstants.UNCONNECTED_REQUIRE_OPEN_PING else PacketConstants.UNCONNECTED_PING).toInt()) {}
 
     /**
      * Creates an `UNCONNECTED_PING` packet to be encoded.

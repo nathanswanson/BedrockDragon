@@ -31,6 +31,7 @@ package bedrockDragon.network.raknet.protocol.login
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 
 /**
  * A `CONNECTION_REQUEST` packet.
@@ -71,7 +72,7 @@ class ConnectionRequest : RakNetPacket {
      *
      * @see .encode
      */
-    constructor() : super(ID_CONNECTION_REQUEST.toInt()) {}
+    constructor() : super(PacketConstants.CONNECTION_REQUEST) {}
 
     /**
      * Creates a `CONNECTION_REQUEST` packet to be decoded.

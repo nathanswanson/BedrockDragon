@@ -31,6 +31,7 @@ package bedrockDragon.network.raknet.protocol.connection
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 
 /**
  * A `CONNECTION_BANNED` packet.
@@ -58,7 +59,7 @@ class ConnectionBanned : RakNetPacket {
      *
      * @see .encode
      */
-    constructor() : super(ID_CONNECTION_BANNED.toInt()) {}
+    constructor() : super(PacketConstants.CONNECTION_BANNED) {}
 
     /**
      * Creates a `CONNECTION_BANNED` packet to be decoded.

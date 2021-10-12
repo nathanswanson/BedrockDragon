@@ -30,7 +30,6 @@
 package bedrockDragon.debug.clientSimulator
 
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.protocol.packet.packethandler.logger
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.DatagramPacket

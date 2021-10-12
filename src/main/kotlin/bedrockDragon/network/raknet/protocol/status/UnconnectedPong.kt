@@ -35,6 +35,7 @@ import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Failable
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.RakNetException
+import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.identifier.Identifier
 
 /**
@@ -86,7 +87,7 @@ class UnconnectedPong : RakNetPacket, Failable {
      *
      * @see .encode
      */
-    constructor() : super(ID_UNCONNECTED_PONG.toInt()) {}
+    constructor() : super(PacketConstants.UNCONNECTED_PONG) {}
 
     /**
      * Creates an `UNCONNECTED_PONG` packet to be decoded.
