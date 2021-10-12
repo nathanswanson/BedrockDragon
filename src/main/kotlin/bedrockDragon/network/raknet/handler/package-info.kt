@@ -41,5 +41,5 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.network.raknet.protocol.packet.packethandler
+package bedrockDragon.network.raknet.handler
 
