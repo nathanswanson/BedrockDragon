@@ -1,3 +1,46 @@
+/*
+ *      ##### ##                  ##                                    /                 ##### ##
+ *   ######  /##                   ##                                 #/               /#####  /##
+ *  /#   /  / ##                   ##                                 ##             //    /  / ###
+ * /    /  /  ##                   ##                                 ##            /     /  /   ###
+ *     /  /   /                    ##                                 ##                 /  /     ###
+ *    ## ##  /        /##      ### ##  ###  /###     /###     /###    ##  /##           ## ##      ## ###  /###     /###     /###      /###   ###  /###
+ *    ## ## /        / ###    ######### ###/ #### / / ###  / / ###  / ## / ###          ## ##      ##  ###/ #### / / ###  / /  ###  / / ###  / ###/ #### /
+ *    ## ##/        /   ###  ##   ####   ##   ###/ /   ###/ /   ###/  ##/   /           ## ##      ##   ##   ###/ /   ###/ /    ###/ /   ###/   ##   ###/
+ *    ## ## ###    ##    ### ##    ##    ##       ##    ## ##         ##   /            ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
+ *    ## ##   ###  ########  ##    ##    ##       ##    ## ##         ##  /             ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
+ *    #  ##     ## #######   ##    ##    ##       ##    ## ##         ## ##             #  ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
+ *       /      ## ##        ##    ##    ##       ##    ## ##         ######               /       /    ##       ##    ## ##     ## ##    ##    ##    ##
+ *   /##/     ###  ####    / ##    /#    ##       ##    ## ###     /  ##  ###         /###/       /     ##       ##    /# ##     ## ##    ##    ##    ##
+ *  /  ########     ######/   ####/      ###       ######   ######/   ##   ### /     /   ########/      ###       ####/ ## ########  ######     ###   ###
+ * /     ####        #####     ###        ###       ####     #####     ##   ##/     /       ####         ###       ###   ##  ### ###  ####       ###   ###
+ * #                                                                                #                                             ###
+ *  ##                                                                               ##                                     ####   ###
+ *                                                                                                                        /######  /#
+ *                                                                                                                       /     ###/
+ * the MIT License (MIT)
+ *
+ * Copyright (c) 2021-2021 Nathan Swanson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * the above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package bedrockDragon
 
 import bedrockDragon.network.raknet.protocol.packet.PacketSortFactory
@@ -28,9 +71,21 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
 
-private val logger = KotlinLogging.logger {}
 
+/**
+ * The heart of the entire server. this object initializes all coroutines,
+ * raknet thread, and client update thread(main)
+ *
+ * All packets from the internet are passed through here first. See
+ * [handleMessage]
+ *
+ * All events are fired from this object. See [callEvent]
+ *
+ * @author Nathan Swanson
+ * @since Bedrock Dragon ALPHA
+ */
 class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
+    private val logger = KotlinLogging.logger {}
 
     private var eventThreadCount = 0
     private var isRunning = false
@@ -158,8 +213,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.mtu, channel, sender)
             }
         }
-
-
     }
 
     fun handleHandlerException(causeAddress: InetSocketAddress, cause: Throwable) {

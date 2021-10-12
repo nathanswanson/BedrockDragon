@@ -2,9 +2,10 @@ package bedrockDragon.ticking
 
 import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {}
 
 class WorldTicker : TickingThread {
+    private val logger = KotlinLogging.logger {}
+
     override fun tick() {
         var lastTick = System.currentTimeMillis()
         while(true) {

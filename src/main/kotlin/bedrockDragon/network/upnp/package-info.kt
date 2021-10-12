@@ -40,29 +40,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package bedrockDragon.network.upnp
 
-package bedrockDragon
-
-import bedrockDragon.mod.Mod
 import mu.KotlinLogging
 
 
 /**
- * Object that initializes and makes sure no mods clash on startup.
- *
+ * Any code found here is converted java code from Federico Dossena. This package contains all needed class file
+ * run basic uPnP in raknet.
  * @author Nathan Swanson
  * @since Bedrock Dragon ALPHA
  */
-object ModManager {
-    private val logger = KotlinLogging.logger {}
 
-    private var modRegistry = ArrayList<Mod>()
 
-    fun register(mod: Mod) {
-        modRegistry.add(mod)
-    }
-
-    fun reload() {
-
-    }
-}
