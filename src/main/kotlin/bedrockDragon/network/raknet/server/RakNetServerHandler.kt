@@ -30,7 +30,6 @@
 package bedrockDragon.network.raknet.server
 
 import bedrockDragon.DragonServer
-import bedrockDragon.network.raknet.handler.packethandler.logger
 import io.netty.channel.ChannelInboundHandlerAdapter
 import java.util.concurrent.ConcurrentHashMap
 import java.net.InetAddress
@@ -40,7 +39,9 @@ import java.lang.NullPointerException
 import io.netty.channel.ChannelHandlerContext
 import bedrockDragon.network.raknet.RakNetPacket
 import io.netty.channel.socket.DatagramPacket
+import mu.KotlinLogging
 import java.lang.Exception
+import kotlin.math.log
 
 /**
  * Used by the [RakNetServer] with the sole purpose of sending received
@@ -50,10 +51,10 @@ import java.lang.Exception
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet v1.0.0
  */
-class RakNetServerHandler(
-    //private final Logger logger;
-    private val server: DragonServer
-) : ChannelInboundHandlerAdapter() {
+class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHandlerAdapter() {
+
+    val logger = KotlinLogging.logger {}
+
     private val blocked: ConcurrentHashMap<InetAddress, BlockedAddress?> = ConcurrentHashMap()
     private var causeAddress: InetSocketAddress? = null
 
@@ -98,7 +99,7 @@ class RakNetServerHandler(
      * @param address
      * the IP address to unblock.
      */
-    fun unblockAddress(address: InetAddress?) {
+    private fun unblockAddress(address: InetAddress?) {
         if (address != null) {
             if (blocked.remove(address) != null) {
                 server.callEvent { listener: RakNetServerListener? ->
@@ -119,14 +120,12 @@ class RakNetServerHandler(
      * @return `true` if the IP address is blocked,
      * `false` otherwise.
      */
-    fun isAddressBlocked(address: InetAddress): Boolean {
+    private fun isAddressBlocked(address: InetAddress): Boolean {
         return blocked.containsKey(address)
     }
 
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-
-
         if (msg is DatagramPacket) {
             // Get packet and sender data
             val datagram = msg
@@ -169,16 +168,5 @@ class RakNetServerHandler(
 
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         server.handleHandlerException(causeAddress!!, cause)
-    }
-
-    /**
-     * Creates a RakNet server Netty handler.
-     *
-     * @param server
-     * the server to send received packets to.
-     */
-    init {
-        //this.logger = LogManager.getLogger(RakNetServer.class.getSimpleName() + "-"
-        //		+ Long.toHexString(server.getGloballyUniqueId()).toUpperCase());
     }
 }

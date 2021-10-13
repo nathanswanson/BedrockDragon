@@ -48,7 +48,6 @@ import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionReques
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
-import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
@@ -56,17 +55,23 @@ import bedrockDragon.ticking.ChunkTicker
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
 import io.netty.bootstrap.Bootstrap
+import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
+import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.handler.codec.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.net.InetSocketAddress
+import java.net.URI
+import java.nio.channels.SocketChannel
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -87,18 +92,17 @@ import java.util.function.Consumer
  */
 class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
     private val logger = KotlinLogging.logger {}
-
     private var eventThreadCount = 0
     private var isRunning = false
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
-    private var group: NioEventLoopGroup = NioEventLoopGroup()
+    private var group: NioEventLoopGroup = NioEventLoopGroup(1)
+    private val groupHTTP: NioEventLoopGroup = NioEventLoopGroup()
     var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
     private lateinit var channel: Channel
     private lateinit var handle : RakNetServerHandler
     private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
-
     companion object {
         var guid : Long = 0
         var pongId : Long = 0
@@ -117,8 +121,10 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         logger.info { "Starting RakNet" }
         handle = RakNetServerHandler(this)
 
-        bootstrap.handler(handle)
-        bootstrap.channel(NioDatagramChannel::class.java).group(group)
+        bootstrap.group(group)
+        //bootstrap.handler(handle)
+        bootstrap.channel(NioDatagramChannel::class.java)
+        bootstrap.handler(RakNetServerHandler(this))
         bootstrap.option(ChannelOption.SO_BROADCAST, true).option(ChannelOption.SO_REUSEADDR, false)
             .option(ChannelOption.SO_SNDBUF, mtu)
             .option(ChannelOption.SO_RCVBUF, mtu)
@@ -126,6 +132,13 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         channel = bootstrap.bind(bindAddress).sync().channel()
 
+        //val url = URI("https://auth.mojang.com/")
+        //val request = DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, url.rawPath)
+        //request.headers().set(HttpHeaderNames.HOST, bindAddress)
+        //request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
+        //request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP)
+
+        //channel.writeAndFlush(request)
 
         //Coroutine Entity
         logger.info { "Starting Entity Thread" }
@@ -205,11 +218,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
 
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
+
         if(clients.containsKey(sender)) {
-                logger.info { packet.id }
-
                 clients[sender]!!.incomingPacket(packet)
-
         } else {
             val packetHandler = PacketSortFactory.createPacketHandle(sender, packet, channel)
             packetHandler.responseToClient()
@@ -226,6 +237,4 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     fun timeStamp(): Long {
         return System.currentTimeMillis() - startTimeStamp
     }
-
-
 }

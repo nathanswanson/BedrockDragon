@@ -44,18 +44,19 @@ package bedrockDragon.network.raknet.peer
  */
 
 import bedrockDragon.DragonServer
+import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketSortFactory
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
+import kotlinx.serialization.json.Json
 import java.net.InetSocketAddress
 
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
     : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel){
 
     var status: Status = Status.DISCONNECTED
-
-
+    var clientPeer : MinecraftClientPeer? = null
 
 
     /**
@@ -64,10 +65,21 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
     override fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
         //Client has connected at this point
-        val handler = PacketSortFactory.createClientPacketHandle(this, packet, channel)
+        if(packet.payload.buffer().getUnsignedByte(0).toInt() == PacketConstants.GAME_PACKET) {
+            logger.info { "GAME" }
+        } else {
+            val handler = PacketSortFactory.createEncapsulatedPacketHandle(this, packet, channel)
+            handler.responseToClient()
+            handler.responseToServer()
+        }
+    }
 
-        handler.responseToClient()
-        handler.responseToServer()
+    fun bedrockClient(): MinecraftClientPeer? {
+        return clientPeer
+    }
+
+    fun generateClient(protocol: Int, playerData: Json, skinData: Json) {
+
     }
 }
 

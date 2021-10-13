@@ -55,15 +55,18 @@ import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.AcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.NotAcknowledgedPacket
 import bedrockDragon.network.raknet.protocol.message.acknowledge.Record
-import bedrockDragon.network.raknet.handler.packethandler.logger
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
+import mu.KotlinLogging
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val maximumTransferUnit: Int,val connectionType: ConnectionType, val channel: Channel) {
+
+    val logger = KotlinLogging.logger {}
+
     private var orderSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
     private var sequenceSendIndex = Array(RakNet.CHANNEL_COUNT) {0}
     private var splitId = 0
