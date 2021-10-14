@@ -1,5 +1,3 @@
-package bedrockDragon.network.raknet.peer
-
 /*
  *      ##### ##                  ##                                    /                 ##### ##
  *   ######  /##                   ##                                 #/               /#####  /##
@@ -42,6 +40,7 @@ package bedrockDragon.network.raknet.peer
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package bedrockDragon.network.raknet.peer
 
 import bedrockDragon.DragonServer
 import bedrockDragon.network.minecraft.handler.MinecraftPacketFactory
@@ -75,12 +74,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
     }
 
-    fun bedrockClient(): MinecraftClientPeer? {
+    private fun bedrockClient(): MinecraftClientPeer? {
         return clientPeer
-    }
-
-    fun generateClient(protocol: Int, playerData: Json, skinData: Json) {
-
     }
 }
 

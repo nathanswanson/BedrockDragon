@@ -51,6 +51,7 @@ import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
+import bedrockDragon.network.raknet.server.RaknetHTTPServerListener
 import bedrockDragon.ticking.ChunkTicker
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
@@ -61,17 +62,18 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioDatagramChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.*
+import io.netty.handler.logging.LogLevel
+import io.netty.handler.logging.LoggingHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.net.InetSocketAddress
-import java.net.URI
-import java.nio.channels.SocketChannel
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -97,8 +99,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
-    private var group: NioEventLoopGroup = NioEventLoopGroup(1)
-    private val groupHTTP: NioEventLoopGroup = NioEventLoopGroup()
+    private var group: NioEventLoopGroup = NioEventLoopGroup()
     var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
     private lateinit var channel: Channel
     private lateinit var handle : RakNetServerHandler
@@ -116,9 +117,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         guid = uuid.mostSignificantBits
         pongId = uuid.leastSignificantBits
-
         mtu = RakNet.getMaximumTransferUnit(bindAddress)
         logger.info { "Starting RakNet" }
+
         handle = RakNetServerHandler(this)
 
         bootstrap.group(group)
@@ -131,14 +132,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             .option(ChannelOption.RCVBUF_ALLOCATOR, FixedRecvByteBufAllocator(mtu + 500))
 
         channel = bootstrap.bind(bindAddress).sync().channel()
-
-        //val url = URI("https://auth.mojang.com/")
-        //val request = DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, url.rawPath)
-        //request.headers().set(HttpHeaderNames.HOST, bindAddress)
-        //request.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
-        //request.headers().set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP)
-
-        //channel.writeAndFlush(request)
 
         //Coroutine Entity
         logger.info { "Starting Entity Thread" }

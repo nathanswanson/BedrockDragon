@@ -40,42 +40,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package bedrockDragon.network.minecraft.packet.zlib
 
-package bedrockDragon.network.minecraft.packet
+import io.netty.buffer.ByteBuf
+import org.apache.commons.io.IOUtils
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.Inflater
+import java.util.zip.InflaterInputStream
 
-import bedrockDragon.network.raknet.Packet
-import bedrockDragon.network.raknet.VarInt
-import com.philjay.jwt.JWT
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.decodeFromStream
+object PacketCompression {
+    fun decompress(buffer: ByteBuf): ByteArray {
+        val bis = ByteArrayInputStream(buffer.array())
+        val bos = ByteArrayOutputStream()
 
-class MinecraftLoginPacket(val packet: Packet): MinecraftPacket {
+        val inflator = InflaterInputStream(bis)
+        try {
+            return IOUtils.toByteArray(inflator)
+        } finally {
+            inflator.close()
+            bis.close()
+            bos.close()
+        }
 
-    var protocol = 0
-    lateinit var chainData: JsonArray
-    lateinit var skinData: JWT
 
-    override fun encode() {
 
+        /*
+        val inflater = Inflater()
+            inflater.setInput(buffer.nioBuffer())
+
+        val decompressedBytes = ArrayList<Byte>()
+        while(!inflater.finished()) {
+            val tempByteArr = ByteArray(1024)
+
+            inflater.inflate(tempByteArr)
+
+            for(byte in tempByteArr) {
+                decompressedBytes.add(byte)
+            }
+        }
+
+        return decompressedBytes.toByteArray()
+
+     */
     }
 
-    override fun decode() {
-        protocol = packet.readInt()
-        val jwt = packet.buffer().readSlice(VarInt.readUnsignedVarInt(packet.inputStream).toInt())
-        println(jwt)
-    }
-
-    override fun encrypt() {
-        TODO("Not yet implemented")
-    }
-
-    override fun decrypt() {
-        TODO("Not yet implemented")
-    }
-
-    override fun checkCryptStatus() {
-        TODO("Not yet implemented")
-    }
 }
