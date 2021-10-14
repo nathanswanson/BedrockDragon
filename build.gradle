@@ -11,7 +11,8 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenLocal()
-    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url "https://kotlin.bintray.com/kotlinx"}
+    maven { url "https://jitpack.io" }
     mavenCentral()
 }
 
@@ -22,8 +23,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2-native-mt'
 
     implementation 'it.unimi.dsi:fastutil:8.5.6'
-    implementation 'io.netty:netty-all:4.1.24.Final'
+    implementation 'io.netty:netty-all:4.1.68.Final'
     implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    implementation 'com.github.PhilJay:JWT:1.1.5'
 
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'org.slf4j:slf4j-simple:1.7.32'
