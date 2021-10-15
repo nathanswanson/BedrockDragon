@@ -29,8 +29,6 @@
  */
 package bedrockDragon.network.raknet
 
-import bedrockDragon.network.raknet.handler.PacketConstants
-import bedrockDragon.network.raknet.map.ShortMap
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled

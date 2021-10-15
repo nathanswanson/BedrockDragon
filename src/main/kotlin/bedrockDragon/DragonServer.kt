@@ -43,6 +43,7 @@
 
 package bedrockDragon
 
+import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.network.raknet.handler.PacketSortFactory
 import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
@@ -93,6 +94,7 @@ import java.util.function.Consumer
  * @since Bedrock Dragon ALPHA
  */
 class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
+
     private val logger = KotlinLogging.logger {}
     private var eventThreadCount = 0
     private var isRunning = false
@@ -112,7 +114,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     fun start(): Boolean {
 
-
         val uuid = UUID.randomUUID()
 
         guid = uuid.mostSignificantBits
@@ -124,6 +125,8 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         bootstrap.group(group)
         //bootstrap.handler(handle)
+
+        //TODO add TCP and HTTP support
         bootstrap.channel(NioDatagramChannel::class.java)
         bootstrap.handler(RakNetServerHandler(this))
         bootstrap.option(ChannelOption.SO_BROADCAST, true).option(ChannelOption.SO_REUSEADDR, false)
@@ -152,9 +155,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private fun tick() {
         while(isRunning) {
             for (peer in clients.values) {
-                //if (peer.status == Status.CONNECTED) {
                     peer.update()
-               // }
             }
         }
     }
@@ -188,7 +189,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         if (event == null) {
             throw NullPointerException("Event cannot be null")
         }
-        //logger.trace("Called event of class " + event.getClass().getName() + " for " + listeners.size() + " listeners");
         for (listener: RakNetServerListener in listeners) {
             if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
                 val threadedListener = listener.javaClass.getAnnotation(

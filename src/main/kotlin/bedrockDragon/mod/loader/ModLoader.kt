@@ -41,33 +41,84 @@
  * SOFTWARE.
  */
 
-package bedrockDragon
+package bedrockDragon.mod.loader
 
+import bedrockDragon.mod.DragonMod
 import bedrockDragon.mod.Mod
+import bedrockDragon.util.Singleton
 import mu.KotlinLogging
 import java.io.File
+import java.io.FileNotFoundException
+import java.net.URL
+import java.net.URLClassLoader
+import java.nio.file.Files
 
+@Singleton
+object ModLoader {
 
-/**
- * Object that initializes and makes sure no mods clash on startup.
- *
- * @author Nathan Swanson
- * @since Bedrock Dragon ALPHA
- */
-object ModManager {
     private val logger = KotlinLogging.logger {}
 
-    private var modRegistry = ArrayList<Mod>()
-
-    fun createAndRegister(mod: File) {
-
-
-       // modRegistry.add(mod)
+    fun getModfolderContent(): Array<File> {
+        return try {
+            File("mods").listFiles()!!
+        } catch (e: FileNotFoundException) {
+            logger.info { e }
+            emptyArray()
+        }
     }
 
-    fun reload() {
+    /**
+     * When reloading plugins instead of restarting completely
+     * the hash can tell us if the mod was truly different and
+     * actually needs to be reloaded
+     * @author Nathan Swanson
+     * @since ALPHA
+     */
+
+    private fun getModHash(): Int {
+        return TODO()
+    }
+
+    private fun safeUnload(vararg mods: Mod) {
 
     }
 
+    private fun safeLoad(vararg mods: File): Mod {
+        for (mod in mods) {
+            if (authenticate(mod)) {
+                generateDetachedJar(mod)
+            }
+        }
 
+        return TODO()
+    }
+
+    private fun generateDetachedJar(mod: File): JarContents {
+        val loader = URLClassLoader(arrayOf(mod.toURI().toURL()))
+        val classes = ArrayList<Class<*>>()
+        Files.walk(mod.toPath()).forEach { file ->
+            if (file.endsWith(".class")) {
+                val tempClass = loader.loadClass(file.toString())
+                if(tempClass.isAnnotationPresent(DragonMod::class.java)) {
+                    classes.add(tempClass)
+                }
+            }
+        }
+        return TODO()
+    }
+
+    fun authenticate(mod: File): Boolean {
+        /* mod is authenticated under the following conditions
+            -Is a jar file, folder, or zip (which all follow the same Dragon Mod format)
+            -Mod version is supported by the current server
+            -Contains a Dragon Mod main file annotated with @DragonMod //CHECKED ON GENERATION NOT HERE
+            -Passes dependency check.
+         */
+
+        //file check
+        if(!(mod.isDirectory or mod.name.endsWith("zip") or mod.name.endsWith("jar"))) {
+            return false
+        }
+        return true
+    }
 }

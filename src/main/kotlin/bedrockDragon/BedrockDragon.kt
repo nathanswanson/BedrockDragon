@@ -43,6 +43,7 @@
 
 package bedrockDragon
 
+import bedrockDragon.mod.loader.ModLoader
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
@@ -60,8 +61,7 @@ private val logger = KotlinLogging.logger {}
  * @since Bedrock Dragon ALPHA
  */
 fun main() {
-    val bindAddress = InetSocketAddress("0.0.0.0", 19142)
-    val server = DragonServer(bindAddress)
+
 
     logger.info { "Starting Bedrock Dragon." }
     logger.info { "Validating server root." }
@@ -110,7 +110,7 @@ fun main() {
         serverPropeties.setProperty("max-world-size", "29999984")
         serverPropeties.setProperty("function-permission-level", "2")
         serverPropeties.setProperty("rcon.port", "25575")
-        serverPropeties.setProperty("server-port", "25565")
+        serverPropeties.setProperty("server-port", "19132")
         serverPropeties.setProperty("debug", "false")
         serverPropeties.setProperty("server-ip", "")
         serverPropeties.setProperty("spawn-npcs", "true")
@@ -147,6 +147,13 @@ fun main() {
     logger.info { "STARTING DRAGON SERVER." }
     logger.info { "=====================" }
 
+    val bindAddress = InetSocketAddress(
+        serverPropeties.getProperty("server-ip"),
+        serverPropeties.getProperty("server-port").toInt()
+    )
+
+    val server = DragonServer(bindAddress)
+
     server.start()
 }
 
@@ -158,5 +165,8 @@ fun main() {
  * @since Bedrock Dragon ALPHA
  */
 fun registerMods() {
+    val mods = ModLoader.getModfolderContent()
+    //remove any non jars from list
+    mods.filter { mod -> ModManager.authenticate(mod) }
 
 }

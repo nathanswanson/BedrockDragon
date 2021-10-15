@@ -50,7 +50,7 @@ import java.util.zip.Inflater
 
 object PacketCompression {
 
-    val BUFFER: ThreadLocal<ByteArray> = ThreadLocal.withInitial { ByteArray(1024 * 1024 * 2) }
+    private val BUFFER: ThreadLocal<ByteArray> = ThreadLocal.withInitial { ByteArray(1024 * 1024 * 2) }
 
     fun decompress(buffer: ByteBuf): ByteArray {
         val inflater = Inflater(true)

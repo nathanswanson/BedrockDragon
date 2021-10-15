@@ -41,33 +41,7 @@
  * SOFTWARE.
  */
 
-package bedrockDragon
+package bedrockDragon.mod.loader
 
-import bedrockDragon.mod.Mod
-import mu.KotlinLogging
-import java.io.File
-
-
-/**
- * Object that initializes and makes sure no mods clash on startup.
- *
- * @author Nathan Swanson
- * @since Bedrock Dragon ALPHA
- */
-object ModManager {
-    private val logger = KotlinLogging.logger {}
-
-    private var modRegistry = ArrayList<Mod>()
-
-    fun createAndRegister(mod: File) {
-
-
-       // modRegistry.add(mod)
-    }
-
-    fun reload() {
-
-    }
-
-
+class ModUnloader {
 }

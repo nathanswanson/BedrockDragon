@@ -24,7 +24,7 @@
  *
  */
 
-package bedrockDragon.network.minecraft.json
+package bedrockDragon.event
 
-class JSONPacketUtil {
+interface Cancelable {
 }
