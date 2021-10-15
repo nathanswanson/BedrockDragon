@@ -43,46 +43,42 @@
 package bedrockDragon.network.minecraft.packet.zlib
 
 import io.netty.buffer.ByteBuf
-import org.apache.commons.io.IOUtils
-import java.io.ByteArrayInputStream
+import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import java.io.ByteArrayOutputStream
+import java.util.function.Supplier
 import java.util.zip.Inflater
-import java.util.zip.InflaterInputStream
 
 object PacketCompression {
+
+    val BUFFER: ThreadLocal<ByteArray> = ThreadLocal.withInitial { ByteArray(1024 * 1024 * 2) }
+
     fun decompress(buffer: ByteBuf): ByteArray {
-        val bis = ByteArrayInputStream(buffer.array())
-        val bos = ByteArrayOutputStream()
+        val inflater = Inflater(true)
 
-        val inflator = InflaterInputStream(bis)
         try {
-            return IOUtils.toByteArray(inflator)
-        } finally {
-            inflator.close()
-            bis.close()
-            bos.close()
-        }
-
-
-
-        /*
-        val inflater = Inflater()
             inflater.setInput(buffer.nioBuffer())
+            inflater.finished()
 
-        val decompressedBytes = ArrayList<Byte>()
-        while(!inflater.finished()) {
-            val tempByteArr = ByteArray(1024)
+            val bos = FastByteArrayOutputStream()
+            bos.reset()
 
-            inflater.inflate(tempByteArr)
+            val tempBytes = BUFFER.get()
 
-            for(byte in tempByteArr) {
-                decompressedBytes.add(byte)
+            while(!inflater.finished()) {
+                val i = inflater.inflate(tempBytes)
+                if (i == 0) {
+                    println("Needs dictionary: ${inflater.needsDictionary()} or input: ${inflater.needsInput()}")
+                }
+
+                bos.write(tempBytes,0, i)
             }
+
+            return bos.array
+
+        } finally {
+            inflater.reset()
         }
 
-        return decompressedBytes.toByteArray()
-
-     */
     }
 
 }

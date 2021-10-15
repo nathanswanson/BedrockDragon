@@ -51,12 +51,13 @@ import java.lang.IllegalArgumentException
 
 object MinecraftPacketFactory {
     fun createIncomingPacketHandler(client: MinecraftClientPeer?, packet : EncapsulatedPacket): MinecraftHandler {
-
-        //strip first byte now that we know its a game packet
-        packet.payload.buffer().readByte()
+        val buf = packet.payload.buffer()
 
         //removes zlib compression
-        val decompressed = PacketCompression.decompress(packet.payload.buffer().discardReadBytes())
+        val decompressed = PacketCompression.decompress(
+            buf.readBytes(
+                buf.readableBytes())
+        )
 
         return when(packet.payload.buffer().readByte().toInt()) {
             MinecraftPacketConstants.LOGIN -> MinecraftLoginHandler(client, packet)

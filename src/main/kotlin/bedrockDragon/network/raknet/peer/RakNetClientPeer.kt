@@ -66,6 +66,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     override fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
         //Client has connected at this point
         if(packet.payload.buffer().getUnsignedByte(0).toInt() == PacketConstants.GAME_PACKET) {
+            packet.payload.buffer().readUnsignedByte()
             MinecraftPacketFactory.createIncomingPacketHandler(bedrockClient(), packet)
         } else {
             val handler = PacketSortFactory.createEncapsulatedPacketHandle(this, packet, channel)
