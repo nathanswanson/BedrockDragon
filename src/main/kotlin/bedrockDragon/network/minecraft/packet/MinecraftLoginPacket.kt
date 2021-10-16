@@ -45,7 +45,6 @@ package bedrockDragon.network.minecraft.packet
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.VarInt
-import com.philjay.jwt.JWT
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
@@ -55,7 +54,7 @@ class MinecraftLoginPacket(val packet: Packet): MinecraftPacket {
 
     var protocol = 0
     lateinit var chainData: JsonArray
-    lateinit var skinData: JWT
+    lateinit var skinData: Json
 
     override fun encode() {
 

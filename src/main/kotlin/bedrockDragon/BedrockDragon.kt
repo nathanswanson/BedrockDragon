@@ -167,6 +167,6 @@ fun main() {
 fun registerMods() {
     val mods = ModLoader.getModfolderContent()
     //remove any non jars from list
-    mods.filter { mod -> ModManager.authenticate(mod) }
+    //mods.filter { mod -> ModManager.authenticate(mod) }
 
 }

@@ -1,9 +1,9 @@
 package bedrockDragon.network.raknet.peer
 
-import com.philjay.jwt.JWT
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 
-class MinecraftClientPeer(val protocol: Int, val playerData: JsonArray, val skinData: JWT) {
+class MinecraftClientPeer(val protocol: Int, val playerData: JsonArray, val skinData: Json) {
     var status: PlayerStatus = PlayerStatus.Connected
 
 }

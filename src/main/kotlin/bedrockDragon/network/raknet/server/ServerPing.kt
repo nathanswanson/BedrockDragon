@@ -30,10 +30,9 @@
 package bedrockDragon.network.raknet.server
 
 import bedrockDragon.network.raknet.identifier.Identifier
-import java.net.InetSocketAddress
 import bedrockDragon.network.raknet.protocol.ConnectionType
+import java.net.InetSocketAddress
 import java.util.Objects
-import bedrockDragon.network.raknet.server.ServerPing
 
 /**
  * Contains information about a server ping such as who sent the ping and what

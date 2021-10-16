@@ -3,7 +3,7 @@ package bedrockDragon.network.raknet.handler.packethandler.connect
 import bedrockDragon.network.raknet.handler.packethandler.EncapsulatedPacketHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.peer.RakNetPeer
-import bedrockDragon.network.raknet.peer.Status
+import bedrockDragon.network.raknet.protocol.ConnectionStatus
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequest
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequestAccepted
@@ -21,7 +21,7 @@ class ConnectionRequestHandlerPost(override val sender: RakNetPeer, val packet: 
             connectionRequestPong.clientTimestamp = connectionRequestPing.timestamp
             connectionRequestPong.serverTimestamp = sender.server.timeStamp()
             connectionRequestPong.encode()
-            sender.status = Status.CONNECTED
+            sender.status = ConnectionStatus.CONNECTED
             sender.sendMessage(Reliability.RELIABLE_ORDERED, 0, connectionRequestPong)
 
         }

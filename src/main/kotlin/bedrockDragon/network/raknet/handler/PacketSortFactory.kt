@@ -1,25 +1,20 @@
 package bedrockDragon.network.raknet.handler
 
-import bedrockDragon.debug.clientSimulator.packet.ConnectionRequestAcceptedHandler
-import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.handler.packethandler.connect.ConnectionRequestHandlerPost
 import bedrockDragon.network.raknet.handler.packethandler.connect.IncomingConnectionHandler
 import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerOne
 import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.handler.packethandler.login.LoginHandler
 import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.packethandler.PacketHandler
 import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import bedrockDragon.network.raknet.handler.packethandler.PacketHandler
 import bedrockDragon.network.raknet.handler.packethandler.connect.ConnectedPingHandler
-import bedrockDragon.network.raknet.handler.packethandler.game.BedrockPacketHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import io.netty.channel.Channel
 import mu.KotlinLogging
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
-import java.util.zip.DataFormatException
-import java.util.zip.Inflater
 
 class PacketSortFactory {
     companion object {
@@ -76,11 +71,6 @@ class PacketSortFactory {
 
         //CLIENT PACKETS FOR CLIENT SIMULATION
 
-        fun createOutboundClientHandler(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
-            return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
-                PacketConstants.CONNECTION_REQUEST_ACCEPTED -> ConnectionRequestAcceptedHandler(sender, packet, channel)
-                else -> throw IllegalArgumentException("Unknown packet sent to factory.")
-            }
-        }
+
     }
 }

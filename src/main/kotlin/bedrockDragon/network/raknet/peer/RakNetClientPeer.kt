@@ -46,16 +46,16 @@ import bedrockDragon.DragonServer
 import bedrockDragon.network.minecraft.handler.MinecraftPacketFactory
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketSortFactory
+import bedrockDragon.network.raknet.protocol.ConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
-import kotlinx.serialization.json.Json
 import java.net.InetSocketAddress
 
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
     : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel){
 
-    var status: Status = Status.DISCONNECTED
+    var status: ConnectionStatus = ConnectionStatus.DISCONNECTED
     var clientPeer : MinecraftClientPeer? = null
 
 
@@ -78,10 +78,4 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     private fun bedrockClient(): MinecraftClientPeer? {
         return clientPeer
     }
-}
-
-
-
-enum class Status {
-    CONNECTED, DISCONNECTED
 }

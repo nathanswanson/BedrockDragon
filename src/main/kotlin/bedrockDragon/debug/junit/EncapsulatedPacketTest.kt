@@ -47,12 +47,10 @@ import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.login.ConnectionRequest
 import bedrockDragon.network.raknet.protocol.message.CustomFourPacket
-import bedrockDragon.network.raknet.protocol.message.CustomPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import org.junit.jupiter.api.assertAll
 import java.util.*
 import kotlin.collections.ArrayList
 
