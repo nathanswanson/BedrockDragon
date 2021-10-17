@@ -63,16 +63,24 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
      * When a registered client sends a packet this function is called with that packet
      */
 
-    override fun handleEncapsulatedPacket(packet: EncapsulatedPacket) {
+    override fun handleEncapsulatedPacket(packet: EncapsulatedPacket): EncapsulatedPacket {
+
+        val packetUnSplit = super.handleEncapsulatedPacket(packet)
         //Client has connected at this point
-        if(packet.payload.buffer().getUnsignedByte(0).toInt() == PacketConstants.GAME_PACKET) {
-            packet.payload.buffer().readUnsignedByte()
-            MinecraftPacketFactory.createIncomingPacketHandler(bedrockClient(), packet)
+        if(packetUnSplit.payload.buffer().getUnsignedByte(0).toInt() == PacketConstants.GAME_PACKET) {
+            if(!packetUnSplit.split)
+            {
+                packetUnSplit.payload.buffer().readUnsignedByte()
+                MinecraftPacketFactory.createIncomingPacketHandler(bedrockClient(), packetUnSplit)
+            }
         } else {
-            val handler = PacketSortFactory.createEncapsulatedPacketHandle(this, packet, channel)
+            val handler = PacketSortFactory.createEncapsulatedPacketHandle(this, packetUnSplit, channel)
             handler.responseToClient()
             handler.responseToServer()
         }
+
+        //TODO make sure it returns clone not original
+        return packetUnSplit
     }
 
     private fun bedrockClient(): MinecraftClientPeer? {

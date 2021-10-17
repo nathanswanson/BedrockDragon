@@ -52,14 +52,14 @@ import java.lang.IllegalArgumentException
 object MinecraftPacketFactory {
     fun createIncomingPacketHandler(client: MinecraftClientPeer?, packet : EncapsulatedPacket): MinecraftHandler {
         val buf = packet.payload.buffer()
-
+        val bytes = ByteArray(buf.readableBytes())
+        buf.readBytes(bytes)
         //removes zlib compression
         val decompressed = PacketCompression.decompress(
-            buf.readBytes(
-                buf.readableBytes())
+            bytes
         )
 
-        return when(packet.payload.buffer().readByte().toInt()) {
+        return when(decompressed[0].toInt()) {
             MinecraftPacketConstants.LOGIN -> MinecraftLoginHandler(client, packet)
             else -> throw IllegalArgumentException("Unknown packet sent to factory.")
         }
