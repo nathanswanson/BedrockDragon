@@ -43,14 +43,17 @@
 
 package bedrockDragon.network.minecraft.packet
 
+import bedrockDragon.network.JWT
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.VarInt
+import io.fusionauth.jwt.JWTDecoder
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.decodeFromStream
+import java.nio.charset.StandardCharsets
 
-class MinecraftLoginPacket(val packet: Packet): MinecraftPacket {
+class MinecraftLoginPacket(val packet: Packet): MinecraftPacket(packet) {
 
     var protocol = 0
     lateinit var chainData: JsonArray
@@ -62,19 +65,31 @@ class MinecraftLoginPacket(val packet: Packet): MinecraftPacket {
 
     override fun decode() {
         protocol = packet.readInt()
-        val jwt = packet.buffer().readSlice(VarInt.readUnsignedVarInt(packet.inputStream).toInt())
-        println(jwt)
-    }
+        if(protocol == 0) {
+            packet.buffer().readerIndex(packet.buffer().readerIndex()+2)
+            protocol = packet.readInt()
+        }
 
-    override fun encrypt() {
-        TODO("Not yet implemented")
-    }
+        //chain data
 
-    override fun decrypt() {
-        TODO("Not yet implemented")
-    }
+        //dont know what this is yet
+        VarInt.readUnsignedVarInt(packet.inputStream)
 
-    override fun checkCryptStatus() {
-        TODO("Not yet implemented")
+        val buf = packet.buffer()
+
+        //val temp = Base64.decode(buf.slice(buf.readerIndex()+4, buf.readIntLE()))
+
+        val chainString = Json.decodeFromString<ChainData>(buf.slice(buf.readerIndex()+4, buf.readIntLE()).toString(StandardCharsets.UTF_8))
+
+
+
+
+       val chain1 = JWT(chainString.chain[0])
+       val chain2 = JWT(chainString.chain[1])
+       val chain3 = JWT(chainString.chain[2])
+
     }
 }
+
+@Serializable
+data class ChainData(val chain: Array<String>)

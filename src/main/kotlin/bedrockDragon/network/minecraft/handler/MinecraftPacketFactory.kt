@@ -43,9 +43,11 @@
 
 package bedrockDragon.network.minecraft.handler
 
+import bedrockDragon.network.minecraft.packet.MinecraftLoginPacket
 import bedrockDragon.network.minecraft.packet.MinecraftPacketConstants
 import bedrockDragon.network.minecraft.packet.zlib.PacketCompression
 import bedrockDragon.network.raknet.peer.MinecraftClientPeer
+import bedrockDragon.network.raknet.protocol.game.GamePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import java.lang.IllegalArgumentException
 
@@ -58,9 +60,11 @@ object MinecraftPacketFactory {
         val decompressed = PacketCompression.decompress(
             bytes
         )
+        val inGamePacket = GamePacket(decompressed)
+        //decompressed now get header
 
-        return when(decompressed[0].toInt()) {
-            MinecraftPacketConstants.LOGIN -> MinecraftLoginHandler(client, packet)
+        return when(inGamePacket.gamePacketId) {
+            MinecraftPacketConstants.LOGIN -> MinecraftLoginHandler(client, inGamePacket)
             else -> throw IllegalArgumentException("Unknown packet sent to factory.")
         }
     }

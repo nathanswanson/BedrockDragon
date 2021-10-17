@@ -44,11 +44,13 @@
 
 package bedrockDragon.network.minecraft.packet
 
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
+import bedrockDragon.network.raknet.handler.PacketConstants
 
-interface MinecraftPacket {
-    fun encode()
-    fun decode()
-    fun encrypt()
-    fun decrypt()
-    fun checkCryptStatus()
+
+open class MinecraftPacket(packet: Packet) : RakNetPacket(PacketConstants.GAME_PACKET) {
+    init {
+
+    }
 }

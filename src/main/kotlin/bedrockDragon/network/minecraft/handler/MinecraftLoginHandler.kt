@@ -44,18 +44,21 @@
 package bedrockDragon.network.minecraft.handler
 
 import bedrockDragon.network.minecraft.packet.MinecraftLoginPacket
+import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.peer.MinecraftClientPeer
+import bedrockDragon.network.raknet.protocol.game.GamePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 
-class MinecraftLoginHandler(var client: MinecraftClientPeer?, packet: EncapsulatedPacket) : MinecraftHandler() {
+class MinecraftLoginHandler(var client: MinecraftClientPeer?, packet: GamePacket) : MinecraftHandler() {
     init {
         client = createClient(packet)
     }
 
     override fun pass() {}
 
-    private fun createClient(packet: EncapsulatedPacket): MinecraftClientPeer {
-        val loginPacket = MinecraftLoginPacket(packet.payload)
+    private fun createClient(packet: GamePacket): MinecraftClientPeer {
+
+        val loginPacket = MinecraftLoginPacket(Packet(packet.gamePacketContent))
         loginPacket.decode()
 
         return MinecraftClientPeer(loginPacket.protocol, loginPacket.chainData, loginPacket.skinData)
