@@ -40,6 +40,7 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
 
     override fun responseToServer() {
          //NO RESPONSE
+
     }
 
 

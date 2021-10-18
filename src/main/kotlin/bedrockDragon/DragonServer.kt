@@ -34,7 +34,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -43,7 +43,6 @@
 
 package bedrockDragon
 
-import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.network.raknet.handler.PacketSortFactory
 import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
@@ -52,23 +51,16 @@ import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
-import bedrockDragon.network.raknet.server.RaknetHTTPServerListener
 import bedrockDragon.ticking.ChunkTicker
 import bedrockDragon.ticking.EntityTicker
 import bedrockDragon.ticking.WorldTicker
 import io.netty.bootstrap.Bootstrap
-import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
-import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioDatagramChannel
-import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.*
-import io.netty.handler.logging.LogLevel
-import io.netty.handler.logging.LoggingHandler
+import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -78,8 +70,6 @@ import java.net.InetSocketAddress
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.Consumer
-
 
 /**
  * The heart of the entire server. this object initializes all coroutines,
@@ -95,8 +85,8 @@ import java.util.function.Consumer
  */
 class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
 
-    private val logger = KotlinLogging.logger {}
     private var eventThreadCount = 0
+    private val logger = KotlinLogging.logger {}
     private var isRunning = false
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val startTimeStamp = System.currentTimeMillis()
@@ -184,8 +174,10 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     }
 
+    //TODO COMPLETE REDO
+
     @Throws(NullPointerException::class)
-    fun callEvent(event: Consumer<in RakNetServerListener?>?) {
+    fun callEvent(event: MessagePassingQueue.Consumer<in RakNetServerListener?>?) {
         if (event == null) {
             throw NullPointerException("Event cannot be null")
         }
@@ -208,8 +200,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
     }
 
-
-
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
 
         if(clients.containsKey(sender)) {
@@ -221,6 +211,8 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.mtu, channel, sender)
             }
         }
+
+        packet.buffer().release()
     }
 
     fun handleHandlerException(causeAddress: InetSocketAddress, cause: Throwable) {
@@ -230,4 +222,5 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     fun timeStamp(): Long {
         return System.currentTimeMillis() - startTimeStamp
     }
+
 }

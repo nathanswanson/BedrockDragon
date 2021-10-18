@@ -85,11 +85,15 @@ class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHand
                 server.disconnect(client.value, reason ?: "Address blocked")
             }
         }
+        //TODO EVENT
+
         server.callEvent { listener: RakNetServerListener? ->
             listener!!.onBlock(
                 server, address, reason, time
             )
         }
+
+
         //logger.info("Blocked address " + address + " due to \"" + reason + "\" for " + time + " milliseconds");
     }
 
@@ -102,12 +106,16 @@ class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHand
     private fun unblockAddress(address: InetAddress?) {
         if (address != null) {
             if (blocked.remove(address) != null) {
+                //TODO EVENT
+
                 server.callEvent { listener: RakNetServerListener? ->
                     listener!!.onUnblock(
                         server, address
                     )
                 }
-                //logger.info("Unblocked address " + address);
+                //logger.info("Unblocked address " + address);\
+
+
             }
         }
     }
@@ -149,10 +157,14 @@ class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHand
             // Handle the packet and release the buffer
             server.handleMessage(sender, packet)
             logger.debug("Sent packet to server and reset datagram buffer read position");
+            //TODO EVENT
+
             server.callEvent { listener: RakNetServerListener? ->
                 datagram.content().readerIndex(0) // Reset index
                 listener!!.handleNettyMessage(server, sender, datagram.content())
             }
+
+
             if (datagram.release() /* No longer needed */) {
                 	logger.trace("Released datagram");
             } else {

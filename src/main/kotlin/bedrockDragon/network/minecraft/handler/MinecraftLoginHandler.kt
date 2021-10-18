@@ -46,8 +46,8 @@ package bedrockDragon.network.minecraft.handler
 import bedrockDragon.network.minecraft.packet.MinecraftLoginPacket
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.peer.MinecraftClientPeer
-import bedrockDragon.network.raknet.protocol.game.GamePacket
-import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
+import bedrockDragon.network.raknet.game.GamePacket
+import kotlinx.serialization.json.JsonObject
 
 class MinecraftLoginHandler(var client: MinecraftClientPeer?, packet: GamePacket) : MinecraftHandler() {
     init {
@@ -61,6 +61,6 @@ class MinecraftLoginHandler(var client: MinecraftClientPeer?, packet: GamePacket
         val loginPacket = MinecraftLoginPacket(Packet(packet.gamePacketContent))
         loginPacket.decode()
 
-        return MinecraftClientPeer(loginPacket.protocol, loginPacket.chainData, loginPacket.skinData)
+        return MinecraftClientPeer(loginPacket.protocol, loginPacket.chainData as JsonObject, loginPacket.skinData)
     }
  }

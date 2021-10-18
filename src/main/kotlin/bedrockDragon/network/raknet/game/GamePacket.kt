@@ -1,4 +1,4 @@
-package bedrockDragon.network.raknet.protocol.game
+package bedrockDragon.network.raknet.game
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.VarInt
@@ -13,7 +13,5 @@ class GamePacket(decompressed: ByteArray) : Packet() {
         gamePacketId = stream.read()
         gamePacketContent = stream.readBytes()
         stream.close()
-
-
     }
 }

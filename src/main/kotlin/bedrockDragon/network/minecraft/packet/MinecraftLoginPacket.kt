@@ -49,15 +49,14 @@ import bedrockDragon.network.raknet.VarInt
 import io.fusionauth.jwt.JWTDecoder
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.*
 import java.nio.charset.StandardCharsets
 
 class MinecraftLoginPacket(val packet: Packet): MinecraftPacket(packet) {
 
     var protocol = 0
-    lateinit var chainData: JsonArray
-    lateinit var skinData: Json
+    lateinit var chainData: JsonElement
+    lateinit var skinData: String
 
     override fun encode() {
 
@@ -72,24 +71,57 @@ class MinecraftLoginPacket(val packet: Packet): MinecraftPacket(packet) {
 
         //chain data
 
-        //dont know what this is yet
+        //don't know what this is yet
         VarInt.readUnsignedVarInt(packet.inputStream)
 
         val buf = packet.buffer()
 
-        //val temp = Base64.decode(buf.slice(buf.readerIndex()+4, buf.readIntLE()))
+        val chainByteIdx = buf.readIntLE()
 
-        val chainString = Json.decodeFromString<ChainData>(buf.slice(buf.readerIndex()+4, buf.readIntLE()).toString(StandardCharsets.UTF_8))
+        val chainString = Json.decodeFromString<ChainData>(buf.slice(buf.readerIndex(), chainByteIdx).toString(StandardCharsets.UTF_8))
 
+        //I skip 4 because I don't need the LEInt anyways
+        buf.readerIndex(buf.readerIndex() + chainByteIdx + 4)
 
+        //TODO SKIN PARSER
+         skinData = JWT(buf.toString(StandardCharsets.UTF_8)).payload
 
+        //I don't understand this yet. Client sends 2 seemingly useless JWT then a third with the content I need
 
-       val chain1 = JWT(chainString.chain[0])
-       val chain2 = JWT(chainString.chain[1])
-       val chain3 = JWT(chainString.chain[2])
+        for(c in chainString.chain) {
+            val decodedJWT = JWT(c)
+            if(decodedJWT.payload.contains("extraData")) {
+                val decoded = Json.decodeFromString<ExtraData>(decodedJWT.payload)
+                chainData = decoded.extraData
+
+            }
+        }
+
 
     }
-}
 
-@Serializable
-data class ChainData(val chain: Array<String>)
+
+    @Serializable
+    data class ChainData(val chain: Array<String>) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ChainData
+
+            if (!chain.contentEquals(other.chain)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return chain.contentHashCode()
+        }
+    }
+
+    @Serializable
+    data class SkinData(val skin: String)
+
+    @Serializable
+    data class ExtraData(val nbf: Long, val extraData: JsonElement, val randomNonce: Long, val iss: String, val exp: Long, val iat: Long, val identityPublicKey: String)
+}

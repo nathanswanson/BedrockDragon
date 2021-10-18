@@ -43,11 +43,10 @@
 
 package bedrockDragon.network.minecraft.handler
 
-import bedrockDragon.network.minecraft.packet.MinecraftLoginPacket
 import bedrockDragon.network.minecraft.packet.MinecraftPacketConstants
 import bedrockDragon.network.minecraft.packet.zlib.PacketCompression
 import bedrockDragon.network.raknet.peer.MinecraftClientPeer
-import bedrockDragon.network.raknet.protocol.game.GamePacket
+import bedrockDragon.network.raknet.game.GamePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import java.lang.IllegalArgumentException
 

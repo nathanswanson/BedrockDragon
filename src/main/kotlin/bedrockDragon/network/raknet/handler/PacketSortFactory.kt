@@ -28,6 +28,7 @@ class PacketSortFactory {
                 PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_2 -> ConnectionRequestHandlerTwo(sender, packet, channel)
                 else -> throw IllegalArgumentException("Unknown packet sent to factory.")
             }
+
         }
 
         fun createEncapsulatedPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {

@@ -78,7 +78,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             handler.responseToClient()
             handler.responseToServer()
         }
-
         //TODO make sure it returns clone not original
         return packetUnSplit
     }
