@@ -1,4 +1,4 @@
-package bedrockDragon.network.raknet.handler.packethandler.connect
+package bedrockDragon.network.raknet.handler.handlertype.connect
 
 import bedrockDragon.network.raknet.handler.EncapsulatedPacketHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer

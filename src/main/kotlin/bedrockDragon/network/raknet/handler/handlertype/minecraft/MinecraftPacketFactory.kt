@@ -41,5 +41,32 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.network.raknet.handler.packethandler.login
+package bedrockDragon.network.raknet.handler.handlertype.minecraft
 
+import bedrockDragon.network.minecraft.handler.MinecraftHandler
+import bedrockDragon.network.minecraft.packet.MinecraftPacketConstants
+import bedrockDragon.network.minecraft.packet.zlib.PacketCompression
+import bedrockDragon.network.raknet.game.GamePacket
+import bedrockDragon.network.raknet.peer.MinecraftClientPeer
+import bedrockDragon.network.raknet.peer.MinecraftPeer
+import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
+import java.lang.IllegalArgumentException
+
+object MinecraftPacketFactory {
+    fun createIncomingPacketHandler(client: MinecraftPeer?, packet : EncapsulatedPacket): MinecraftHandler {
+        val buf = packet.payload.buffer()
+        val bytes = ByteArray(buf.readableBytes())
+        buf.readBytes(bytes)
+        //removes zlib compression
+        val decompressed = PacketCompression.decompress(
+            bytes
+        )
+        val inGamePacket = GamePacket(decompressed)
+        //decompressed now get header
+
+        return when(inGamePacket.gamePacketId) {
+            MinecraftPacketConstants.LOGIN -> MinecraftLoginHandler(client as MinecraftClientPeer, inGamePacket)
+            else -> throw IllegalArgumentException("Unknown packet sent to factory.")
+        }
+    }
+}

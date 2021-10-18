@@ -1,22 +1,21 @@
 package bedrockDragon.network.raknet.handler
 
-import bedrockDragon.network.raknet.handler.packethandler.connect.ConnectionRequestHandlerPost
-import bedrockDragon.network.raknet.handler.packethandler.connect.IncomingConnectionHandler
-import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerOne
-import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
-import bedrockDragon.network.raknet.handler.packethandler.login.LoginHandler
+import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectionRequestHandlerPost
+import bedrockDragon.network.raknet.handler.handlertype.connect.IncomingConnectionHandler
+import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerOne
+import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.handler.handlertype.login.LoginHandler
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.handler.packethandler.PacketHandler
 import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import bedrockDragon.network.raknet.handler.packethandler.connect.ConnectedPingHandler
+import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectedPingHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import io.netty.channel.Channel
 import mu.KotlinLogging
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
 
-class PacketSortFactory {
+class ServerHandlerFactory {
     companion object {
 
         private val logger = KotlinLogging.logger {}

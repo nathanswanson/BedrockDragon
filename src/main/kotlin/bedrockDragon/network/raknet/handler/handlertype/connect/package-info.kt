@@ -40,54 +40,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package bedrockDragon.network.minecraft.packet.zlib
 
-import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
-import java.io.IOException
-import java.util.zip.Inflater
+package bedrockDragon.network.raknet.handler.handlertype.connect
 
-object PacketCompression {
-
-    private val INFLATER_RAW = ThreadLocal.withInitial {
-        Inflater(
-            true
-        )
-    }
-
-
-    private val FASTBYTE = ThreadLocal.withInitial {
-        FastByteArrayOutputStream(1024)
-    }
-
-    private val BUFFER: ThreadLocal<ByteArray> = ThreadLocal.withInitial { ByteArray(2 * 1024 * 1024) }
-
-    fun decompress(buffer: ByteArray): ByteArray {
-        val inflater = PacketCompression.INFLATER_RAW.get()
-
-        try {
-            inflater.setInput(buffer)
-            inflater.finished()
-
-            val bos = FASTBYTE.get()
-            bos.reset()
-
-            val tempBytes = BUFFER.get()
-
-            while(!inflater.finished()) {
-                val i = inflater.inflate(tempBytes)
-                if (i == 0) {
-                    throw IOException("Needs dictionary: ${inflater.needsDictionary()} or input: ${inflater.needsInput()}")
-                }
-
-                bos.write(tempBytes,0, i)
-            }
-
-            return bos.array
-
-        } finally {
-            inflater.reset()
-        }
-
-    }
-
-}

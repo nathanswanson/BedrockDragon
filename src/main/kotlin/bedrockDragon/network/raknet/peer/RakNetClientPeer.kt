@@ -43,9 +43,9 @@
 package bedrockDragon.network.raknet.peer
 
 import bedrockDragon.DragonServer
-import bedrockDragon.network.minecraft.handler.MinecraftPacketFactory
 import bedrockDragon.network.raknet.handler.PacketConstants
-import bedrockDragon.network.raknet.handler.PacketSortFactory
+import bedrockDragon.network.raknet.handler.ServerHandlerFactory
+import bedrockDragon.network.raknet.handler.handlertype.minecraft.MinecraftPacketFactory
 import bedrockDragon.network.raknet.protocol.ConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -71,10 +71,10 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             if(!packetUnSplit.split)
             {
                 packetUnSplit.payload.buffer().readUnsignedByte()
-                MinecraftPacketFactory.createIncomingPacketHandler(bedrockClient(), packetUnSplit)
+                MinecraftPacketFactory.createIncomingPacketHandler(bedrockClient() as MinecraftClientPeer, packetUnSplit)
             }
         } else {
-            val handler = PacketSortFactory.createEncapsulatedPacketHandle(this, packetUnSplit, channel)
+            val handler = ServerHandlerFactory.createEncapsulatedPacketHandle(this, packetUnSplit, channel)
             handler.responseToClient()
             handler.responseToServer()
         }

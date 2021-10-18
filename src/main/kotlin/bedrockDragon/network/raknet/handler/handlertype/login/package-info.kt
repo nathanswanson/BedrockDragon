@@ -41,21 +41,5 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.network.http
+package bedrockDragon.network.raknet.handler.handlertype.login
 
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-
-object HTTPControl {
-    fun sendRequest(url: URI) {
-        var client = HttpClient.newHttpClient()
-
-
-        var request = HttpRequest.newBuilder()
-            .uri(url)
-            .build()
-
-       // val response = client.send(request, TODO())
-    }
-}

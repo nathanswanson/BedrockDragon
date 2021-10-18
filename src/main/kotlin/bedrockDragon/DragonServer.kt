@@ -43,8 +43,8 @@
 
 package bedrockDragon
 
-import bedrockDragon.network.raknet.handler.PacketSortFactory
-import bedrockDragon.network.raknet.handler.packethandler.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.handler.ServerHandlerFactory
+import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
@@ -205,7 +205,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         if(clients.containsKey(sender)) {
                 clients[sender]!!.incomingPacket(packet)
         } else {
-            val packetHandler = PacketSortFactory.createPacketHandle(sender, packet, channel)
+            val packetHandler = ServerHandlerFactory.createPacketHandle(sender, packet, channel)
             packetHandler.responseToClient()
             if(packetHandler is ConnectionRequestHandlerTwo && packetHandler.finished) {
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.mtu, channel, sender)

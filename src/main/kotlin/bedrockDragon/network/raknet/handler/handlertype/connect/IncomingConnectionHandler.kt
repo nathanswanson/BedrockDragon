@@ -1,6 +1,6 @@
-package bedrockDragon.network.raknet.handler.packethandler.connect
+package bedrockDragon.network.raknet.handler.handlertype.connect
 
-import bedrockDragon.network.raknet.handler.packethandler.PacketHandler
+import bedrockDragon.network.raknet.handler.PacketHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.protocol.ConnectionStatus
 import bedrockDragon.network.raknet.protocol.login.NewIncomingConnection

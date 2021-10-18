@@ -41,5 +41,27 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.network.raknet.handler.packethandler.game
+package bedrockDragon.network.raknet.handler.handlertype.minecraft
 
+import bedrockDragon.network.minecraft.handler.MinecraftHandler
+import bedrockDragon.network.minecraft.packet.MinecraftLoginPacket
+import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.game.GamePacket
+import bedrockDragon.network.raknet.peer.MinecraftClientPeer
+import kotlinx.serialization.json.JsonObject
+
+class MinecraftLoginHandler(var client: MinecraftClientPeer?, packet: GamePacket) : MinecraftHandler() {
+    init {
+        client = createClient(packet)
+    }
+
+    override fun pass() {}
+
+    private fun createClient(packet: GamePacket): MinecraftClientPeer {
+
+        val loginPacket = MinecraftLoginPacket(Packet(packet.gamePacketContent))
+        loginPacket.decode()
+
+        return MinecraftClientPeer(loginPacket.protocol, loginPacket.chainData as JsonObject, loginPacket.skinData)
+    }
+ }
