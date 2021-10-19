@@ -11,7 +11,7 @@ import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
-class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
+class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel, private val pongId: Long) : PacketHandler(channel) {
 
 
     override fun responseToClient() {
@@ -26,7 +26,7 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
 
             val pong = UnconnectedPong()
             pong.timestamp = unconnectedPing.timestamp
-            pong.pongId = DragonServer.pongId
+            pong.pongId = pongId
             pong.identifier = pingEvent.identifier
             pong.encode()
             if(!pong.failed()) {

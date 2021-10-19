@@ -44,6 +44,7 @@
 package bedrockDragon
 
 import bedrockDragon.mod.loader.ModLoader
+import bedrockDragon.network.raknet.peer.MinecraftPeer
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
@@ -151,6 +152,8 @@ fun main() {
         serverPropeties.getProperty("server-ip"),
         serverPropeties.getProperty("server-port").toInt()
     )
+
+    //val motd = MinecraftPeer()
 
     val server = DragonServer(bindAddress)
 

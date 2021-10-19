@@ -43,12 +43,22 @@
 
 package bedrockDragon
 
-import bedrockDragon.network.raknet.handler.ServerHandlerFactory
+import bedrockDragon.DragonServer.ServerHandlerFactory.pongId
+import bedrockDragon.network.Peer
 import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerTwo
-import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
+import bedrockDragon.network.raknet.handler.PacketConstants
+import bedrockDragon.network.raknet.handler.PacketHandler
+import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectedPingHandler
+import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectionRequestHandlerPost
+import bedrockDragon.network.raknet.handler.handlertype.connect.IncomingConnectionHandler
+import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerOne
+import bedrockDragon.network.raknet.handler.handlertype.login.LoginHandler
+import bedrockDragon.network.raknet.identifier.MinecraftIdentifier
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
+import bedrockDragon.network.raknet.peer.RakNetPeer
+import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
 import bedrockDragon.ticking.ChunkTicker
@@ -66,6 +76,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -83,32 +94,26 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @author Nathan Swanson
  * @since Bedrock Dragon ALPHA
  */
-class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener {
+class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerListener, Peer(bindAddress) {
 
     private var eventThreadCount = 0
     private val logger = KotlinLogging.logger {}
-    private var isRunning = false
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
     private var group: NioEventLoopGroup = NioEventLoopGroup()
     var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
+
+    //init in start
     private lateinit var channel: Channel
     private lateinit var handle : RakNetServerHandler
     private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
-    companion object {
-        var guid : Long = 0
-        var pongId : Long = 0
-        var mtu = RakNet.getMaximumTransferUnit()
-    }
 
-    fun start(): Boolean {
+    override fun start(): Boolean {
 
         val uuid = UUID.randomUUID()
-
-        guid = uuid.mostSignificantBits
         pongId = uuid.leastSignificantBits
-        mtu = RakNet.getMaximumTransferUnit(bindAddress)
+
         logger.info { "Starting RakNet" }
 
         handle = RakNetServerHandler(this)
@@ -150,7 +155,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
     }
 
-    fun stop(): Boolean {
+    override fun stop(): Boolean {
         isRunning = false
         return true
     }
@@ -208,7 +213,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             val packetHandler = ServerHandlerFactory.createPacketHandle(sender, packet, channel)
             packetHandler.responseToClient()
             if(packetHandler is ConnectionRequestHandlerTwo && packetHandler.finished) {
-                clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.mtu, channel, sender)
+                clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.clientmtu, channel, sender)
             }
         }
 
@@ -221,6 +226,32 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     fun timeStamp(): Long {
         return System.currentTimeMillis() - startTimeStamp
+    }
+
+    object ServerHandlerFactory {
+        private val logger = KotlinLogging.logger {}
+
+        //set in server start()
+        var pongId = 0L
+        fun createPacketHandle(sender: InetSocketAddress, packet: RakNetPacket, channel: Channel) : PacketHandler {
+            return when(packet.id.toInt()) {
+                PacketConstants.UNCONNECTED_PING -> LoginHandler(sender, packet, channel, pongId)
+                PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_1 -> ConnectionRequestHandlerOne(sender, packet, channel, guid)
+                PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_2 -> ConnectionRequestHandlerTwo(sender, packet, channel, guid, mtu)
+                else -> throw IllegalArgumentException("Unknown packet sent to factory.")
+            }
+
+        }
+
+        fun createEncapsulatedPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
+            return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
+                PacketConstants.CONNECTED_PING -> ConnectedPingHandler(sender, packet, channel)
+                PacketConstants.CONNECTION_REQUEST -> ConnectionRequestHandlerPost(sender, packet, channel)
+                PacketConstants.NEW_INCOMING_CONNECTION -> IncomingConnectionHandler(sender as RakNetClientPeer, packet, channel)
+                else -> throw IllegalArgumentException("Unknown packet sent to factory.")
+            }
+
+        }
     }
 
 }

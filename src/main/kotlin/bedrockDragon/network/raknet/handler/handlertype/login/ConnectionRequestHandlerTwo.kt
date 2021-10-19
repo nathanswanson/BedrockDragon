@@ -1,6 +1,5 @@
 package bedrockDragon.network.raknet.handler.handlertype.login
 
-import bedrockDragon.DragonServer
 import bedrockDragon.network.raknet.RakNet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.handler.PacketHandler
@@ -11,11 +10,12 @@ import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
-class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
+class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel,
+                                  private val guid: Long,private val mtu: Int) : PacketHandler(channel) {
 
     lateinit var connectionType: ConnectionType
     var clientGuid = 0L
-    var mtu = 0
+    var clientmtu = 0
 
     override fun responseToClient() {
         //Must check if able to join not banned, server not full, etc
@@ -24,13 +24,13 @@ class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: Rak
 
         if(connectionRequestPing.maximumTransferUnit >= RakNet.MINIMUM_MTU_SIZE) {
             val connectionRequestPong = OpenConnectionResponseTwo()
-            connectionRequestPong.serverGuid = DragonServer.guid
+            connectionRequestPong.serverGuid = guid
             connectionRequestPong.clientAddress = sender
             connectionRequestPong.maximumTransferUnit =
-                connectionRequestPing.maximumTransferUnit.coerceAtMost(DragonServer.mtu)
+                connectionRequestPing.maximumTransferUnit.coerceAtMost(mtu)
             connectionRequestPong.encryptionEnabled = false
 
-            mtu = connectionRequestPong.maximumTransferUnit
+            clientmtu = connectionRequestPong.maximumTransferUnit
             clientGuid = connectionRequestPing.clientGuid
             connectionType = connectionRequestPing.connectionType!!
             connectionRequestPong.encode()

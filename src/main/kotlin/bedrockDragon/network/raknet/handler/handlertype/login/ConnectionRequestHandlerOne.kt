@@ -9,14 +9,14 @@ import io.netty.channel.Channel
 import io.netty.channel.socket.DatagramPacket
 import java.net.InetSocketAddress
 
-class ConnectionRequestHandlerOne(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel) : PacketHandler(channel) {
+class ConnectionRequestHandlerOne(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel, val guid : Long) : PacketHandler(channel) {
     override fun responseToClient() {
         //Must check if able to join not banned, server not full, etc
         val connectionRequestPing = OpenConnectionRequestOne(packet)
         connectionRequestPing.decode()
 
         val connectionRequestPong = OpenConnectionResponseOne()
-        connectionRequestPong.serverGuid = DragonServer.guid
+        connectionRequestPong.serverGuid = guid
         connectionRequestPong.useSecurity = false
         connectionRequestPong.maximumTransferUnit = connectionRequestPing.maximumTransferUnit
         connectionRequestPong.encode()
