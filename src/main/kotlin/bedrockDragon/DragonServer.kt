@@ -43,19 +43,19 @@
 
 package bedrockDragon
 
+import bedrockDragon.DragonServer.ServerHandlerFactory.guid
 import bedrockDragon.DragonServer.ServerHandlerFactory.pongId
 import bedrockDragon.network.Peer
-import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerTwo
+import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketHandler
-import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectedPingHandler
-import bedrockDragon.network.raknet.handler.handlertype.connect.ConnectionRequestHandlerPost
-import bedrockDragon.network.raknet.handler.handlertype.connect.IncomingConnectionHandler
-import bedrockDragon.network.raknet.handler.handlertype.login.ConnectionRequestHandlerOne
-import bedrockDragon.network.raknet.handler.handlertype.login.LoginHandler
-import bedrockDragon.network.raknet.identifier.MinecraftIdentifier
+import bedrockDragon.network.raknet.handler.connect.ConnectedPingHandler
+import bedrockDragon.network.raknet.handler.connect.ConnectionRequestHandlerPost
+import bedrockDragon.network.raknet.handler.connect.IncomingConnectionHandler
+import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerOne
+import bedrockDragon.network.raknet.handler.login.LoginHandler
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -102,6 +102,8 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
     private var group: NioEventLoopGroup = NioEventLoopGroup()
+    private var playerCount = 0
+    //TODO MAKE PRIVATE
     var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
 
     //init in start
@@ -113,6 +115,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         val uuid = UUID.randomUUID()
         pongId = uuid.leastSignificantBits
+
+        ServerHandlerFactory.guid = guid
+        ServerHandlerFactory.mtu = mtu
 
         logger.info { "Starting RakNet" }
 
@@ -176,9 +181,13 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     }
 
     fun disconnect(client: RakNetClientPeer, s: String) {
-
+        try {
+            clients.remove(client.sender)
+            playerCount--
+        } catch (e: java.lang.NullPointerException) {
+            logger.info { "$client does not exist but disconnect was called!" }
+        }
     }
-
     //TODO COMPLETE REDO
 
     @Throws(NullPointerException::class)
@@ -214,6 +223,8 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             packetHandler.responseToClient()
             if(packetHandler is ConnectionRequestHandlerTwo && packetHandler.finished) {
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.clientmtu, channel, sender)
+                //todo playercount incremented when minecraft login finalized not when raknet is.
+                playerCount++
             }
         }
 
@@ -233,6 +244,9 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         //set in server start()
         var pongId = 0L
+        var guid = 0L
+        var mtu = 0
+
         fun createPacketHandle(sender: InetSocketAddress, packet: RakNetPacket, channel: Channel) : PacketHandler {
             return when(packet.id.toInt()) {
                 PacketConstants.UNCONNECTED_PING -> LoginHandler(sender, packet, channel, pongId)
