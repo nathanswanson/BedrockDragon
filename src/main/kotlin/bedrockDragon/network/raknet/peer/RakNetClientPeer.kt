@@ -43,32 +43,39 @@
 package bedrockDragon.network.raknet.peer
 
 import bedrockDragon.DragonServer
+import bedrockDragon.network.PlayerStatus
+import bedrockDragon.network.auth.MojangAuth
+import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.game.GamePacket
 import bedrockDragon.network.raknet.handler.MinecraftHandler
 import bedrockDragon.network.raknet.handler.PacketConstants
-import bedrockDragon.network.raknet.handler.minecraft.MinecraftLoginHandler
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.protocol.game.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
+import bedrockDragon.reactive.player.PlayerObservable
+import com.nimbusds.jose.JWSObject
 import io.netty.channel.Channel
 import io.reactivex.rxjava3.core.Observable
 import org.jetbrains.annotations.Nullable
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
 
-class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress,
-                       override val observable: Observable<Any>
-)
-    : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel), ReactSocket<PlayerStatus> {
+class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
+    : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel) {
 
-
+    //TODO status safety
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
-    var clientPeer : MinecraftClientPeer? = null
+    var observer: Observable<Any> = Observable.empty()
+    private var clientPeer : MinecraftClientPeer? = null
 
 
+    public fun setMinecraftClient(protocol: Int, chainData: List<JWSObject>, skinData: String) {
+        clientPeer = MinecraftClientPeer(protocol,chainData,skinData, observer)
+    }
     /**
      * When a registered client sends a packet this function is called with that packet
      */
@@ -85,7 +92,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             if(!packetUnSplit.split)
             {
                 packetUnSplit.payload.buffer().readUnsignedByte()
-                MinecraftPacketFactory.createIncomingPacketHandler(clientPeer , packetUnSplit)
+                MinecraftPacketFactory().createIncomingPacketHandler(clientPeer , packetUnSplit)
             }
         } else {
             val handler = DragonServer.ServerHandlerFactory.createEncapsulatedPacketHandle(this, packetUnSplit, channel)
@@ -100,8 +107,55 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         return clientPeer
     }
 
-    object MinecraftPacketFactory {
-        fun createIncomingPacketHandler(@Nullable client: MinecraftPeer?, packet: EncapsulatedPacket): MinecraftHandler {
+    private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String,
+                                    override var observable: Observable<Any>): ReactSocket<PlayerObservable>, MinecraftPeer() {
+        //TODO() class for playerData
+        var xuid: Long = 0
+        var uuid: String = ""
+        var userName: String = ""
+        init {
+            for(jwt in playerData) {
+                val jsonJwt = jwt.payload.toJSONObject()
+                if(jsonJwt.containsKey("extraData")) {
+                    //very unsafe checks here
+                    //TODO
+                    val extra = jsonJwt["extraData"] as Map<*,*>
+                    xuid = (extra["XUID"] as String).toLong()
+                    uuid = extra["identity"] as String
+                    userName = extra["displayName"] as String
+                }
+            }
+
+            var statusPreObservable: PlayerStatus = PlayerStatus.Connected
+
+            if(MojangAuth.verifyXUIDFromChain(playerData)) {
+                statusPreObservable = PlayerStatus.Authenticated
+            }
+
+            if(userName.length !in 3..16)
+            {
+                statusPreObservable = PlayerStatus.PendDisconnect
+            }
+
+            if(!userName.matches(Regex("^a-zA-Z0-9_]*$"))) {
+                statusPreObservable = PlayerStatus.PendDisconnect
+            }
+
+            if(statusPreObservable == PlayerStatus.Authenticated) {
+                statusPreObservable = PlayerStatus.LoadingGame
+            }
+
+            //publish our new status
+            observable = Observable.just(statusPreObservable)
+            observable.publish()
+
+            //send back decoded salt to complete the encryption chain
+
+        }
+    }
+
+    private inner class MinecraftPacketFactory {
+        fun createIncomingPacketHandler(@Nullable client: MinecraftPeer?, packet: EncapsulatedPacket) {
             val buf = packet.payload.buffer()
             val bytes = ByteArray(buf.readableBytes())
             buf.readBytes(bytes)
@@ -112,11 +166,15 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             val inGamePacket = GamePacket(decompressed)
 
-            return when(inGamePacket.gamePacketId) {
+            when(inGamePacket.gamePacketId) {
                 MinecraftPacketConstants.LOGIN -> {
-                    val loginHandle = MinecraftLoginHandler(inGamePacket)
-
-                    loginHandle
+                        val loginPacket = MinecraftLoginPacket(Packet(inGamePacket))
+                        loginPacket.decode()
+                        setMinecraftClient(
+                            loginPacket.protocol,
+                            loginPacket.chainData.map { s: String -> JWSObject.parse(s) },
+                           "loginPacket.skinData"
+                        )
                 }
                 else -> throw IllegalArgumentException("Unknown packet sent to factory.")
             }
