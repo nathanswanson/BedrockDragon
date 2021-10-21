@@ -47,10 +47,11 @@ import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.game.GamePacket
-import bedrockDragon.network.raknet.handler.MinecraftHandler
 import bedrockDragon.network.raknet.handler.PacketConstants
+import bedrockDragon.network.raknet.handler.minecraft.PlayStatusHandler
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
+import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -107,12 +108,12 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         return clientPeer
     }
 
-    private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String,
-                                    override var observable: Observable<Any>): ReactSocket<PlayerObservable>, MinecraftPeer() {
-        //TODO() class for playerData
+    private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String, override var observable: Observable<Any>): ReactSocket<PlayerObservable>, MinecraftPeer() {
         var xuid: Long = 0
         var uuid: String = ""
         var userName: String = ""
+        var status = PlayerStatus.Connected
+
         init {
             for(jwt in playerData) {
                 val jsonJwt = jwt.payload.toJSONObject()
@@ -126,57 +127,69 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 }
             }
 
-            var statusPreObservable: PlayerStatus = PlayerStatus.Connected
+            //Player status is moving from reactive to ping-pong netty
+            //TODO
 
             if(MojangAuth.verifyXUIDFromChain(playerData)) {
-                statusPreObservable = PlayerStatus.Authenticated
+                status = PlayerStatus.Authenticated
             }
 
             if(userName.length !in 3..16)
             {
-                statusPreObservable = PlayerStatus.PendDisconnect
+                status = PlayerStatus.PendDisconnect
             }
 
-            if(!userName.matches(Regex("^a-zA-Z0-9_]*$"))) {
-                statusPreObservable = PlayerStatus.PendDisconnect
+            if(!userName.matches(Regex("^[a-zA-Z0-9_ ]*$"))) {
+                status = PlayerStatus.PendDisconnect
             }
 
-            if(statusPreObservable == PlayerStatus.Authenticated) {
-                statusPreObservable = PlayerStatus.LoadingGame
+            if(status == PlayerStatus.Authenticated) {
+                status = PlayerStatus.LoadingGame
             }
-
-            //publish our new status
-            observable = Observable.just(statusPreObservable)
-            observable.publish()
-
-            //send back decoded salt to complete the encryption chain
-
         }
     }
 
     private inner class MinecraftPacketFactory {
         fun createIncomingPacketHandler(@Nullable client: MinecraftPeer?, packet: EncapsulatedPacket) {
             val buf = packet.payload.buffer()
-            val bytes = ByteArray(buf.readableBytes())
-            buf.readBytes(bytes)
-            //removes zlib compression
-            val decompressed = PacketCompression.decompress(
-                bytes
-            )
+            try {
+                val bytes = ByteArray(buf.readableBytes())
+                buf.readBytes(bytes)
+                //removes zlib compression
+                val decompressed = PacketCompression.decompress(
+                    bytes
+                )
 
-            val inGamePacket = GamePacket(decompressed)
+                val inGamePacket = GamePacket(decompressed)
 
-            when(inGamePacket.gamePacketId) {
-                MinecraftPacketConstants.LOGIN -> {
-                        val loginPacket = MinecraftLoginPacket(Packet(inGamePacket))
+                if(clientPeer != null && clientPeer!!.status == PlayerStatus.InGame) {
+                    //if packet is non-reflective send the packet to the observer deck.
+                    //packet is converted into dragon protocol which is an Observable
+                    //protocol request will then wait its turn to be broadcast by the reactor and
+                    // then filtered through the great mesh
+                }
+                when(inGamePacket.gamePacketId) {
+                    MinecraftPacketConstants.LOGIN -> {
+                        val loginPacket = MinecraftLoginPacket(Packet(inGamePacket.gamePacketContent))
                         loginPacket.decode()
                         setMinecraftClient(
                             loginPacket.protocol,
                             loginPacket.chainData.map { s: String -> JWSObject.parse(s) },
-                           "loginPacket.skinData"
+                            "loginPacket.skinData"
                         )
+
+                        if(clientPeer!!.status == PlayerStatus.LoadingGame) {
+                            //send server - client handshake
+                            //TODO add encryption to payload and figure out what header value does
+                            val response = GamePacket.create(0, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
+                            sendMessage(Reliability.UNRELIABLE,0, response)
+                        }
+                    }
+                    MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> { PlayStatusHandler(0, this@RakNetClientPeer) }//todo last check before letting them join
+                    else -> throw IllegalArgumentException("Unknown packet sent to factory.")
                 }
-                else -> throw IllegalArgumentException("Unknown packet sent to factory.")
+            } finally {
+                buf.release()
             }
         }
     }

@@ -82,6 +82,7 @@ fun main() {
         /*
             Generate properties file
          */
+        //todo use bedrock properties not java
         serverProperties.setProperty("spawn-protection", "16")
         serverProperties.setProperty("max-tick-time", "60000")
         serverProperties.setProperty("query.port", "25565")
@@ -131,9 +132,13 @@ fun main() {
         serverProperties.setProperty("enable-jmx-monitoring" , "false")
         serverProperties.setProperty("enable-rcon", "false")
         serverProperties.setProperty("motd", "A Minecraft Server")
+
+        serverProperties.setProperty("dev-mode", "true")
         serverProperties.store(FileOutputStream("server.properties"), "Dragon Server")
 
     }
+    if(serverProperties.getProperty("dev-mode").toBoolean())
+        logger.info { "Warning dev mode enabled." }
 
     logger.info { "Loading world." }
     //Todo unsafe
