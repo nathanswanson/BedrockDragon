@@ -45,7 +45,11 @@ package bedrockDragon.mod.loader
 
 import bedrockDragon.mod.DragonMod
 import bedrockDragon.mod.Mod
+import bedrockDragon.mod.informative.ModDoc
 import bedrockDragon.util.Singleton
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import mu.KotlinLogging
 import java.io.File
 import java.io.FileNotFoundException
@@ -110,6 +114,7 @@ object ModLoader {
     fun authenticate(mod: File): Boolean {
         /* mod is authenticated under the following conditions
             -Is a jar file, folder, or zip (which all follow the same Dragon Mod format)
+            -has plugin config
             -Mod version is supported by the current server
             -Contains a Dragon Mod main file annotated with @DragonMod //CHECKED ON GENERATION NOT HERE
             -Passes dependency check.
@@ -120,5 +125,28 @@ object ModLoader {
             return false
         }
         return true
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun parsePluginConfig(config: File): ModDoc {
+        /*
+        {
+            name: "dragon example mod",
+            packageName: "com.dragonexamplemod",
+            modVersion: "1.0.0",
+            minMinecraftVersion: "1.7.30",
+            maxMinecraftVersion: "*",
+            dependency: {
+                modName: "other example mod"
+                atLeastVersion: "1.0.2",
+                atMostVersion: "1.0.05"
+            },
+            description: "example mod"
+        }
+
+         */
+
+
+        return Json.decodeFromStream(config.inputStream())
     }
 }

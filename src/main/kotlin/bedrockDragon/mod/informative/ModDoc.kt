@@ -43,15 +43,37 @@
 
 package bedrockDragon.mod.informative
 
+import kotlinx.serialization.Serializable
+
 /**
  * Template for json deserialize
  * @author Nathan Swanson
  */
-class ModDoc(
-    name: String,
-    packageRoot: String,
-    modVersion: Version,
-    serverVersion: SupportMap,
-    dependency: Dependency,
-    description: String
-    )
+@Serializable
+data class ModDoc(
+    val name: String,
+    val packageRoot: String,
+    val modVersion: Version,
+    val minServerVersion: Version,
+    val maxServerVersion: Version,
+    val dependency: Dependency,
+    val description: String
+    ) {
+
+    @Serializable
+    class Version(val release: Int, val version: Int, val revision: Int): Comparable<Version>
+    {
+        override fun compareTo(other: Version): Int {
+            val releaseComp = release.compareTo(other.release)
+            return if(releaseComp != 0) releaseComp
+            else {
+                val versionComp = version.compareTo(other.version)
+                return if(versionComp != 0) versionComp
+                else revision.compareTo(other.revision)
+            }
+        }
+    }
+
+    @Serializable
+    data class Dependency(val modName: String, val atLeastVersion: Version, val atMostVersion: Version)
+}
