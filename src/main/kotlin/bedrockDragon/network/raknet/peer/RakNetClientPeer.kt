@@ -46,14 +46,17 @@ import bedrockDragon.DragonServer
 import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.game.GamePacket
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.minecraft.PlayStatusHandler
+import bedrockDragon.network.raknet.handler.minecraft.ResourcePackInfoHandler
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
+import bedrockDragon.network.raknet.protocol.game.PlayStatusPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
@@ -160,7 +163,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     bytes
                 )
 
-                val inGamePacket = GamePacket(decompressed)
+                val inGamePacket = GamePacket()
+                inGamePacket.decode(Packet(decompressed))
 
                 if(clientPeer != null && clientPeer!!.status == PlayerStatus.InGame) {
                     //if packet is non-reflective send the packet to the observer deck.
@@ -179,13 +183,26 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                         )
 
                         if(clientPeer!!.status == PlayerStatus.LoadingGame) {
-                            //send server - client handshake
-                            //TODO add encryption to payload and figure out what header value does
-                            val response = GamePacket.create(0, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
-                            sendMessage(Reliability.UNRELIABLE,0, response)
+                            //TODO add encryption to payload
+                            //play status ID 0x02, success status 0x00 we send status
+                            val playStatusPacket = GamePacket()
+                            val contentPlayStatus = PlayStatusPacket(0)
+                            contentPlayStatus.encode()
+                            playStatusPacket.gamePacketId = MinecraftPacketConstants.PLAY_STATUS
+                            playStatusPacket.gamePacketContent = contentPlayStatus.array()!!
+                            playStatusPacket.encode()
+
+                            sendMessage(Reliability.UNRELIABLE, 0 , playStatusPacket)
+                            //now lets send the resource packet info
+                        // GamePacket.create(1, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
+                            //sendMessage(Reliability.UNRELIABLE,0, response)
+                            ResourcePackInfoHandler(this@RakNetClientPeer)
+
                         }
                     }
                     MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> { PlayStatusHandler(0, this@RakNetClientPeer) }//todo last check before letting them join
+                    MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> { println("resource pack response")}
+                    MinecraftPacketConstants.MALFORM_PACKET -> {println("malform")}
                     else -> throw IllegalArgumentException("Unknown packet sent to factory.")
                 }
             } finally {
