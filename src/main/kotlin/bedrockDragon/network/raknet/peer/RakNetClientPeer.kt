@@ -47,14 +47,16 @@ import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.game.GamePacket
 import bedrockDragon.network.raknet.handler.PacketConstants
+import bedrockDragon.network.raknet.handler.minecraft.ClientCacheHandler
 import bedrockDragon.network.raknet.handler.minecraft.PlayStatusHandler
 import bedrockDragon.network.raknet.handler.minecraft.ResourcePackInfoHandler
+import bedrockDragon.network.raknet.handler.minecraft.ResourcePackStackHandler
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftLoginPacket
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PlayStatusPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -75,7 +77,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
     var observer: Observable<Any> = Observable.empty()
     private var clientPeer : MinecraftClientPeer? = null
-
+    var cacheEnabled = false
 
     public fun setMinecraftClient(protocol: Int, chainData: List<JWSObject>, skinData: String) {
         clientPeer = MinecraftClientPeer(protocol,chainData,skinData, observer)
@@ -163,8 +165,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     bytes
                 )
 
-                val inGamePacket = GamePacket()
-                inGamePacket.decode(Packet(decompressed))
+                val inGamePacket = MinecraftPacket(Packet(decompressed))
 
                 if(clientPeer != null && clientPeer!!.status == PlayerStatus.InGame) {
                     //if packet is non-reflective send the packet to the observer deck.
@@ -172,36 +173,37 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     //protocol request will then wait its turn to be broadcast by the reactor and
                     // then filtered through the great mesh
                 }
-                when(inGamePacket.gamePacketId) {
+                when(inGamePacket.minecraftId) {
                     MinecraftPacketConstants.LOGIN -> {
-                        val loginPacket = MinecraftLoginPacket(Packet(inGamePacket.gamePacketContent))
-                        loginPacket.decode()
+
+                        (inGamePacket as MinecraftLoginPacket).decode()
                         setMinecraftClient(
-                            loginPacket.protocol,
-                            loginPacket.chainData.map { s: String -> JWSObject.parse(s) },
+                            inGamePacket.protocol,
+                            inGamePacket.chainData.map { s: String -> JWSObject.parse(s) },
                             "loginPacket.skinData"
                         )
 
                         if(clientPeer!!.status == PlayerStatus.LoadingGame) {
                             //TODO add encryption to payload
                             //play status ID 0x02, success status 0x00 we send status
-                            val playStatusPacket = GamePacket()
-                            val contentPlayStatus = PlayStatusPacket(0)
-                            contentPlayStatus.encode()
-                            playStatusPacket.gamePacketId = MinecraftPacketConstants.PLAY_STATUS
-                            playStatusPacket.gamePacketContent = contentPlayStatus.array()!!
-                            playStatusPacket.encode()
+                            val playStatusPacket = PlayStatusPacket(0)
+
 
                             sendMessage(Reliability.UNRELIABLE, 0 , playStatusPacket)
                             //now lets send the resource packet info
                         // GamePacket.create(1, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
                             //sendMessage(Reliability.UNRELIABLE,0, response)
                             ResourcePackInfoHandler(this@RakNetClientPeer)
+                            //if no resource packets just send Vanilla
+                            //TODO doesnt handle client blobs yet
+
+                           // ResourcePackStackHandler(this@RakNetClientPeer)
 
                         }
                     }
                     MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> { PlayStatusHandler(0, this@RakNetClientPeer) }//todo last check before letting them join
                     MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> { println("resource pack response")}
+                    MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { ClientCacheHandler(this@RakNetClientPeer, inGamePacket) }
                     MinecraftPacketConstants.MALFORM_PACKET -> {println("malform")}
                     else -> throw IllegalArgumentException("Unknown packet sent to factory.")
                 }

@@ -44,6 +44,7 @@
 package bedrockDragon
 
 import bedrockDragon.mod.loader.ModLoader
+import bedrockDragon.resource.ResourcePackManager
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
@@ -149,6 +150,11 @@ fun main() {
     logger.info { "Registering mods." }
     registerMods()
 
+    logger.info { "Registering blocks." }
+
+    ResourcePackManager
+
+
     logger.info { "=====================" }
     logger.info { "SERVER PRE-INIT DONE." }
     logger.info { "STARTING DRAGON SERVER." }
@@ -162,7 +168,6 @@ fun main() {
     //val motd = MinecraftPeer()
 
     val server = DragonServer(bindAddress)
-
     server.start()
 }
 
