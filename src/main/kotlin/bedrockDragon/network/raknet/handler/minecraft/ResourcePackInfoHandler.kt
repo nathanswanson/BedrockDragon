@@ -5,6 +5,7 @@ import bedrockDragon.network.raknet.handler.ReflectMinecraftHandler
 import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.ResourceInfoPacket
 import bedrockDragon.network.raknet.protocol.game.type.ResourcePack
 import java.util.*
@@ -21,6 +22,7 @@ class ResourcePackInfoHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer) 
         packet.encode()
 
 
-        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, packet)
+
+        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, MinecraftPacket.encapsulateGamePacket(packet, MinecraftPacketConstants.RESOURCE_PACKS_INFO))
     }
 }

@@ -165,7 +165,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     bytes
                 )
 
-                val inGamePacket = MinecraftPacket(Packet(decompressed))
+                val inGamePacket = MinecraftPacket()
+                inGamePacket.decode(Packet(decompressed))
 
                 if(clientPeer != null && clientPeer!!.status == PlayerStatus.InGame) {
                     //if packet is non-reflective send the packet to the observer deck.
@@ -173,13 +174,14 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     //protocol request will then wait its turn to be broadcast by the reactor and
                     // then filtered through the great mesh
                 }
-                when(inGamePacket.minecraftId) {
+                when(inGamePacket.packetId) {
                     MinecraftPacketConstants.LOGIN -> {
 
-                        (inGamePacket as MinecraftLoginPacket).decode()
+                        val loginPacket = MinecraftLoginPacket()
+                        loginPacket.decode(inGamePacket.payload)
                         setMinecraftClient(
-                            inGamePacket.protocol,
-                            inGamePacket.chainData.map { s: String -> JWSObject.parse(s) },
+                            loginPacket.protocol,
+                            loginPacket.chainData.map { s: String -> JWSObject.parse(s) },
                             "loginPacket.skinData"
                         )
 
@@ -187,9 +189,9 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                             //TODO add encryption to payload
                             //play status ID 0x02, success status 0x00 we send status
                             val playStatusPacket = PlayStatusPacket(0)
+                            playStatusPacket.encode()
 
-
-                            sendMessage(Reliability.UNRELIABLE, 0 , playStatusPacket)
+                            sendMessage(Reliability.UNRELIABLE, 0 , MinecraftPacket.encapsulateGamePacket(playStatusPacket, MinecraftPacketConstants.PLAY_STATUS))
                             //now lets send the resource packet info
                         // GamePacket.create(1, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
                             //sendMessage(Reliability.UNRELIABLE,0, response)
