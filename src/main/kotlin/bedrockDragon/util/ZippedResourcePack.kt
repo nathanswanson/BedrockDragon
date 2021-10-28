@@ -1,7 +1,8 @@
 package bedrockDragon.util
 
-import bedrockDragon.network.raknet.protocol.game.type.ResourceManifest
-import bedrockDragon.network.raknet.protocol.game.type.ResourcePack
+
+import bedrockDragon.network.raknet.protocol.game.type.resourcepack.ResourceManifest
+import bedrockDragon.network.raknet.protocol.game.type.resourcepack.ResourcePack
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json

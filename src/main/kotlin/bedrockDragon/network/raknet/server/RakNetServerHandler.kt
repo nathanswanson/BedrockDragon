@@ -139,40 +139,44 @@ class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHand
             val datagram = msg
           //  logger.info { VarInt.readUnsignedVarInt(datagram.content().) }
             val sender = datagram.sender()
-            val packet = RakNetPacket(datagram)
+            val packet: RakNetPacket
+            try {
+                packet = RakNetPacket(datagram)
 
-            // If an exception happens it's because of this address
-            causeAddress = sender
+                // If an exception happens it's because of this address
+                causeAddress = sender
 
-            // Check if address is blocked
-            if (isAddressBlocked(sender.address)) {
-                val status = blocked[sender.address]
-                if (!status!!.shouldUnblock()) {
-                    datagram.release() // No longer needed
-                    return  // Address still blocked
+                // Check if address is blocked
+                if (isAddressBlocked(sender.address)) {
+                    val status = blocked[sender.address]
+                    if (!status!!.shouldUnblock()) {
+                        datagram.release() // No longer needed
+                        return  // Address still blocked
+                    }
+                    unblockAddress(sender.address)
                 }
-                unblockAddress(sender.address)
+
+                // Handle the packet and release the buffer
+                server.handleMessage(sender, packet)
+                logger.debug("Sent packet to server and reset datagram buffer read position");
+                //TODO EVENT
+
+                server.callEvent { listener: RakNetServerListener? ->
+                    datagram.content().readerIndex(0) // Reset index
+                    listener!!.handleNettyMessage(server, sender, datagram.content())
+                }
+
+
+                if (datagram.release() /* No longer needed */) {
+                    logger.trace("Released datagram");
+                } else {
+                    logger.error("Memory leak: Failed to deallocate datagram when releasing it");
+                }
+            } finally {
+                datagram.release()
             }
-
-            // Handle the packet and release the buffer
-            server.handleMessage(sender, packet)
-            logger.debug("Sent packet to server and reset datagram buffer read position");
-            //TODO EVENT
-
-            server.callEvent { listener: RakNetServerListener? ->
-                datagram.content().readerIndex(0) // Reset index
-                listener!!.handleNettyMessage(server, sender, datagram.content())
-            }
-
-
-            if (datagram.release() /* No longer needed */) {
-                	logger.trace("Released datagram");
-            } else {
-                	logger.error("Memory leak: Failed to deallocate datagram when releasing it");
-            }
-
-            // No exceptions occurred, release the suspect
-            causeAddress = null
+                // No exceptions occurred, release the suspect
+                causeAddress = null
         } else {
             logger.info { "Message is not datagram" }
         }

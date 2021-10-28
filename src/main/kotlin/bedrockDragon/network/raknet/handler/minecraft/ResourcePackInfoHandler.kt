@@ -6,8 +6,7 @@ import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
-import bedrockDragon.network.raknet.protocol.game.ResourceInfoPacket
-import bedrockDragon.network.raknet.protocol.game.type.ResourcePack
+import bedrockDragon.network.raknet.protocol.game.resourcepacket.ResourceInfoPacket
 import java.util.*
 
 class ResourcePackInfoHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer) {

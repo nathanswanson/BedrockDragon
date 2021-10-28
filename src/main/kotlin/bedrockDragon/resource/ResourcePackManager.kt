@@ -1,6 +1,6 @@
 package bedrockDragon.resource
 
-import bedrockDragon.network.raknet.protocol.game.type.ResourcePack
+import bedrockDragon.network.raknet.protocol.game.type.resourcepack.ResourcePack
 import bedrockDragon.util.ZippedResourcePack
 import java.io.File
 import java.util.*

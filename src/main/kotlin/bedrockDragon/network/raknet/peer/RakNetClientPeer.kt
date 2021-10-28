@@ -48,17 +48,11 @@ import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.handler.PacketConstants
-import bedrockDragon.network.raknet.handler.minecraft.ClientCacheHandler
-import bedrockDragon.network.raknet.handler.minecraft.PlayStatusHandler
-import bedrockDragon.network.raknet.handler.minecraft.ResourcePackInfoHandler
-import bedrockDragon.network.raknet.handler.minecraft.ResourcePackStackHandler
+import bedrockDragon.network.raknet.handler.minecraft.*
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
-import bedrockDragon.network.raknet.protocol.game.MinecraftLoginPacket
-import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
-import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
-import bedrockDragon.network.raknet.protocol.game.PlayStatusPacket
+import bedrockDragon.network.raknet.protocol.game.*
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
@@ -77,9 +71,13 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
     var observer: Observable<Any> = Observable.empty()
     private var clientPeer : MinecraftClientPeer? = null
-    var cacheEnabled = false
+   // var cacheEnabled = false
 
-    public fun setMinecraftClient(protocol: Int, chainData: List<JWSObject>, skinData: String) {
+    fun attemptMinecraftHandoff() {
+        clientPeer!!.fireJoinSequence()
+    }
+
+    fun setMinecraftClient(protocol: Int, chainData: List<JWSObject>, skinData: String) {
         clientPeer = MinecraftClientPeer(protocol,chainData,skinData, observer)
     }
     /**
@@ -152,6 +150,14 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 status = PlayerStatus.LoadingGame
             }
         }
+
+        fun fireJoinSequence() {
+            println("Player is joining the game")
+
+            val startGamePacket =  StartGamePacket.capture()
+            startGamePacket.encode()
+            //sendMessage(startGamePacket)
+        }
     }
 
     private inner class MinecraftPacketFactory {
@@ -199,12 +205,14 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                             //if no resource packets just send Vanilla
                             //TODO doesnt handle client blobs yet
 
-                           // ResourcePackStackHandler(this@RakNetClientPeer)
+                            ResourcePackStackHandler(this@RakNetClientPeer)
 
                         }
                     }
                     MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> { PlayStatusHandler(0, this@RakNetClientPeer) }//todo last check before letting them join
-                    MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> { println("resource pack response")}
+                    //for now this initiates start game packet
+                    MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> { ResourcePackResponseHandler(inGamePacket, this@RakNetClientPeer)
+                    }
                     MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { ClientCacheHandler(this@RakNetClientPeer, inGamePacket) }
                     MinecraftPacketConstants.MALFORM_PACKET -> {println("malform")}
                     else -> throw IllegalArgumentException("Unknown packet sent to factory.")

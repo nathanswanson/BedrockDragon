@@ -70,6 +70,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
+import io.netty.util.ResourceLeakDetector
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,7 +113,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
 
     override fun start(): Boolean {
-
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID)
         val uuid = UUID.randomUUID()
         pongId = uuid.leastSignificantBits
 

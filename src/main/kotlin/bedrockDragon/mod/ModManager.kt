@@ -41,7 +41,7 @@
  * SOFTWARE.
  */
 
-package bedrockDragon
+package bedrockDragon.mod
 
 import bedrockDragon.mod.Mod
 import mu.KotlinLogging
