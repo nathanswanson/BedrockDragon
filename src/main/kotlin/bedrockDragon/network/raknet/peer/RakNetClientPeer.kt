@@ -46,16 +46,20 @@ import bedrockDragon.DragonServer
 import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
-import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.minecraft.*
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.*
+import bedrockDragon.network.raknet.protocol.game.connect.BiomeDefinitionPacket
+import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
+import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
+import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
+import bedrockDragon.player.Player
 import bedrockDragon.reactive.player.PlayerObservable
 import com.nimbusds.jose.JWSObject
 import io.netty.channel.Channel
@@ -116,7 +120,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         var uuid: String = ""
         var userName: String = ""
         var status = PlayerStatus.Connected
-
+        lateinit var player: Player
         init {
             for(jwt in playerData) {
                 val jsonJwt = jwt.payload.toJSONObject()
@@ -153,10 +157,32 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
         fun fireJoinSequence() {
             println("Player is joining the game")
+            player = Player()
+            println("created player")
 
-            val startGamePacket =  StartGamePacket.capture()
+            val startGamePacket =  StartGamePacket.capture(player)
+            println("Init Start Packet")
+
             startGamePacket.encode()
-            //sendMessage(startGamePacket)
+            println("encode start packet")
+
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket(MinecraftPacketConstants.START_GAME))
+            println("Player is Loading Creative Content")
+
+            val creativeContentPacket = CreativeContentPacket()
+            creativeContentPacket.encode()
+            sendMessage(Reliability.UNRELIABLE, 0 , creativeContentPacket.gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
+
+            println("Player is Loading Biome Definition")
+
+            val biomeDefinitionPacket = BiomeDefinitionPacket()
+            biomeDefinitionPacket.encode()
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket(MinecraftPacketConstants.BIOME_DEFINITION_LIST))
+
+            //send one chunk through netty then say play status good
+
+
+            sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
         }
     }
 
