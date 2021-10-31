@@ -56,6 +56,7 @@ import bedrockDragon.network.raknet.protocol.game.connect.BiomeDefinitionPacket
 import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
 import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
+import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
@@ -180,7 +181,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket(MinecraftPacketConstants.BIOME_DEFINITION_LIST))
 
             //send one chunk through netty then say play status good
-
+            //debug chunk
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
         }
@@ -240,7 +242,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> { ResourcePackResponseHandler(inGamePacket, this@RakNetClientPeer)
                     }
                     MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { ClientCacheHandler(this@RakNetClientPeer, inGamePacket) }
-                    MinecraftPacketConstants.MALFORM_PACKET -> {println("malform")}
+                    MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload)}
                     else -> throw IllegalArgumentException("Unknown packet sent to factory.")
                 }
             } finally {

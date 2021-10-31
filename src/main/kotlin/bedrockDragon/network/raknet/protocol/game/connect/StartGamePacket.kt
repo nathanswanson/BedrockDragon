@@ -20,29 +20,29 @@ class StartGamePacket: PacketPayload() {
     var biomeType: Short = 0
     var customBiomeName: String = ""
     var dimension: Int = 0 //sVarInt
-    var generator: Int = 0 //sVarInt
+    var generator: Int = 1 //sVarInt
     var worldGamemode: Int = 0 //sVarInt
     var difficulty: Int = 0 //sVarInt
     lateinit var worldSpawn: Float3 //Todo blockCoord (sVarInt x, varInt y, sVarInt z)
     val hasAchievementsDisabled = false
-    var dayCycleStopTime: Int = 0 //sVarInt
-    val EDUOffer: Int = 1 //sVarInt
+    var dayCycleStopTime: Int = -1 //sVarInt
+    val EDUOffer: Int = 0 //sVarInt
     val educationFeatures = false
     val educationProductId: String = ""
     var rainLevel: Float = 0f
     var lightningLevel: Float = 0f
     val hasConfirmedPlatLockContent = false
     val isMultiplayer = true
-    val broadcastToLAN = false //todo
-    var xboxLiveBroadcast: Int = 0
-    var platformBroadcaseMode: Int = 0
+    val broadcastToLAN = true //todo
+    var xboxLiveBroadcast: Int = 4
+    var platformBroadcaseMode: Int = 4
     val enableCommands = true
     var texturePackRequired = false
     var gameRules = GameRules
     val bonusChest = false
     val mapEnabled = false
-    var permissionLevel: Int = 0
-    val serverTickRange: Int = 20 //arbitrary
+    var permissionLevel: Int = 1
+    val serverTickRange: Int = 4 //arbitrary
     val lockedBehaviorPack = false
     val lockedResourcePack = false
     val MSANametagsOnly = false
@@ -50,8 +50,8 @@ class StartGamePacket: PacketPayload() {
     val lockedWorldTemplate = false
     val v1Villager = false
     var gameVersion: String = ""
-    var limitedWorldWidth: Int = 0
-    var limitedWorldHeight: Int = 0
+    var limitedWorldWidth: Int = 16
+    var limitedWorldHeight: Int = 16
     var isNetherType = false
     var forceExperimental = false
     var levelId: String = ""
@@ -67,6 +67,7 @@ class StartGamePacket: PacketPayload() {
     //itemStates //todo
     val multiplayerCorId: String = UUID.randomUUID().toString()
     var inventoryServerAuthoritative = false
+    val serverEngine = ""
 
     override fun encode() {
         try {
@@ -76,7 +77,7 @@ class StartGamePacket: PacketPayload() {
             writeVector3(spawn)
             writeVector2(rotation)//
             VarInt.writeVarInt(seed, outputStream) //
-            writeShort(biomeType) //
+            writeShortLE(biomeType.toInt()) //
             writeString(customBiomeName)
             VarInt.writeVarInt(dimension, outputStream)
             VarInt.writeVarInt(generator, outputStream)
@@ -88,41 +89,41 @@ class StartGamePacket: PacketPayload() {
             VarInt.writeVarInt(EDUOffer, outputStream)
             writeBoolean(educationFeatures)
             writeString(educationProductId)
-            writeFloat(rainLevel) //
-            writeFloat(lightningLevel) //
+            writeFloatLE(rainLevel.toDouble()) //
+            writeFloatLE(lightningLevel.toDouble()) //
             writeBoolean(hasConfirmedPlatLockContent)
             writeBoolean(isMultiplayer)
             writeBoolean(broadcastToLAN)
-            VarInt.writeUnsignedVarInt(xboxLiveBroadcast, outputStream) //
-            VarInt.writeUnsignedVarInt(platformBroadcaseMode, outputStream) //
+            VarInt.writeVarInt(xboxLiveBroadcast, outputStream) //
+            VarInt.writeVarInt(platformBroadcaseMode, outputStream) //
             writeBoolean(enableCommands)
             writeBoolean(texturePackRequired)
             writeGameRules(gameRules)
-            //
-            //
+            writeIntLE(0) //experiment count
             writeBoolean(bonusChest)
             writeBoolean(mapEnabled)
             VarInt.writeVarInt(permissionLevel, outputStream)
-            writeInt(serverTickRange)//
+            writeIntLE(serverTickRange)//
             writeBoolean(lockedBehaviorPack)
             writeBoolean(lockedResourcePack)
+            writeBoolean(false) //islockedworldtemplate
             writeBoolean(MSANametagsOnly)
             writeBoolean(isFromWorldTemplate)
             writeBoolean(lockedWorldTemplate)
             writeBoolean(v1Villager)
             writeString(gameVersion)
-            writeInt(limitedWorldWidth)//v
-            writeInt(limitedWorldHeight)//v
+            writeIntLE(limitedWorldWidth)//v
+            writeIntLE(limitedWorldHeight)//v
             writeBoolean(isNetherType)
-            //edu uri button
-            //edu uri linkuri
+            writeString("")//edu uri button
+            writeString("")//edu uri linkuri
             writeBoolean(forceExperimental)//
             writeString(levelId)
             writeString(worldName)
             writeString(premiumWorldId)
             writeBoolean(isTrial)
             VarInt.writeUnsignedVarInt(movementType, outputStream)
-            writeInt(movementRewindSize)
+            VarInt.writeVarInt(movementRewindSize, outputStream)
             writeBoolean(serverAuthoritativeBlockBreaking)
             writeLongLE(currentTick)
             VarInt.writeVarInt(enchantSeed, outputStream)
@@ -130,7 +131,9 @@ class StartGamePacket: PacketPayload() {
             writeManifest()//v
             writeString(multiplayerCorId)
             writeBoolean(inventoryServerAuthoritative)
+            writeString(serverEngine)
             //
+            println()
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
             println(e.message)
@@ -148,7 +151,7 @@ class StartGamePacket: PacketPayload() {
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = Float3(0f,10f,0f)
             startGamePacket.rotation = Float2(0f,0f)
-            startGamePacket.seed = 12389
+            startGamePacket.seed = -1
             startGamePacket.biomeType = 0x00
             startGamePacket.customBiomeName = "Plains"
             startGamePacket.dimension = 0 //overworld
@@ -159,26 +162,24 @@ class StartGamePacket: PacketPayload() {
             startGamePacket.dayCycleStopTime = -1
             startGamePacket.rainLevel = 0f
             startGamePacket.lightningLevel = 0f
-            startGamePacket.xboxLiveBroadcast = 0
-            startGamePacket.platformBroadcaseMode = 0
+            startGamePacket.xboxLiveBroadcast = 4
+            startGamePacket.platformBroadcaseMode = 4
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
             startGamePacket.gameVersion = "1.17.40"
-            startGamePacket.limitedWorldWidth = 0
-            startGamePacket.limitedWorldHeight = 0
+            startGamePacket.limitedWorldWidth = 16
+            startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false
             startGamePacket.forceExperimental = false
-            startGamePacket.levelId = "QzpcVXNlcnNcbWlubmVcRGVza3RvcFxpbnRlbGlqIHNjaG9vbFxCZWRyb2NrRHJhZ29u"
+            startGamePacket.levelId = ""
             startGamePacket.worldName = "DRAGON"
             startGamePacket.movementType = 0
             startGamePacket.movementRewindSize = 0
             startGamePacket.serverAuthoritativeBlockBreaking = false
             startGamePacket.currentTick = 100000
-            startGamePacket.enchantSeed = 54123
+            startGamePacket.enchantSeed = -1
             startGamePacket.blockProperties = emptyArray()
-            //todo item states
-
             startGamePacket.inventoryServerAuthoritative = false
             return startGamePacket
         }
@@ -186,11 +187,11 @@ class StartGamePacket: PacketPayload() {
 
     fun writeManifest() {
         val manifest = RuntimeItemState.parse()
-        VarInt.writeUnsignedVarInt(manifest.size, outputStream)
-        for(entry in manifest) {
-            writeString(entry.name)
-            writeShortLE(entry.id)
-            writeBoolean(false) //component
-        }
+        VarInt.writeUnsignedVarInt(0, outputStream)
+       // for(entry in manifest) {
+       //     writeString(entry.name)
+       //     writeShortLE(entry.id)
+       //     writeBoolean(false) //component
+       // }
     }
 }

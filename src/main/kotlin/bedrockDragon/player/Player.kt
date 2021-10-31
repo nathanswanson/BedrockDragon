@@ -9,8 +9,8 @@ class Player: Living() {
     var gamemode = Gamemode.SURVIVAL
     var isOp = false
     var name = "Nathan"
-    val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1000u
-    val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1000
+    val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
+    val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
     override fun getDrops(): List<Item> {
         return emptyList()
