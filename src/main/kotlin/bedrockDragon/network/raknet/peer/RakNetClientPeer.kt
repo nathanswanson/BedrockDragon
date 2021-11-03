@@ -40,6 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package bedrockDragon.network.raknet.peer
 
 import bedrockDragon.DragonServer
@@ -71,6 +72,12 @@ import org.jetbrains.annotations.Nullable
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
 
+/**
+ * RaknetClientPeer is the bridge between client -> [raknet -> minecraftPeer -> player] -> reactiveX
+ * @author Nathan Swanson
+ * @see [God Object]
+ * @since ALPHA
+ */
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
     : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel) {
 

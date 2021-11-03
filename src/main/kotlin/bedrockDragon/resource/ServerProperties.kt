@@ -41,55 +41,80 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.network.raknet.handler.login
+package bedrockDragon.resource
 
-import bedrockDragon.network.raknet.RakNet
-import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.handler.PacketHandler
-import bedrockDragon.network.raknet.protocol.ConnectionType
-import bedrockDragon.network.raknet.protocol.connection.OpenConnectionRequestTwo
-import bedrockDragon.network.raknet.protocol.connection.OpenConnectionResponseTwo
-import io.netty.channel.Channel
-import io.netty.channel.socket.DatagramPacket
-import java.net.InetSocketAddress
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.util.*
 
-class ConnectionRequestHandlerTwo(val sender: InetSocketAddress, val packet: RakNetPacket, channel : Channel,
-                                  private val guid: Long,private val mtu: Int) : PacketHandler(channel) {
+/**
+ * global object which holds current server properties.
+ * @author Nathan Swanson
+ * @since ALPHA
+ */
+object ServerProperties: Properties() {
+    init {
+        try {
+            load(FileReader("server.properties"))
+        } catch (e: FileNotFoundException) {
+            /*
+                Generate properties file
+             */
+            //todo use bedrock properties not java
+            setProperty("spawn-protection", "16")
+            setProperty("max-tick-time", "60000")
+            setProperty("query.port", "25565")
+            setProperty("generator-settings", "")
+            setProperty("sync-chunk-writes", "true")
+            setProperty("force-gamemode", "false")
+            setProperty("allow-nether", "true")
+            setProperty("enforce-whitelist", "false")
+            setProperty("gamemode", "survival")
+            setProperty("broadcast-console-to-ops", "true")
+            setProperty("enable-query", "false")
+            setProperty("player-idle-timeout", "0")
+            setProperty("difficulty", "easy")
+            setProperty("spawn-monsters", "true")
+            setProperty("broadcast-rcon-to-ops", "true")
+            setProperty("op-permission-level", "4")
+            setProperty("pvp", "true")
+            setProperty("entity-broadcast-range-percentage", "100")
+            setProperty("snooper-enabled", "true")
+            setProperty("level-type", "default")
+            setProperty("hardcore", "false")
+            setProperty("enable-status", "true")
+            setProperty("enable-command-block", "false")
+            setProperty("max-players", "20")
+            setProperty("network-compression-threshold", "256")
+            setProperty("resource-pack-sha1", "")
+            setProperty("max-world-size", "29999984")
+            setProperty("function-permission-level", "2")
+            setProperty("rcon.port", "25575")
+            setProperty("server-port", "19132")
+            setProperty("debug", "false")
+            setProperty("server-ip", "")
+            setProperty("spawn-npcs", "true")
+            setProperty("allow-flight", "false")
+            setProperty("level-name", "world")
+            setProperty("view-distance", "10")
+            setProperty("resource-pack", "")
+            setProperty("spawn-animals" , "true")
+            setProperty("white-list" , "false")
+            setProperty("rcon.password", "")
+            setProperty("generate-structures", "true")
+            setProperty("max-build-height" , "256")
+            setProperty("online-mode", "true")
+            setProperty("level-seed", "")
+            setProperty("use-native-transport" ,"true")
+            setProperty("prevent-proxy-connections", "false")
+            setProperty("enable-jmx-monitoring" , "false")
+            setProperty("enable-rcon", "false")
+            setProperty("motd", "A Minecraft Server")
 
-    lateinit var connectionType: ConnectionType
-    var clientGuid = 0L
-    var clientmtu = 0
+            setProperty("dev-mode", "true")
+            store(FileOutputStream("server.properties"), "Dragon Server")
 
-    override fun responseToClient() {
-        //Must check if able to join not banned, server not full, etc
-        val connectionRequestPing = OpenConnectionRequestTwo(packet)
-        connectionRequestPing.decode()
-
-        if(connectionRequestPing.maximumTransferUnit >= RakNet.MINIMUM_MTU_SIZE) {
-            val connectionRequestPong = OpenConnectionResponseTwo()
-            connectionRequestPong.serverGuid = guid
-            connectionRequestPong.clientAddress = sender
-            connectionRequestPong.maximumTransferUnit =
-                connectionRequestPing.maximumTransferUnit.coerceAtMost(mtu)
-            connectionRequestPong.encryptionEnabled = false
-
-            clientmtu = connectionRequestPong.maximumTransferUnit
-            clientGuid = connectionRequestPing.clientGuid
-            connectionType = connectionRequestPing.connectionType!!
-            connectionRequestPong.encode()
-
-            channel.writeAndFlush(DatagramPacket(connectionRequestPong.buffer(), sender))
-            finished = true
-        } else {
-            logger.info { "Failed MTU too small for response" }
         }
-    }
-
-    override fun responseToServer() {
-        //NO RESPONSE
-    }
-
-    override fun toString(): String {
-        return "C->S HandShake 2"
     }
 }

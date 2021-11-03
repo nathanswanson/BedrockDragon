@@ -50,6 +50,11 @@ import bedrockDragon.network.raknet.protocol.login.NewIncomingConnection
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import io.netty.channel.Channel
 
+/**
+ * Client sends this packet after connecion request and before login.
+ * @author Nathan Swanson
+ * @since ALPHA
+ */
 class IncomingConnectionHandler(val sender: RakNetClientPeer, val packet: EncapsulatedPacket, channel : Channel) : PacketHandler(channel) {
 
     override fun responseToClient() {

@@ -46,14 +46,12 @@ package bedrockDragon.mod.loader
 import bedrockDragon.mod.DragonMod
 import bedrockDragon.mod.Mod
 import bedrockDragon.mod.informative.ModDoc
-import bedrockDragon.util.Singleton
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import mu.KotlinLogging
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 

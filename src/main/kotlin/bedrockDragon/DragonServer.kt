@@ -112,6 +112,11 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private lateinit var handle : RakNetServerHandler
     private lateinit var listeners: ConcurrentLinkedQueue<RakNetServerListener>
 
+    /**
+     * Main method calls this after config and mods are loaded.
+     * @author Nathan Swanson
+     * @since ALPHA
+     */
     override fun start(): Boolean {
         ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID)
         val uuid = UUID.randomUUID()
@@ -215,6 +220,12 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
     }
 
+    /**
+     * Every packet sent from client to server starts here as of 11/03/2021
+     * Do not call this function.
+     * @author Nathan Swanson
+     * @since ALPHA
+     */
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
 
         if(clients.containsKey(sender)) {
