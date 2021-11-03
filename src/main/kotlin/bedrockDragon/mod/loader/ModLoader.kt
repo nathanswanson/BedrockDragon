@@ -55,7 +55,6 @@ import java.io.FileNotFoundException
 import java.net.URLClassLoader
 import java.nio.file.Files
 
-@Singleton
 object ModLoader {
 
     private val logger = KotlinLogging.logger {}

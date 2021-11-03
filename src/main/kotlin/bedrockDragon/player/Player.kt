@@ -43,10 +43,18 @@
 
 package bedrockDragon.player
 
+import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.item.Item
-import java.util.*
+import bedrockDragon.reactive.type.Receiver
+import bedrockDragon.reactive.type.Transceiver
+import bedrockDragon.world.Chunk
+import bedrockDragon.world.Dimension
+import com.curiouscreature.kotlin.math.Float2
+import com.curiouscreature.kotlin.math.Float3
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.collections.HashSet
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -55,14 +63,31 @@ import java.util.*
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player: Living() {
-    var gamemode = Gamemode.SURVIVAL
-    var isOp = false
-    var name = "Nathan"
+class Player: Living(), Transceiver<Player> {
+
+    override val subscribers: HashSet<Receiver<Player>>
+        get() = TODO("Not yet implemented")
+
+    //Outgoing Packets
+    val nettyQueue = ConcurrentLinkedQueue<Int>()
+
+    var name = ""
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
+    var gamemode = Gamemode.SURVIVAL
+    var isOp = false
+
+    var position = Float3(0f,0f,0f)
+    var rotation = Float2(0f, 0f)
+    var dimension = Dimension.Overworld
+
     var skinData: Skin? = null
+
+    fun playInit() {
+        //register to Chat Rail
+        ChatRail.DEFAULT().subscribe(this)
+    }
 
     override fun getDrops(): List<Item> {
         return emptyList()
@@ -82,10 +107,36 @@ class Player: Living() {
     override fun damage() {
     }
 
+    fun subscribedChunks() : Array<Chunk> {
+        return TODO()
+    }
+
     enum class Gamemode {
         SURVIVAL,
         CREATIVE,
         ADVENTURE,
         SPECTATOR
+    }
+
+    fun handleIncomingPacket() {
+        //depending on packet send to all subscribed entities.
+    }
+
+    //Sender
+
+    override fun receive(received: Player) {
+        TODO("Not yet implemented")
+    }
+
+    override fun subscribe(receiver: Receiver<Player>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun unSubscribe(receiver: Receiver<Player>) {
+        TODO("Not yet implemented")
+    }
+
+    override fun send(sender: Player) {
+        TODO("Not yet implemented")
     }
 }

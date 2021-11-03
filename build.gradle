@@ -32,7 +32,6 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'org.slf4j:slf4j-simple:1.7.32'
     implementation 'io.github.microutils:kotlin-logging-jvm:2.0.11'
-    implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation("com.nimbusds:nimbus-jose-jwt:9.15.2")
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'

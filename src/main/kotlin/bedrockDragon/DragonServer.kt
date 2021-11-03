@@ -48,7 +48,7 @@ import bedrockDragon.DragonServer.ServerHandlerFactory.pongId
 import bedrockDragon.network.Peer
 import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNetPacket
-import bedrockDragon.network.raknet.ThreadedListener
+//import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketHandler
 import bedrockDragon.network.raknet.handler.connect.ConnectedPingHandler
@@ -202,22 +202,21 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             throw NullPointerException("Event cannot be null")
         }
         for (listener: RakNetServerListener in listeners) {
-            if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
-                val threadedListener = listener.javaClass.getAnnotation(
-                    ThreadedListener::class.java
-                )
-                object : Thread(
-                    DragonServer::class.java.simpleName + (if (threadedListener.name.isNotEmpty()) "-" else "")
-                            + threadedListener.name + "-Thread-" + ++eventThreadCount
-                ) {
-                    override fun run() {
-                        event.accept(listener)
-                    }
-                }.start()
-            } else {
+          //  if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
+              //  val threadedListener = listener.javaClass.getAnnotation(
+                 //   ThreadedListener::class.java
+             //   )
+            //    object : Thread(
+            //        DragonServer::class.java.simpleName + (if (threadedListener.name.isNotEmpty()) "-" else "")
+            //                + threadedListener.name + "-Thread-" + ++eventThreadCount
+            //    ) {
+              //      override fun run() {
+            //            event.accept(listener)
+              //      }
+             //   }.start()
+           // } else {
                 event.accept(listener)
             }
-        }
     }
 
     /**

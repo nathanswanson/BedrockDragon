@@ -55,19 +55,18 @@ import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.*
 import bedrockDragon.network.raknet.protocol.game.connect.BiomeDefinitionPacket
 import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
+import bedrockDragon.network.raknet.protocol.game.connect.PlayStatusPacket
 import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
+import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
-import bedrockDragon.reactive.ReactSocket
 import bedrockDragon.network.zlib.PacketCompression
 import bedrockDragon.player.Player
-import bedrockDragon.reactive.player.PlayerObservable
 import com.nimbusds.jose.JWSObject
 import io.netty.channel.Channel
-import io.reactivex.rxjava3.core.Observable
 import org.jetbrains.annotations.Nullable
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
@@ -81,9 +80,7 @@ import java.net.InetSocketAddress
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
     : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel) {
 
-    //TODO status safety
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
-    var observer: Observable<Any> = Observable.empty()
     private var clientPeer : MinecraftClientPeer? = null
    // var cacheEnabled = false
 
@@ -92,7 +89,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     }
 
     fun setMinecraftClient(protocol: Int, chainData: List<JWSObject>, skinData: String) {
-        clientPeer = MinecraftClientPeer(protocol,chainData,skinData, observer)
+        clientPeer = MinecraftClientPeer(protocol,chainData,skinData)
     }
     /**
      * When a registered client sends a packet this function is called with that packet
@@ -125,7 +122,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         return clientPeer
     }
 
-    private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String, override var observable: Observable<Any>): ReactSocket<PlayerObservable>, MinecraftPeer() {
+    private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String): MinecraftPeer() {
         var xuid: Long = 0
         var uuid: String = ""
         var userName: String = ""
@@ -144,8 +141,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 }
             }
 
-            //Player status is moving from reactive to ping-pong netty
-            //TODO
 
             if(MojangAuth.verifyXUIDFromChain(playerData)) {
                 status = PlayerStatus.Authenticated
@@ -166,30 +161,24 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
 
         fun fireJoinSequence() {
-            println("Player is joining the game")
             player = Player()
-            println("created player")
 
-            println("sent time")
             val setTime = SetTimePacket()
             sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket(MinecraftPacketConstants.SET_TIME))
 
 
             val startGamePacket =  StartGamePacket.capture(player)
-            println("Init Start Packet")
 
             //val entityIdentifiers = AvaliableEntityIDPacket()
             //println("Entity Identifier packet")
             //sendMessage(Reliability.RELIABLE_ORDERED, 0, entityIdentifiers.gamePacket(MinecraftPacketConstants.AVAILABLE_ENTITY_IDENTIFIERS))
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket(MinecraftPacketConstants.START_GAME))
-            println("Player is Loading Creative Content")
 
             //val creativeContentPacket = CreativeContentPacket()
             //creativeContentPacket.encode()
             //sendMessage(Reliability.UNRELIABLE, 0 , creativeContentPacket.gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
 
-            println("Player is Loading Biome Definition")
 
             val biomeDefinitionPacket = BiomeDefinitionPacket()
             biomeDefinitionPacket.encode()
@@ -204,6 +193,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket(MinecraftPacketConstants.SET_ENTITY_DATA))
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
+
+            player.playInit()
         }
     }
 
@@ -240,14 +231,11 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
                         if(clientPeer!!.status == PlayerStatus.LoadingGame) {
                             //TODO add encryption to payload
-                            //play status ID 0x02, success status 0x00 we send status
-                            val playStatusPacket = PlayStatusPacket(0)
-                            playStatusPacket.encode()
 
-                            sendMessage(Reliability.UNRELIABLE, 0 , MinecraftPacket.encapsulateGamePacket(playStatusPacket, MinecraftPacketConstants.PLAY_STATUS))
+                            val playStatusPacket = PlayStatusPacket(0)
+
+                            sendMessage(Reliability.UNRELIABLE, 0 , playStatusPacket.gamePacket(MinecraftPacketConstants.PLAY_STATUS))
                             //now lets send the resource packet info
-                        // GamePacket.create(1, MinecraftPacketConstants.SERVER_TO_CLIENT_HANDSHAKE, ByteArray(0))
-                            //sendMessage(Reliability.UNRELIABLE,0, response)
                             ResourcePackInfoHandler(this@RakNetClientPeer)
                             //if no resource packets just send Vanilla
                             //TODO doesnt handle client blobs yet

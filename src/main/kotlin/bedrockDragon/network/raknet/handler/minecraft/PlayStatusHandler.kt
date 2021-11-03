@@ -6,7 +6,7 @@ import bedrockDragon.network.raknet.handler.ReflectMinecraftHandler
 import bedrockDragon.network.raknet.peer.MinecraftPeer
 import bedrockDragon.network.raknet.peer.RakNetClientPeer
 import bedrockDragon.network.raknet.protocol.Reliability
-import bedrockDragon.network.raknet.protocol.game.PlayStatusPacket
+import bedrockDragon.network.raknet.protocol.game.connect.PlayStatusPacket
 
 class PlayStatusHandler(val status: Int, peer: RakNetClientPeer): ReflectMinecraftHandler(peer) {
     init {
