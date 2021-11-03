@@ -1,18 +1,17 @@
 package bedrockDragon.network.raknet.protocol.game.connect
 
 import bedrockDragon.network.raknet.VarInt
-import bedrockDragon.player.Player
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.type.GameRules
+import bedrockDragon.player.Player
 import bedrockDragon.resource.RuntimeItemState
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
 import java.util.*
-import kotlin.random.Random
 
 class StartGamePacket: PacketPayload() {
-    var entityIdSelf: Long = 0 //VarLong
-    var runtimeEntityId: ULong = 0u //VarLong
+    var entityIdSelf: Long = 1 //VarLong
+    var runtimeEntityId: ULong = 2u //VarLong
     var playerGamemode: Int = 0 //sVarInt
     lateinit var spawn: Float3
     lateinit var rotation: Float2 //vector2
@@ -47,7 +46,7 @@ class StartGamePacket: PacketPayload() {
     val lockedResourcePack = false
     val MSANametagsOnly = false
     val isFromWorldTemplate = false
-    val lockedWorldTemplate = false
+    val lockedWorldOptionTemplate = false
     val v1Villager = false
     var gameVersion: String = ""
     var limitedWorldWidth: Int = 16
@@ -65,75 +64,91 @@ class StartGamePacket: PacketPayload() {
     var enchantSeed: Int = 0 //sVarInt
     lateinit var blockProperties: Array<String> //todo
     //itemStates //todo
-    val multiplayerCorId: String = UUID.randomUUID().toString()
+    val multiplayerCorId = ""//: String = UUID.randomUUID().toString()
     var inventoryServerAuthoritative = false
     val serverEngine = ""
 
     override fun encode() {
         try {
-            VarInt.writeVarLong(entityIdSelf, outputStream)//
-            VarInt.writeUnsignedVarLong(runtimeEntityId, outputStream)//
-            VarInt.writeVarInt(playerGamemode, outputStream)
-            writeVector3(spawn)
-            writeVector2(rotation)//
-            VarInt.writeVarInt(seed, outputStream) //
-            writeShortLE(biomeType.toInt()) //
-            writeString(customBiomeName)
-            VarInt.writeVarInt(dimension, outputStream)
-            VarInt.writeVarInt(generator, outputStream)
-            VarInt.writeVarInt(worldGamemode, outputStream)
-            VarInt.writeVarInt(difficulty, outputStream)
-            writeBlockCoordinates(worldSpawn) //
-            writeBoolean(hasAchievementsDisabled)
-            VarInt.writeVarInt(dayCycleStopTime, outputStream)
-            VarInt.writeVarInt(EDUOffer, outputStream)
-            writeBoolean(educationFeatures)
-            writeString(educationProductId)
-            writeFloatLE(rainLevel.toDouble()) //
-            writeFloatLE(lightningLevel.toDouble()) //
-            writeBoolean(hasConfirmedPlatLockContent)
-            writeBoolean(isMultiplayer)
-            writeBoolean(broadcastToLAN)
-            VarInt.writeVarInt(xboxLiveBroadcast, outputStream) //
-            VarInt.writeVarInt(platformBroadcaseMode, outputStream) //
-            writeBoolean(enableCommands)
-            writeBoolean(texturePackRequired)
-            writeGameRules(gameRules)
+            writeVarLong(1)//
+            writeUnsignedVarLong(1)//
+            writeVarInt(0)
+           // writeVector3(spawn)
+            writeFloatLE(0.0)
+            writeFloatLE(0.0)
+            writeFloatLE(0.0)
+
+            //writeVector2(rotation)
+            writeFloatLE(0.0)
+            writeFloatLE(0.0)
+
+            writeVarInt(-1)
+            writeShortLE(0) //
+            writeString("plains")
+            writeVarInt(0)
+            writeVarInt(1)
+            writeVarInt(0)
+            writeVarInt(1)
+
+            //writeBlockCoordinates(worldSpawn) //
+            writeVarInt(0)
+            writeUnsignedVarInt(0)
+            writeVarInt(0)
+
+            writeBoolean(true)
+            writeVarInt(-1)
+            writeVarInt(0)
+            writeBoolean(false)
+            writeString("")
+            writeFloatLE(0.0) //
+            writeFloatLE(0.0) //
+            writeBoolean(false)
+            writeBoolean(true)
+            writeBoolean(true)
+            writeVarInt(4) //
+            writeVarInt(4) //
+
+            writeBoolean(true)
+            writeBoolean(false)
+            writeVarInt(0)// writeGameRules(gameRules)
             writeIntLE(0) //experiment count
-            writeBoolean(bonusChest)
-            writeBoolean(mapEnabled)
-            VarInt.writeVarInt(permissionLevel, outputStream)
-            writeIntLE(serverTickRange)//
-            writeBoolean(lockedBehaviorPack)
-            writeBoolean(lockedResourcePack)
+            writeBoolean(false) //prev experiment
+            writeBoolean(false)
+            writeBoolean(false)
+            writeVarInt(1)
+            writeIntLE(4)//
+            writeBoolean(false)
+            writeBoolean(false)
             writeBoolean(false) //islockedworldtemplate
-            writeBoolean(MSANametagsOnly)
-            writeBoolean(isFromWorldTemplate)
-            writeBoolean(lockedWorldTemplate)
-            writeBoolean(v1Villager)
-            writeString(gameVersion)
-            writeIntLE(limitedWorldWidth)//v
-            writeIntLE(limitedWorldHeight)//v
-            writeBoolean(isNetherType)
-            writeString("")//edu uri button
-            writeString("")//edu uri linkuri
-            writeBoolean(forceExperimental)//
-            writeString(levelId)
-            writeString(worldName)
-            writeString(premiumWorldId)
-            writeBoolean(isTrial)
-            VarInt.writeUnsignedVarInt(movementType, outputStream)
-            VarInt.writeVarInt(movementRewindSize, outputStream)
-            writeBoolean(serverAuthoritativeBlockBreaking)
-            writeLongLE(currentTick)
-            VarInt.writeVarInt(enchantSeed, outputStream)
-            VarInt.writeUnsignedVarInt(0, outputStream)
-            writeManifest()//v
-            writeString(multiplayerCorId)
-            writeBoolean(inventoryServerAuthoritative)
-            writeString(serverEngine)
-            //
-            println()
+            writeBoolean(false)
+            writeBoolean(false)
+            writeBoolean(false)
+            writeBoolean(false)
+            writeString("1.17.41")
+
+            writeIntLE(16)//v
+            writeIntLE(16)//v
+            writeBoolean(false)
+            writeString("") // EduSharedUriResource buttonName
+            writeString("") // EduSharedUriResource linkUri
+            writeBoolean(false)//
+            writeString("")
+            writeString("drago")
+            writeString("")
+            writeBoolean(false)
+
+            writeUnsignedVarInt(0)
+            writeVarInt(0)
+            writeBoolean(false)
+            writeLongLE(0)
+            writeVarInt(0)
+            writeUnsignedVarInt(0) //blockmanifest
+            writeUnsignedVarInt(0)//writeManifest()//v
+
+            writeString("")
+            writeBoolean(false)
+            writeString("")
+
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
             println(e.message)
@@ -146,14 +161,14 @@ class StartGamePacket: PacketPayload() {
     companion object {
         fun capture(player: Player): StartGamePacket {
             val startGamePacket = StartGamePacket()
-            startGamePacket.entityIdSelf = player.entityIdSelf
-            startGamePacket.runtimeEntityId = player.runtimeEntityId
+            //startGamePacket.entityIdSelf = player.entityIdSelf
+            //startGamePacket.runtimeEntityId = player.runtimeEntityId
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = Float3(0f,10f,0f)
             startGamePacket.rotation = Float2(0f,0f)
-            startGamePacket.seed = -1
-            startGamePacket.biomeType = 0x00
-            startGamePacket.customBiomeName = "Plains"
+            startGamePacket.seed = 12345
+            startGamePacket.biomeType = 0
+            startGamePacket.customBiomeName = "plains"
             startGamePacket.dimension = 0 //overworld
             startGamePacket.generator = 1
             startGamePacket.worldGamemode = 0
@@ -167,18 +182,18 @@ class StartGamePacket: PacketPayload() {
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = "1.17.40"
+            startGamePacket.gameVersion = ""
             startGamePacket.limitedWorldWidth = 16
             startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false
             startGamePacket.forceExperimental = false
-            startGamePacket.levelId = ""
+            startGamePacket.levelId = "1m0AAMIFIgA="
             startGamePacket.worldName = "DRAGON"
             startGamePacket.movementType = 0
             startGamePacket.movementRewindSize = 0
             startGamePacket.serverAuthoritativeBlockBreaking = false
             startGamePacket.currentTick = 100000
-            startGamePacket.enchantSeed = -1
+            startGamePacket.enchantSeed = 12356
             startGamePacket.blockProperties = emptyArray()
             startGamePacket.inventoryServerAuthoritative = false
             return startGamePacket
@@ -187,11 +202,11 @@ class StartGamePacket: PacketPayload() {
 
     fun writeManifest() {
         val manifest = RuntimeItemState.parse()
-        VarInt.writeUnsignedVarInt(0, outputStream)
-       // for(entry in manifest) {
-       //     writeString(entry.name)
-       //     writeShortLE(entry.id)
-       //     writeBoolean(false) //component
-       // }
+        writeUnsignedVarInt(manifest.size)
+        for(entry in manifest) {
+            writeString(entry.name)
+            writeShortLE(entry.id)
+            writeBoolean(false) //component
+        }
     }
 }

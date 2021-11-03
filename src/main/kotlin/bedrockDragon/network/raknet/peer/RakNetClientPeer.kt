@@ -55,6 +55,8 @@ import bedrockDragon.network.raknet.protocol.game.*
 import bedrockDragon.network.raknet.protocol.game.connect.BiomeDefinitionPacket
 import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
 import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
+import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
+import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -161,18 +163,24 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             player = Player()
             println("created player")
 
+            println("sent time")
+            val setTime = SetTimePacket()
+            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket(MinecraftPacketConstants.SET_TIME))
+
+
             val startGamePacket =  StartGamePacket.capture(player)
             println("Init Start Packet")
 
-            startGamePacket.encode()
-            println("encode start packet")
+            //val entityIdentifiers = AvaliableEntityIDPacket()
+            //println("Entity Identifier packet")
+            //sendMessage(Reliability.RELIABLE_ORDERED, 0, entityIdentifiers.gamePacket(MinecraftPacketConstants.AVAILABLE_ENTITY_IDENTIFIERS))
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket(MinecraftPacketConstants.START_GAME))
             println("Player is Loading Creative Content")
 
-            val creativeContentPacket = CreativeContentPacket()
-            creativeContentPacket.encode()
-            sendMessage(Reliability.UNRELIABLE, 0 , creativeContentPacket.gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
+            //val creativeContentPacket = CreativeContentPacket()
+            //creativeContentPacket.encode()
+            //sendMessage(Reliability.UNRELIABLE, 0 , creativeContentPacket.gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
 
             println("Player is Loading Biome Definition")
 
@@ -182,7 +190,11 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             //send one chunk through netty then say play status good
             //debug chunk
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
+          //  sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
+
+            val entityDataPacket = EntityDataPacket()
+            entityDataPacket.runtimeEntityId = player.runtimeEntityId.toLong()
+            sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket(MinecraftPacketConstants.SET_ENTITY_DATA))
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
         }
