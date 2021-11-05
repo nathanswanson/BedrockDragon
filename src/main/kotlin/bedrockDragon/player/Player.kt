@@ -47,14 +47,16 @@ import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.item.Item
-import bedrockDragon.reactive.type.Receiver
-import bedrockDragon.reactive.type.Transceiver
+import bedrockDragon.network.raknet.protocol.Reliability
+import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.network.raknet.protocol.game.util.TextPacket
 import bedrockDragon.world.Chunk
 import bedrockDragon.world.Dimension
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.collections.HashSet
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -63,13 +65,11 @@ import kotlin.collections.HashSet
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player: Living(), Transceiver<Player> {
+class Player: Living() {
 
-    override val subscribers: HashSet<Receiver<Player>>
-        get() = TODO("Not yet implemented")
 
     //Outgoing Packets
-    val nettyQueue = ConcurrentLinkedQueue<Int>()
+    val nettyQueue = ConcurrentLinkedQueue<PacketPayload>()
 
     var name = ""
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
@@ -83,14 +83,18 @@ class Player: Living(), Transceiver<Player> {
     var dimension = Dimension.Overworld
 
     var skinData: Skin? = null
-
     fun playInit() {
         //register to Chat Rail
-        ChatRail.DEFAULT().subscribe(this)
+       // println("init")
+        //scope.launch { ChatRail.DEFAULT.invoke("yeet") }
+        //ChatRail.DEFAULT.sendMessage("test")
+        registerSubscription(ChatRail.DEFAULT)
+        ChatRail.DEFAULT.sendMessage("test")
     }
 
     override fun getDrops(): List<Item> {
         return emptyList()
+
     }
 
     override fun getHealth(): Float {
@@ -122,21 +126,4 @@ class Player: Living(), Transceiver<Player> {
         //depending on packet send to all subscribed entities.
     }
 
-    //Sender
-
-    override fun receive(received: Player) {
-        TODO("Not yet implemented")
-    }
-
-    override fun subscribe(receiver: Receiver<Player>) {
-        TODO("Not yet implemented")
-    }
-
-    override fun unSubscribe(receiver: Receiver<Player>) {
-        TODO("Not yet implemented")
-    }
-
-    override fun send(sender: Player) {
-        TODO("Not yet implemented")
-    }
 }

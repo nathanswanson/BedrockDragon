@@ -1,4 +1,6 @@
 package bedrockDragon.entity
 
-open class Entity {
-}
+import bedrockDragon.player.Player
+import bedrockDragon.reactive.type.SealedBroadcaster
+
+abstract class Entity: SealedBroadcaster()

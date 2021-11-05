@@ -118,6 +118,19 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         return packetUnSplit
     }
 
+    override fun updateServer() {
+       // if(clientPeer != null) {
+        //    if(clientPeer?.player?.nettyQueue!!.isNotEmpty()) {
+        //        for(gamePacket in clientPeer?.player?.nettyQueue!!) {
+                    // sendMessage(R)
+       //         }
+       //     }
+       // }
+
+
+
+    }
+
     private fun bedrockClient(): MinecraftClientPeer? {
         return clientPeer
     }
@@ -127,7 +140,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         var uuid: String = ""
         var userName: String = ""
         var status = PlayerStatus.Connected
-        lateinit var player: Player
+        var player: Player? = null
         init {
             for(jwt in playerData) {
                 val jsonJwt = jwt.payload.toJSONObject()
@@ -162,12 +175,12 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
         fun fireJoinSequence() {
             player = Player()
-
             val setTime = SetTimePacket()
+
             sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket(MinecraftPacketConstants.SET_TIME))
 
 
-            val startGamePacket =  StartGamePacket.capture(player)
+            val startGamePacket =  StartGamePacket.capture(player!!)
 
             //val entityIdentifiers = AvaliableEntityIDPacket()
             //println("Entity Identifier packet")
@@ -181,7 +194,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
 
             val biomeDefinitionPacket = BiomeDefinitionPacket()
-            biomeDefinitionPacket.encode()
+            //biomeDefinitionPacket.encode()
             sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket(MinecraftPacketConstants.BIOME_DEFINITION_LIST))
 
             //send one chunk through netty then say play status good
@@ -189,12 +202,11 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
           //  sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
 
             val entityDataPacket = EntityDataPacket()
-            entityDataPacket.runtimeEntityId = player.runtimeEntityId.toLong()
+            entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
             sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket(MinecraftPacketConstants.SET_ENTITY_DATA))
-
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
 
-            player.playInit()
+            player!!.playInit()
         }
     }
 
