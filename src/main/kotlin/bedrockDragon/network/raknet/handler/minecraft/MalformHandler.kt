@@ -8,7 +8,6 @@ class MalformHandler(packet: Packet): MinecraftHandler() {
     init {
         val malformPacket = MalformPacket()
         malformPacket.decode(packet)
-        println()
     }
     override fun pass() {
 

@@ -47,15 +47,18 @@ import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.item.Item
+import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.protocol.Reliability
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
 import bedrockDragon.world.Chunk
 import bedrockDragon.world.Dimension
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -66,10 +69,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @since ALPHA
  */
 class Player: Living() {
+    private val scope = CoroutineScope(Job() + Dispatchers.IO)
 
 
     //Outgoing Packets
-    val nettyQueue = ConcurrentLinkedQueue<PacketPayload>()
+    val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
     var name = ""
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
@@ -87,9 +91,7 @@ class Player: Living() {
         //register to Chat Rail
        // println("init")
         //scope.launch { ChatRail.DEFAULT.invoke("yeet") }
-        //ChatRail.DEFAULT.sendMessage("test")
-        registerSubscription(ChatRail.DEFAULT)
-        ChatRail.DEFAULT.sendMessage("test")
+        ChatRail.DEFAULT.subscribe(this)
     }
 
     override fun getDrops(): List<Item> {
@@ -122,8 +124,23 @@ class Player: Living() {
         SPECTATOR
     }
 
-    fun handleIncomingPacket() {
-        //depending on packet send to all subscribed entities.
+    fun sendMessage(text: String, type: Int = 0) {
+        val messagePacket = TextPacket()
+        messagePacket.type = 0
+        messagePacket.needsTranslate = false
+        messagePacket.message = text
+        nettyQueue.add(messagePacket.gamePacket(MinecraftPacketConstants.TEXT))
+    }
+
+    fun handIncomingCommand(inGamePacket: MinecraftPacket) {
+
+        when(inGamePacket.packetId) {
+            MinecraftPacketConstants.TEXT -> {
+                val payload = TextPacket()
+                payload.decode(inGamePacket.payload)
+                ChatRail.DEFAULT.invoke(payload.message)
+            }
+        }
     }
 
 }
