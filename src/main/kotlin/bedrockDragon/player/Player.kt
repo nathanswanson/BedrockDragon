@@ -53,12 +53,15 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
+import bedrockDragon.reactive.Reactor
+import bedrockDragon.reactive.type.SubscribedEventHandler
 import bedrockDragon.world.Chunk
 import bedrockDragon.world.Dimension
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import mu.KotlinLogging
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -68,8 +71,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player: Living() {
+class Player: Living()/*, SubscribedEventHandler*/ {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    val logger = KotlinLogging.logger {}
 
 
     //Outgoing Packets
@@ -82,15 +86,13 @@ class Player: Living() {
     var gamemode = Gamemode.SURVIVAL
     var isOp = false
 
-    var position = Float3(0f,0f,0f)
+    var position = Float3(0f,100f,0f)
     var rotation = Float2(0f, 0f)
     var dimension = Dimension.Overworld
 
     var skinData: Skin? = null
     fun playInit() {
         //register to Chat Rail
-       // println("init")
-        //scope.launch { ChatRail.DEFAULT.invoke("yeet") }
         ChatRail.DEFAULT.subscribe(this)
     }
 
@@ -136,11 +138,20 @@ class Player: Living() {
 
         when(inGamePacket.packetId) {
             MinecraftPacketConstants.TEXT -> {
+
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
                 ChatRail.DEFAULT.invoke(payload.message)
             }
         }
     }
+/*
+    override fun invoke(reactor: Reactor) {
+        //TODO("Not yet implemented")
+    }
 
+    override fun isApplicable(reactor: Reactor) {
+      //  TODO("Not yet implemented")
+    }
+*/
 }

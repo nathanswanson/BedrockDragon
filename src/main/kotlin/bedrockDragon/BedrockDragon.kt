@@ -46,6 +46,7 @@ package bedrockDragon
 import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
@@ -83,9 +84,11 @@ fun main() {
 
     logger.info { "Loading world." }
     //Todo unsafe
-    if (File("mods").listFiles().isEmpty()) {
+    if (File("world").listFiles().isEmpty()) {
         logger.warn { "World not found. Generating..." }
     }
+
+    val world: World
 
     logger.info { "Registering mods." }
     registerMods()
