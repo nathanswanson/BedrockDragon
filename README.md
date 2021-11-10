@@ -1,6 +1,21 @@
 # BedrockDragon
 
-## Todo
+This is a passion project by me to create the most efficent desentralysed server I can. 
+
+Please note that my common code is still private as I finish up some touches. 
+
+This is required to run and develop this project which means this code is unusable unless you have access to my private Space.
+
+I will release the common code alpha soon.
+
+
+## Framework
+
+The server is structured around kotlin coroutine and sharable flows. A netty thread controls the IO of the server and passes packet information to the
+coroutine network.
+
+
+## Current Todo
 
 ~~- change player packet handler to branch off.~~
 - finish text packet
