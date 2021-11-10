@@ -15,6 +15,11 @@ The server is structured around kotlin coroutine and sharable flows. A netty thr
 coroutine network.
 
 
+## Current Status
+
+Currently I am devleoping this as my main project. The server as of Nov. 10 lets players join however that is it. Once thye join they will see an empty world 
+which they can use the chat with.
+
 ## Current Todo
 
 ~~- change player packet handler to branch off.~~
