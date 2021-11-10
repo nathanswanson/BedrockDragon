@@ -1,6 +1,6 @@
 # BedrockDragon
 
-This is a passion project by me to create the most efficent desentralysed server I can. 
+This is a passion project by me to create the most efficent decentralized server I can. 
 
 Please note that my common code is still private as I finish up some touches. 
 
@@ -25,11 +25,11 @@ which they can use the chat with.
 ~~- change player packet handler to branch off.~~
 - finish text packet
 - finish abstract framework for reactive.
-- remove many packet creations and replace with streams.
+~~- remove many packet creations and replace with streams.~~
 - make sure chats are on one coroutine.
 - fix MOTD
 - find bug where player gets stuck on connecting on server
-- fix string byte searlize in packet.kt
+~~- fix string byte searlize in packet.kt~~
 - unsubscribe leaving players
 - make sure all information is handled when player leaves.
 
