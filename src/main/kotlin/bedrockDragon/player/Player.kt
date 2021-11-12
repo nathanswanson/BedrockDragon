@@ -48,13 +48,16 @@ import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.item.Item
 import bedrockDragon.network.raknet.Packet
+import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
+import bedrockDragon.network.raknet.protocol.game.world.ChunkRadiusUpdatePacket
+import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.reactive.Reactor
-import bedrockDragon.reactive.type.SubscribedEventHandler
+import bedrockDragon.reactive.type.ISubscriber
 import bedrockDragon.world.Chunk
 import bedrockDragon.world.Dimension
 import com.curiouscreature.kotlin.math.Float2
@@ -71,11 +74,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player: Living()/*, SubscribedEventHandler*/ {
+class Player: Living(), ISubscriber {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
 
 
+    var isConfirmed = false
     //Outgoing Packets
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
@@ -91,6 +95,7 @@ class Player: Living()/*, SubscribedEventHandler*/ {
     var dimension = Dimension.Overworld
 
     var skinData: Skin? = null
+
     fun playInit() {
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
@@ -143,15 +148,62 @@ class Player: Living()/*, SubscribedEventHandler*/ {
                 payload.decode(inGamePacket.payload)
                 ChatRail.DEFAULT.invoke(payload.message)
             }
+            MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
+            MinecraftPacketConstants.MOVE_PLAYER -> { println("MOVE_PLAYER") }
+            MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
+            MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_ONE -> { println("LEVEL_SOUND_EVENT_ONE") }
+            MinecraftPacketConstants.ENTITY_EVENT -> { println("ENTITY_EVENT") }
+            MinecraftPacketConstants.INVENTORY_TRANSACTION -> { println("INVENTORY_TRANSACTION") }
+            MinecraftPacketConstants.MOB_EQUIPMENT -> { println("MOB_EQUIPMENT") }
+            MinecraftPacketConstants.MOB_ARMOR_EQUIPMENT -> { println("MOB_ARMOR_EQUIPMENT") }
+            MinecraftPacketConstants.INTERACT -> { println("INTERACT") }
+            MinecraftPacketConstants.BLOCK_PICK_REQUEST -> { println("BLOCK_PICK_REQUEST") }
+            MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
+            MinecraftPacketConstants.PLAYER_ACTION -> { println("PLAYER_ACTION") }
+            MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
+            MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }
+            MinecraftPacketConstants.SET_ENTITY_MOTION -> { println("SET_ENTITY_MOTION") }
+            MinecraftPacketConstants.ANIMATE -> { println("ANIMATE") }
+            MinecraftPacketConstants.RESPAWN -> { println("RESPAWN") }
+            MinecraftPacketConstants.CONTAINER_CLOSE -> { println("CONTAINER_CLOSE") }
+            MinecraftPacketConstants.PLAYER_HOTBAR -> { println("PLAYER_HOTBAR") }
+            MinecraftPacketConstants.INVENTORY_CONTENT -> { println("INVENTORY_CONTENT") }
+            MinecraftPacketConstants.INVENTORY_SLOT -> { println("INVENTORY_SLOT") }
+            MinecraftPacketConstants.CRAFTING_EVENT -> { println("CRAFTING_EVENT") }
+            MinecraftPacketConstants.ADVENTURE_SETTINGS -> { println("ADVENTURE_SETTINGS") }
+            MinecraftPacketConstants.PLAYER_INPUT -> { println("PLAYER_INPUT") }
+            MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { println("SET_PLAYER_GAME_TYPE") }
+            MinecraftPacketConstants.MAP_INFO_REQUEST -> { println("MAP_INFO_REQUEST") }
+            MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> { handleChunkRadius() }
+            MinecraftPacketConstants.ITEMFRAME_DROP_ITEM -> { println("ITEMFRAM_DROP_ITEM") }
+            MinecraftPacketConstants.COMMAND_REQUEST -> { println("COMMAND_REQUEST") }
+            MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }
+            MinecraftPacketConstants.RESOURCE_PACK_CHUNK_REQUEST -> { println("RESOURCE_PACK_CHUNK_REQUEST") }
+            MinecraftPacketConstants.PURCHASE_RECEIPT -> { println("PURCHASE_RECEIPT") }
+            MinecraftPacketConstants.PLAYER_SKIN -> { println("PLAYER_SKIN") }
+            MinecraftPacketConstants.SUB_CLIENT_LOGING -> { println("SUB_CLIENT_LOGIN") }
+            MinecraftPacketConstants.NPC_REQUEST -> { println("NPC_REQUEST") }
+            MinecraftPacketConstants.PHOTO_TRANSFER -> { println("PHOTO_TRANSFER") }
+            MinecraftPacketConstants.MODEL_FORM_RESPONSE ->  { println("MODEL_FORM_RESPONSE") }
+            MinecraftPacketConstants.SERVER_SETTINGS_REQUEST -> { println("SERVER_SETTINGS_REQUEST") }
+            MinecraftPacketConstants.LAB_TABLE -> { println("LAB_TABLE") }
+            MinecraftPacketConstants.SET_LOCAL_PLAYER_AS_INITIALIZED -> {
+                isConfirmed = true
+                //nettyQueue.add(LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
+            }
+            MinecraftPacketConstants.NETWORK_STACK_LATENCY -> { println("NETWORK_STACK_LATENCY") }
+            MinecraftPacketConstants.SCRIPT_CUSTOM_EVENT -> { println("SCRIPT_CUSTOM_EVENT") }
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_TWO -> { println("LEVEL_SOUND_EVENT_TWO") }
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_THREE -> { println("LEVEL_SOUND_EVENT_THREE") }
+            MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { println("CLIENT_CACHE_STATUS") }
+            MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
+            MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }
         }
     }
-/*
-    override fun invoke(reactor: Reactor) {
-        //TODO("Not yet implemented")
-    }
 
-    override fun isApplicable(reactor: Reactor) {
-      //  TODO("Not yet implemented")
+    fun handleChunkRadius() {
+        logger.trace { "sent '$name' update chunk radius" }
+        nettyQueue.add(ChunkRadiusUpdatePacket(8).gamePacket(MinecraftPacketConstants.CHUNK_RADIUS_UPDATED))
     }
-*/
 }

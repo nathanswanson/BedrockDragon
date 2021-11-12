@@ -22,6 +22,6 @@ class ResourcePackInfoHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer) 
 
 
 
-        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, MinecraftPacket.encapsulateGamePacket(packet, MinecraftPacketConstants.RESOURCE_PACKS_INFO))
+        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, MinecraftPacket.encapsulateGamePacket(packet, MinecraftPacketConstants.RESOURCE_PACKS_INFO, null))
     }
 }

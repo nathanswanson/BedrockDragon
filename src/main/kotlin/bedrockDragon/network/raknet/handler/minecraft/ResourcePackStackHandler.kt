@@ -17,7 +17,7 @@ class ResourcePackStackHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer)
         packet.gameVersion = "1.17.40"
         packet.encode()
 
-        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, MinecraftPacket.encapsulateGamePacket(packet, MinecraftPacketConstants.RESOURCE_PACK_STACK))
+        peer.sendMessage(Reliability.RELIABLE_ORDERED, 0, MinecraftPacket.encapsulateGamePacket(packet, MinecraftPacketConstants.RESOURCE_PACK_STACK, null))
 
     }
 }

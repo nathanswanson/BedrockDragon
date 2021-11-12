@@ -48,6 +48,7 @@ import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.handler.PacketConstants
+import bedrockDragon.network.raknet.handler.login.ClientToServerHandler
 import bedrockDragon.network.raknet.handler.minecraft.*
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
@@ -126,7 +127,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             if(clientPeer!!.status == PlayerStatus.InGame) {
                 if(clientPeer?.player?.nettyQueue!!.isNotEmpty()) {
                     for(gamePacket in clientPeer?.player?.nettyQueue!!) {
-                        sendMessage(Reliability.RELIABLE_ORDERED, 0, gamePacket)
+                        sendMessage(gamePacket.reliability, 0, gamePacket)
                         clientPeer!!.player!!.nettyQueue.remove(gamePacket)
                     }
                 }
@@ -199,7 +200,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             //send one chunk through netty then say play status good
             //debug chunk
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
 
             val entityDataPacket = EntityDataPacket()
             entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
@@ -209,6 +209,9 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             clientPeer!!.status = PlayerStatus.InGame
             logger.info { "${clientPeer!!.userName} has joined the game." }
             player!!.playInit()
+
+           // sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
+
         }
     }
 
@@ -266,6 +269,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                                 }
                             }
                             MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> {
+                          //      ClientToServerHandler(inGamePacket.payload)
                                 PlayStatusHandler(0, this@RakNetClientPeer)
                             }//todo last check before letting them join
                             //for now this initiates start game packet
