@@ -1,7 +1,8 @@
 package bedrockDragon.entity.living
 
+import bedrockDragon.Item
 import bedrockDragon.inventory.ArmorInventory
-import bedrockDragon.item.Item
+
 
 class Bat: Living()  {
     override fun getDrops(): List<Item> {

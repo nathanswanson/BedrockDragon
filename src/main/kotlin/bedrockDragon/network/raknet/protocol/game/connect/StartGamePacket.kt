@@ -43,8 +43,9 @@
 
 package bedrockDragon.network.raknet.protocol.game.connect
 
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
-import bedrockDragon.network.raknet.protocol.game.type.GameRules
+import bedrockDragon.network.raknet.protocol.game.type.gamerule.GameRules
 import bedrockDragon.player.Player
 import bedrockDragon.resource.RuntimeItemState
 import com.curiouscreature.kotlin.math.Float2
@@ -57,7 +58,7 @@ import java.util.*
  * @author Nathan Swanson
  * @since ALPHA
  */
-class StartGamePacket: PacketPayload() {
+class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var entityIdSelf: Long = 1 //VarLong
     var runtimeEntityId: ULong = 2u //VarLong
     var playerGamemode: Int = 0 //sVarInt
@@ -216,7 +217,7 @@ class StartGamePacket: PacketPayload() {
             startGamePacket.generator = 1
             startGamePacket.worldGamemode = 0
             startGamePacket.difficulty = 1
-            startGamePacket.worldSpawn = Float3(0f,0f,0f)
+            startGamePacket.worldSpawn = Float3(0f,80f,0f)
             startGamePacket.dayCycleStopTime = -1
             startGamePacket.rainLevel = 0f
             startGamePacket.lightningLevel = 0f

@@ -43,6 +43,7 @@
 
 package bedrockDragon.network.raknet.protocol.game.connect
 
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.resource.BiomeDefinitions.writeBiomeDefinition
 
@@ -51,7 +52,7 @@ import bedrockDragon.resource.BiomeDefinitions.writeBiomeDefinition
  * @author Nathan Swanson
  * @since ALPHA
  */
-class BiomeDefinitionPacket: PacketPayload() {
+class BiomeDefinitionPacket: PacketPayload(MinecraftPacketConstants.BIOME_DEFINITION_LIST) {
 
     override fun encode() {
         writeBiomeDefinition()

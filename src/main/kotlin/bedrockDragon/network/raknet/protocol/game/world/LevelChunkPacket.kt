@@ -1,10 +1,11 @@
 package bedrockDragon.network.raknet.protocol.game.world
 
 import bedrockDragon.network.raknet.protocol.Reliability
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.world.Chunk
 
-class LevelChunkPacket: PacketPayload() {
+class LevelChunkPacket: PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
     init {
         reliability = Reliability.RELIABLE_ORDERED
     }
@@ -29,7 +30,7 @@ class LevelChunkPacket: PacketPayload() {
                 writeLongLE(id)
             }
         }
-
+        writeUnsignedVarInt(data.size)
         write(*data)
     }
 
@@ -39,7 +40,8 @@ class LevelChunkPacket: PacketPayload() {
 
             packet.chunkX = x
             packet.chunkZ = z
-            packet.data = Chunk().binary().array()!!
+            packet.subChunkCount = 1
+            packet.data = ClassLoader.getSystemResourceAsStream("superflat.bin").readAllBytes()
 
             return packet
         }

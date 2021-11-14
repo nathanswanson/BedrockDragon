@@ -1,8 +1,8 @@
 package bedrockDragon.entity.living
 
+import bedrockDragon.Item
 import bedrockDragon.entity.Entity
 import bedrockDragon.inventory.ArmorInventory
-import bedrockDragon.item.Item
 
 abstract class Living: Entity() {
     abstract fun getDrops(): List<Item>

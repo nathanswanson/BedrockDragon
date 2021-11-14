@@ -43,29 +43,36 @@
 
 package bedrockDragon.player
 
+import bedrockDragon.Item
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
-import bedrockDragon.item.Item
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
+import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
+import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.ChunkRadiusUpdatePacket
 import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
+import bedrockDragon.network.raknet.protocol.game.world.NetworkChunkPublisherPacket
 import bedrockDragon.reactive.Reactor
 import bedrockDragon.reactive.type.ISubscriber
 import bedrockDragon.world.Chunk
+import bedrockDragon.world.ChunkRelay
 import bedrockDragon.world.Dimension
+import bedrockDragon.world.World
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.math.log
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -87,18 +94,40 @@ class Player: Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.SURVIVAL
+    var gamemode = Gamemode.CREATIVE
     var isOp = false
 
-    var position = Float3(0f,100f,0f)
+    var position = Float3(1f,38f,1f)
     var rotation = Float2(0f, 0f)
+    var world = World() //Todo shared world
     var dimension = Dimension.Overworld
 
     var skinData: Skin? = null
 
+    var chunkRelay = world.getOrLoadRelay(position.xy)
+
     fun playInit() {
+
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
+        chunkRelay.addPlayer(this)
+
+
+        for(x in 1..15) {
+            for(z in 1..15) {
+                nettyQueue.add(LevelChunkPacket.emptyChunk(x - 8,z - 8).gamePacket())
+            }
+        }
+        logger.info { "send chunk." }
+
+        val attribute = PlayerAttributePacket()
+        attribute.runtimeEntityId = runtimeEntityId.toLong()
+        nettyQueue.add(attribute.gamePacket())
+
+        val publisherUpdate = NetworkChunkPublisherPacket()
+        publisherUpdate.position = position
+        publisherUpdate.radius = 4
+        nettyQueue.add(publisherUpdate.gamePacket())
     }
 
     override fun getDrops(): List<Item> {
@@ -120,10 +149,6 @@ class Player: Living(), ISubscriber {
     override fun damage() {
     }
 
-    fun subscribedChunks() : Array<Chunk> {
-        return TODO()
-    }
-
     enum class Gamemode {
         SURVIVAL,
         CREATIVE,
@@ -136,7 +161,32 @@ class Player: Living(), ISubscriber {
         messagePacket.type = 0
         messagePacket.needsTranslate = false
         messagePacket.message = text
-        nettyQueue.add(messagePacket.gamePacket(MinecraftPacketConstants.TEXT))
+        nettyQueue.add(messagePacket.gamePacket())
+    }
+
+    fun transfer(world: World, position: Float3) {
+
+    }
+
+    fun teleport(position: Float3) {
+        this.position = position
+       // nettyQueue.add()
+    }
+
+    fun updateAttributes() {
+
+    }
+
+    fun updateGamemode() {
+
+    }
+
+    fun updateOp(boolean: Boolean) {
+
+    }
+
+    fun diconnect(kickMessage: String?) {
+        //
     }
 
     fun handIncomingCommand(inGamePacket: MinecraftPacket) {
@@ -149,7 +199,11 @@ class Player: Living(), ISubscriber {
                 ChatRail.DEFAULT.invoke(payload.message)
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
-            MinecraftPacketConstants.MOVE_PLAYER -> { println("MOVE_PLAYER") }
+            MinecraftPacketConstants.MOVE_PLAYER -> {
+                val movePlayerPacket = MovePlayerPacket()
+                movePlayerPacket.decode(inGamePacket.payload)
+                position = movePlayerPacket.position
+            }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
             MinecraftPacketConstants.LEVEL_SOUND_EVENT_ONE -> { println("LEVEL_SOUND_EVENT_ONE") }
@@ -157,14 +211,21 @@ class Player: Living(), ISubscriber {
             MinecraftPacketConstants.INVENTORY_TRANSACTION -> { println("INVENTORY_TRANSACTION") }
             MinecraftPacketConstants.MOB_EQUIPMENT -> { println("MOB_EQUIPMENT") }
             MinecraftPacketConstants.MOB_ARMOR_EQUIPMENT -> { println("MOB_ARMOR_EQUIPMENT") }
-            MinecraftPacketConstants.INTERACT -> { println("INTERACT") }
+            MinecraftPacketConstants.INTERACT -> {
+                val interact = InteractPacket()
+                interact.decode(inGamePacket.payload)
+                println(interact.targetRuntimeEntityId)
+                println(interact.actionId)
+            }
             MinecraftPacketConstants.BLOCK_PICK_REQUEST -> { println("BLOCK_PICK_REQUEST") }
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> { println("PLAYER_ACTION") }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }
             MinecraftPacketConstants.SET_ENTITY_MOTION -> { println("SET_ENTITY_MOTION") }
-            MinecraftPacketConstants.ANIMATE -> { println("ANIMATE") }
+            MinecraftPacketConstants.ANIMATE -> {
+
+            }
             MinecraftPacketConstants.RESPAWN -> { println("RESPAWN") }
             MinecraftPacketConstants.CONTAINER_CLOSE -> { println("CONTAINER_CLOSE") }
             MinecraftPacketConstants.PLAYER_HOTBAR -> { println("PLAYER_HOTBAR") }
@@ -176,7 +237,7 @@ class Player: Living(), ISubscriber {
             MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { println("SET_PLAYER_GAME_TYPE") }
             MinecraftPacketConstants.MAP_INFO_REQUEST -> { println("MAP_INFO_REQUEST") }
             MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> { handleChunkRadius() }
-            MinecraftPacketConstants.ITEMFRAME_DROP_ITEM -> { println("ITEMFRAM_DROP_ITEM") }
+            MinecraftPacketConstants.ITEMFRAME_DROP_ITEM -> { println("ITEMFRAME_DROP_ITEM") }
             MinecraftPacketConstants.COMMAND_REQUEST -> { println("COMMAND_REQUEST") }
             MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }
             MinecraftPacketConstants.RESOURCE_PACK_CHUNK_REQUEST -> { println("RESOURCE_PACK_CHUNK_REQUEST") }
@@ -190,7 +251,6 @@ class Player: Living(), ISubscriber {
             MinecraftPacketConstants.LAB_TABLE -> { println("LAB_TABLE") }
             MinecraftPacketConstants.SET_LOCAL_PLAYER_AS_INITIALIZED -> {
                 isConfirmed = true
-                //nettyQueue.add(LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
             }
             MinecraftPacketConstants.NETWORK_STACK_LATENCY -> { println("NETWORK_STACK_LATENCY") }
             MinecraftPacketConstants.SCRIPT_CUSTOM_EVENT -> { println("SCRIPT_CUSTOM_EVENT") }
@@ -204,6 +264,6 @@ class Player: Living(), ISubscriber {
 
     fun handleChunkRadius() {
         logger.trace { "sent '$name' update chunk radius" }
-        nettyQueue.add(ChunkRadiusUpdatePacket(8).gamePacket(MinecraftPacketConstants.CHUNK_RADIUS_UPDATED))
+        nettyQueue.add(ChunkRadiusUpdatePacket(8).gamePacket())
     }
 }

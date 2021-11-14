@@ -181,14 +181,14 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             player = Player()
             val setTime = SetTimePacket()
 
-            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket(MinecraftPacketConstants.SET_TIME))
+            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
             val startGamePacket =  StartGamePacket.capture(player!!)
 
             val entityIdentifiers = AvaliableEntityIDPacket()
             //println("Entity Identifier packet")
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, entityIdentifiers.gamePacket(MinecraftPacketConstants.AVAILABLE_ENTITY_IDENTIFIERS))
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, entityIdentifiers.gamePacket())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket(MinecraftPacketConstants.START_GAME))
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket())
 
 
           //  sendMessage(Reliability.UNRELIABLE, 0 , CreativeContentPacket().gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
@@ -196,21 +196,20 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             val biomeDefinitionPacket = BiomeDefinitionPacket()
             //biomeDefinitionPacket.encode()
-            sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket(MinecraftPacketConstants.BIOME_DEFINITION_LIST))
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket())
 
             //send one chunk through netty then say play status good
             //debug chunk
 
             val entityDataPacket = EntityDataPacket()
             entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
-            sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket(MinecraftPacketConstants.SET_ENTITY_DATA))
-            sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket(MinecraftPacketConstants.PLAY_STATUS))
+            sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket())
+            sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
             clientPeer!!.status = PlayerStatus.InGame
             logger.info { "${clientPeer!!.userName} has joined the game." }
             player!!.playInit()
 
-           // sendMessage(Reliability.RELIABLE_ORDERED, 0, LevelChunkPacket.emptyChunk(0,0).gamePacket(MinecraftPacketConstants.LEVEL_CHUNK))
 
         }
     }
@@ -257,7 +256,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                                     sendMessage(
                                         Reliability.UNRELIABLE,
                                         0,
-                                        PlayStatusPacket(0).gamePacket(MinecraftPacketConstants.PLAY_STATUS)
+                                        PlayStatusPacket(0).gamePacket()
                                     )
                                     //now lets send the resource packet info
                                     ResourcePackInfoHandler(this@RakNetClientPeer)
