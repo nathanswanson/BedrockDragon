@@ -158,7 +158,7 @@ class RakNetServerHandler(private val server: DragonServer) : ChannelInboundHand
 
                 // Handle the packet and release the buffer
                 server.handleMessage(sender, packet)
-                logger.debug("Sent packet to server and reset datagram buffer read position");
+                logger.trace("Sent packet to server and reset datagram buffer read position");
                 //TODO EVENT
 
                 server.callEvent { listener: RakNetServerListener? ->

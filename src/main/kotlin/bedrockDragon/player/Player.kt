@@ -62,10 +62,9 @@ import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.network.raknet.protocol.game.world.NetworkChunkPublisherPacket
 import bedrockDragon.reactive.Reactor
 import bedrockDragon.reactive.type.ISubscriber
-import bedrockDragon.world.Chunk
-import bedrockDragon.world.ChunkRelay
-import bedrockDragon.world.Dimension
-import bedrockDragon.world.World
+import bedrockDragon.reactive.type.MovePlayer
+import bedrockDragon.reactive.type.ReactivePacket
+import bedrockDragon.world.*
 import com.curiouscreature.kotlin.math.Float2
 import com.curiouscreature.kotlin.math.Float3
 import kotlinx.coroutines.*
@@ -99,12 +98,12 @@ class Player: Living(), ISubscriber {
 
     var position = Float3(1f,38f,1f)
     var rotation = Float2(0f, 0f)
-    var world = World() //Todo shared world
+    var world = World.tempDefault //Todo shared world
     var dimension = Dimension.Overworld
 
     var skinData: Skin? = null
 
-    var chunkRelay = world.getOrLoadRelay(position.xy)
+    var chunkRelay = world.getOrLoadRelay(WorldInt2(position.xy))
 
     fun playInit() {
 
@@ -186,12 +185,20 @@ class Player: Living(), ISubscriber {
     }
 
     fun diconnect(kickMessage: String?) {
-        //
+        chunkRelay.removePlayer(this)
+    }
+
+    fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
+
     }
 
     fun handIncomingCommand(inGamePacket: MinecraftPacket) {
 
         when(inGamePacket.packetId) {
+            MinecraftPacketConstants.DISCONNECT -> {
+                diconnect(null)
+                logger.debug { "${name} has disconnected"  }
+            }
             MinecraftPacketConstants.TEXT -> {
 
                 val payload = TextPacket()
@@ -203,6 +210,8 @@ class Player: Living(), ISubscriber {
                 val movePlayerPacket = MovePlayerPacket()
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
+
+                chunkRelay.invoke(MovePlayer(position))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }

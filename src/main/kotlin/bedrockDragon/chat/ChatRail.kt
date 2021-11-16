@@ -16,7 +16,7 @@ class ChatRail {
     val subscription = _subscription.asSharedFlow()
 
     fun sendMessage(message: String) {
-        scope.launch { invoke(message) }
+        invoke(message)
     }
 
     fun invoke(emitter: String) {
