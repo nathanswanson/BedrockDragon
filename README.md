@@ -17,20 +17,28 @@ coroutine network.
 
 ## Current Status
 
-Currently I am devleoping this as my main project. The server as of Nov. 10 lets players join however that is it. Once thye join they will see an empty world 
-which they can use the chat with.
+Currently I am devleoping this as my main project. The server as of Nov. 10 lets players joins and they can move around a super flat world and use chat. 
 
 ## Current Todo
 
-~~- change player packet handler to branch off.~~
 - finish text packet
 - finish abstract framework for reactive.
-~~- remove many packet creations and replace with streams.~~
 - make sure chats are on one coroutine.
 - fix MOTD
 - find bug where player gets stuck on connecting on server
-~~- fix string byte searlize in packet.kt~~
 - unsubscribe leaving players
 - make sure all information is handled when player leaves.
 
-- then we can start on chunk loading
+- NBT and save files
+
+## Contributing
+
+Contributing is currently closed unless invited until a solid framework is finished.
+
+### Guide
+
+You must have:
+- A copy of Windows 10 Minecraft
+- Intelij IDEA. I'm sure another editor would work but this is built to support IDEA
+
+There is two jar dependencies kotlin-math, and Common both which are found on our jetbrains space.
