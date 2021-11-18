@@ -1,8 +1,7 @@
 package bedrockDragon.world
 
 import bedrockDragon.network.raknet.Packet
-import com.curiouscreature.kotlin.math.Float2
-import com.curiouscreature.kotlin.math.Float3
+import bedrockDragon.network.world.WorldInt2
 import it.unimi.dsi.fastutil.io.FastBufferedOutputStream
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import java.io.InputStream

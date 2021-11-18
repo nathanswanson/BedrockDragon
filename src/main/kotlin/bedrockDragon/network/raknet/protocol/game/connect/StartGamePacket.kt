@@ -48,8 +48,8 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.type.gamerule.GameRules
 import bedrockDragon.player.Player
 import bedrockDragon.resource.RuntimeItemState
-import com.curiouscreature.kotlin.math.Float2
-import com.curiouscreature.kotlin.math.Float3
+import dev.romainguy.kotlin.math.Float2
+import dev.romainguy.kotlin.math.Float3
 import java.util.*
 
 /**

@@ -1,6 +1,6 @@
 package bedrockDragon.world
 
-import com.curiouscreature.kotlin.math.Float2
+import bedrockDragon.network.world.WorldInt2
 
 fun WorldInt2.toChunkSpace() {
     x = x shr 4

@@ -1,12 +1,15 @@
 package bedrockDragon.reactive.type
 
-import com.curiouscreature.kotlin.math.Float3
+import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
+import bedrockDragon.player.Player
 
-abstract class ReactivePacket<T>(val payload: T) {
-    val tags = emptyArray<Any>()
-    val priority = 0
+abstract class ReactivePacket<T: PacketPayload>(val payload: T, val sender: ISubscriber) {
+    var tags = emptyArray<Any>()
+    var priority = 0
+
 }
 
-class MovePlayer(payload: Float3) : ReactivePacket<Float3>(payload)
+class MovePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
 class AnimatePlayer()
-class RotatePlayer(payload: Float3) : ReactivePacket<Float3>(payload)
+class RotatePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)

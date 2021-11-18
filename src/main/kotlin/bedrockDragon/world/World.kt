@@ -1,7 +1,6 @@
 package bedrockDragon.world
 
-import com.curiouscreature.kotlin.math.Float2
-import com.curiouscreature.kotlin.math.Float3
+import bedrockDragon.network.world.WorldInt2
 import mu.KotlinLogging
 import java.util.*
 

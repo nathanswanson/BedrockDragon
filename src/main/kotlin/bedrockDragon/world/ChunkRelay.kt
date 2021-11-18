@@ -1,19 +1,17 @@
 package bedrockDragon.world
 
+import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
-import bedrockDragon.reactive.type.ISubscriber
 import bedrockDragon.reactive.type.ReactivePacket
-import com.curiouscreature.kotlin.math.Float2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.log
 
 class ChunkRelay(x: Int, y: Int) {
     constructor(float2: WorldInt2) : this(float2.x.toInt(), float2.y.toInt())
@@ -37,7 +35,7 @@ class ChunkRelay(x: Int, y: Int) {
 
     init {
         logger.info { "ChunkRelay Initialized at x: $x y: $y" }
-        logger.info { chunks.contentToString() }
+        //logger.info { chunks.contentToString() }
     }
 
     var up: ChunkRelay? = null
@@ -48,7 +46,8 @@ class ChunkRelay(x: Int, y: Int) {
 
     fun addPlayer(player: Player) {
         scope.launch {
-            nonMutableFlow.collectLatest {
+            nonMutableFlow.filter { player.filter(it) }
+                .collectLatest {
                 player.emitReactiveCommand(it)
             }
         }
