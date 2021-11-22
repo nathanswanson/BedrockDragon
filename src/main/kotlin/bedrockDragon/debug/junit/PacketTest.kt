@@ -393,7 +393,6 @@ internal class PacketTest {
     fun writeAddress() {
         val packet = Packet()
         val address = generateIPAddress()
-        println(address.address)
         packet.writeAddress(address)
         when(packet.buffer().readUnsignedByte().toInt()) {
             4 -> {

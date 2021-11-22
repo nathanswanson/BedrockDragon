@@ -61,6 +61,8 @@ import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
+import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
+import bedrockDragon.network.raknet.protocol.game.world.AdventureSettingsPacket
 import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
@@ -87,6 +89,10 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
     private var clientPeer : MinecraftClientPeer? = null
    // var cacheEnabled = false
+
+    fun destroy() {
+        clientPeer!!.player!!.save()
+    }
 
     fun attemptMinecraftHandoff() {
         clientPeer!!.fireJoinSequence()
@@ -178,25 +184,20 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
 
         fun fireJoinSequence() {
-            player = Player()
-            val setTime = SetTimePacket()
+            player = Player(uuid)
 
-            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
-            val startGamePacket =  StartGamePacket.capture(player!!)
-
-            val entityIdentifiers = AvaliableEntityIDPacket()
             //println("Entity Identifier packet")
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, entityIdentifiers.gamePacket())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, StartGamePacket.capture(player!!).gamePacket())
+
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , BiomeDefinitionPacket().gamePacket())
+
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
+
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
 
 
-          //  sendMessage(Reliability.UNRELIABLE, 0 , CreativeContentPacket().gamePacket(MinecraftPacketConstants.CREATIVE_CONTENT))
 
-
-            val biomeDefinitionPacket = BiomeDefinitionPacket()
-            //biomeDefinitionPacket.encode()
-            sendMessage(Reliability.RELIABLE_ORDERED, 0 , biomeDefinitionPacket.gamePacket())
 
             //send one chunk through netty then say play status good
             //debug chunk
@@ -204,15 +205,22 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             val entityDataPacket = EntityDataPacket()
             entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
             sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket())
+
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
             clientPeer!!.status = PlayerStatus.InGame
             logger.info { "${clientPeer!!.userName} has joined the game." }
+
+            val setTime = SetTimePacket()
+
+            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
+
             player!!.playInit()
 
 
         }
     }
+
 
     private inner class MinecraftPacketFactory {
         fun createIncomingPacketHandler(@Nullable client: MinecraftPeer?, packet: EncapsulatedPacket) {

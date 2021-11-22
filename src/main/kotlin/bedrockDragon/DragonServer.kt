@@ -188,6 +188,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
     fun disconnect(client: RakNetClientPeer, s: String) {
         try {
+            client.destroy()
             clients.remove(client.sender)
             playerCount--
         } catch (e: java.lang.NullPointerException) {

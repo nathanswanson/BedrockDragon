@@ -8,9 +8,6 @@ class Blaze: Living()  {
         TODO("Not yet implemented")
     }
 
-    override fun getHealth(): Float {
-        TODO("Not yet implemented")
-    }
 
     override fun tick() {
         TODO("Not yet implemented")
@@ -20,7 +17,7 @@ class Blaze: Living()  {
         TODO("Not yet implemented")
     }
 
-    override fun damage() {
+    fun damage() {
         TODO("Not yet implemented")
     }
 }

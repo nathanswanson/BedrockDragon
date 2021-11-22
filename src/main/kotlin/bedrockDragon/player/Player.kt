@@ -50,8 +50,10 @@ import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
+import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
+import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
 import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
@@ -67,11 +69,17 @@ import bedrockDragon.reactive.type.ISubscriber
 import bedrockDragon.reactive.type.MovePlayer
 import bedrockDragon.reactive.type.ReactivePacket
 import bedrockDragon.world.*
-import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
+import net.benwoodworth.knbt.*
+import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -80,9 +88,13 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player: Living(), ISubscriber {
+class Player(override var uuid: String): Living(), ISubscriber {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
+    //override var position = Float3(1f,8f,1f)
+    init {
+        read()
+    }
 
     var isConfirmed = false
     //Outgoing Packets
@@ -95,17 +107,17 @@ class Player: Living(), ISubscriber {
     var gamemode = Gamemode.SURVIVAL
     var isOp = false
 
-    var position = Float3(1f,38f,1f)
-    var rotation = Float2(0f, 0f)
     var world = World.tempDefault //Todo shared world
     var dimension = Dimension.Overworld
     val inventory = PlayerInventory()
 
     var skinData: Skin? = null
 
+    val adventureSettings = AdventureSettings()
     var chunkRelay = world.getOrLoadRelay(WorldInt2(position.xy))
 
     fun playInit() {
+        //NBT exists for player if so use those settings else use default and create one
 
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
@@ -127,6 +139,9 @@ class Player: Living(), ISubscriber {
         publisherUpdate.position = position
         publisherUpdate.radius = 4
         nettyQueue.add(publisherUpdate.gamePacket())
+
+        sendAdventure()
+        sendAttributes()
     }
 
     override fun getDrops(): List<Item> {
@@ -134,8 +149,25 @@ class Player: Living(), ISubscriber {
 
     }
 
-    override fun getHealth(): Float {
-        return 0f
+    fun sendAttributes() {
+        val attributePacket = PlayerAttributePacket()
+        nettyQueue.add(attributePacket.gamePacket())
+    }
+
+    fun sendAdventure() {
+        val packet = AdventureSettingsPacket()
+
+        for(type in AdventureSettings.Type.values()) {
+            packet.flag(type.id, type.defaultValue)
+        }
+
+
+        packet.commandPermission = 1
+        packet.permissionLevel = 2
+
+        packet.userId = entityIdSelf
+
+        nettyQueue.add(packet.gamePacket())
     }
 
     override fun tick() {
@@ -145,7 +177,11 @@ class Player: Living(), ISubscriber {
         return ArmorInventory()
     }
 
-    override fun damage() {
+    override fun kill() {
+        //respawn remove inventory
+        //reset attributes to default
+        //respawn
+        inventory.clear()
     }
 
     enum class Gamemode {
@@ -214,7 +250,7 @@ class Player: Living(), ISubscriber {
         when(inGamePacket.packetId) {
             MinecraftPacketConstants.DISCONNECT -> {
                 disconnect(null)
-                logger.debug { "$name has disconnected"  }
+                logger.info { "$name has disconnected"  }
             }
             MinecraftPacketConstants.TEXT -> {
 
@@ -262,7 +298,12 @@ class Player: Living(), ISubscriber {
 
             }
             MinecraftPacketConstants.RESPAWN -> { println("RESPAWN") }
-            MinecraftPacketConstants.CONTAINER_CLOSE -> { println("CONTAINER_CLOSE") }
+            MinecraftPacketConstants.CONTAINER_CLOSE -> {
+                val containerRequest = ContainerClosePacket()
+                containerRequest.decode(inGamePacket.payload)
+                nettyQueue.add(containerRequest.gamePacket())
+
+            }
             MinecraftPacketConstants.PLAYER_HOTBAR -> { println("PLAYER_HOTBAR") }
             MinecraftPacketConstants.INVENTORY_CONTENT -> { println("INVENTORY_CONTENT") }
             MinecraftPacketConstants.INVENTORY_SLOT -> { println("INVENTORY_SLOT") }
@@ -300,6 +341,33 @@ class Player: Living(), ISubscriber {
             MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
             MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }
         }
+    }
+
+    public fun save() {
+        val playerFile = File("players/$uuid.nbt")
+        //playerFile.createNewFile() //only creates if does not exist
+        val nbt = Nbt {
+            variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
+            compression = NbtCompression.Gzip // None, Gzip, Zlib
+            compressionLevel = null // in 0..9
+            encodeDefaults = true
+            ignoreUnknownKeys = true
+            serializersModule = EmptySerializersModule
+        }
+        val compound: NbtCompound = buildNbtCompound("") {  save(this) }
+
+        playerFile.outputStream().use { output ->
+            nbt.encodeToStream(compound, output)
+        }
+    }
+
+
+
+    override fun read() {
+        //val file = Path("players/$uuid.nbt") //todo change path
+
+        super.read()
+
     }
 
     private fun handleChunkRadius() {

@@ -6,7 +6,7 @@ import bedrockDragon.player.Player
 abstract class Inventory(size: Int) {
     private val viewers: Array<Player> = emptyArray()
     private val slots: Array<Item?> = arrayOfNulls<Item>(size)
-    val type = -1
+    var type = -1
     val windowId = 0
 
     fun contains(item: Item) {
@@ -33,6 +33,10 @@ abstract class Inventory(size: Int) {
     fun forceAdd(item: Item, slot: Int): Boolean {
         slots[slot] = item
         return true
+    }
+
+    fun clear() {
+        slots.fill(null)
     }
 
     abstract fun openInventory()

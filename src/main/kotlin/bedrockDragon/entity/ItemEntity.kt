@@ -1,4 +1,8 @@
 package bedrockDragon.entity
 
-class ItemEntity: Entity() {
+import net.benwoodworth.knbt.NbtCompound
+import java.util.concurrent.ConcurrentHashMap
+
+class ItemEntity() : Entity() {
+
 }
