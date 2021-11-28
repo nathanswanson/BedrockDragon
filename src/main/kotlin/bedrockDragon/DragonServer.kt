@@ -280,4 +280,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
     }
 
+    companion object {
+        const val MINECRAFT_VERSION = "1.17.41"
+    }
 }

@@ -54,6 +54,8 @@ import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
+const val SERVER_VERSION = "ALPHA"
+
 /**
  * Welcome to the very start of the server. main checks if root directory
  * is in order, loads mods, and reads server.properties
@@ -110,6 +112,7 @@ fun main() {
 
     val server = DragonServer(bindAddress)
     server.start()
+
 }
 
 

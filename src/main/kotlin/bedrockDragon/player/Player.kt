@@ -53,17 +53,16 @@ import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
+import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
+import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
 import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
-import bedrockDragon.network.raknet.protocol.game.world.AdventureSettingsPacket
-import bedrockDragon.network.raknet.protocol.game.world.ChunkRadiusUpdatePacket
-import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
-import bedrockDragon.network.raknet.protocol.game.world.NetworkChunkPublisherPacket
+import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.reactive.type.ISubscriber
 import bedrockDragon.reactive.type.MovePlayer
@@ -104,7 +103,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.SURVIVAL
+    var gamemode = Gamemode.CREATIVE
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
@@ -114,14 +113,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var skinData: Skin? = null
 
     val adventureSettings = AdventureSettings()
-    var chunkRelay = world.getOrLoadRelay(WorldInt2(position.xy))
+    //var chunkRelay = world.getOrLoadRelay(WorldInt2(position.xy))
 
     fun playInit() {
         //NBT exists for player if so use those settings else use default and create one
 
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
-        chunkRelay.addPlayer(this)
+        //chunkRelay.addPlayer(this)
 
 
         for(x in 1..15) {
@@ -221,7 +220,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     fun disconnect(kickMessage: String?) {
-        chunkRelay.removePlayer(this)
+       // chunkRelay.removePlayer(this)
     }
 
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
@@ -264,14 +263,22 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
 
-                chunkRelay.invoke(MovePlayer(movePlayerPacket, this))
+               // chunkRelay.invoke(MovePlayer(movePlayerPacket, this))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
-            MinecraftPacketConstants.LEVEL_SOUND_EVENT_ONE -> { println("LEVEL_SOUND_EVENT_ONE") }
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_ONE -> { /*reject*/ }
             MinecraftPacketConstants.ENTITY_EVENT -> { println("ENTITY_EVENT") }
-            MinecraftPacketConstants.INVENTORY_TRANSACTION -> { println("INVENTORY_TRANSACTION") }
-            MinecraftPacketConstants.MOB_EQUIPMENT -> { println("MOB_EQUIPMENT") }
+            MinecraftPacketConstants.INVENTORY_TRANSACTION -> {
+                val inventoryTransactionPacket = InventoryTransactionPacket()
+                inventoryTransactionPacket.decode(inGamePacket.payload)
+                println(inventoryTransactionPacket)
+            }
+            MinecraftPacketConstants.MOB_EQUIPMENT -> {
+                val mobEquipmentPacket = MobEquipmentPacket()
+                mobEquipmentPacket.decode(inGamePacket.payload)
+                println(mobEquipmentPacket)
+            }
             MinecraftPacketConstants.MOB_ARMOR_EQUIPMENT -> { println("MOB_ARMOR_EQUIPMENT") }
             MinecraftPacketConstants.INTERACT -> {
                 val interact = InteractPacket()
@@ -284,7 +291,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
                // println(interact.targetRuntimeEntityId)
                // println(interact.actionId)
             }
-            MinecraftPacketConstants.BLOCK_PICK_REQUEST -> { println("BLOCK_PICK_REQUEST") }
+            MinecraftPacketConstants.BLOCK_PICK_REQUEST -> {
+                val blockPickRequestPacket = BlockPickRequestPacket()
+                blockPickRequestPacket.decode(inGamePacket.payload)
+                println(blockPickRequestPacket)
+            }
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
@@ -324,7 +335,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.RESOURCE_PACK_CHUNK_REQUEST -> { println("RESOURCE_PACK_CHUNK_REQUEST") }
             MinecraftPacketConstants.PURCHASE_RECEIPT -> { println("PURCHASE_RECEIPT") }
             MinecraftPacketConstants.PLAYER_SKIN -> { println("PLAYER_SKIN") }
-            MinecraftPacketConstants.SUB_CLIENT_LOGING -> { println("SUB_CLIENT_LOGIN") }
+            MinecraftPacketConstants.SUB_CLIENT_LOGIN -> { println("SUB_CLIENT_LOGIN") }
             MinecraftPacketConstants.NPC_REQUEST -> { println("NPC_REQUEST") }
             MinecraftPacketConstants.PHOTO_TRANSFER -> { println("PHOTO_TRANSFER") }
             MinecraftPacketConstants.MODEL_FORM_RESPONSE ->  { println("MODEL_FORM_RESPONSE") }
@@ -335,8 +346,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
             }
             MinecraftPacketConstants.NETWORK_STACK_LATENCY -> { println("NETWORK_STACK_LATENCY") }
             MinecraftPacketConstants.SCRIPT_CUSTOM_EVENT -> { println("SCRIPT_CUSTOM_EVENT") }
-            MinecraftPacketConstants.LEVEL_SOUND_EVENT_TWO -> { println("LEVEL_SOUND_EVENT_TWO") }
-            MinecraftPacketConstants.LEVEL_SOUND_EVENT_THREE -> { println("LEVEL_SOUND_EVENT_THREE") }
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_TWO -> {/*reject*/}
+            MinecraftPacketConstants.LEVEL_SOUND_EVENT_THREE -> { /*reject*/ }
             MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { println("CLIENT_CACHE_STATUS") }
             MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
             MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }

@@ -3,6 +3,7 @@ package bedrockDragon.world
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.type.ReactivePacket
+import bedrockDragon.util.Region
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,8 +14,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 
-class ChunkRelay(x: Int, y: Int) {
-    constructor(float2: WorldInt2) : this(float2.x.toInt(), float2.y.toInt())
+class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
+    constructor(float2: WorldInt2, region: Region) : this(float2.x.toInt(), float2.y.toInt(), region)
 
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
@@ -24,19 +25,17 @@ class ChunkRelay(x: Int, y: Int) {
     //chunks are a 4x4 grid laid in an array and are absolute position in world
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
     // y = idx mod 4     0: 0,4,8,12 1: 1,5,9,13...
-    private val chunks = Array<Chunk>(16) { i ->
+    val chunks = Array<Chunk>(16) { i ->
         Chunk(
             WorldInt2(
-                ((i shr 2) + (x shl 6)),
-                ((i and 3) + (y shl 6))
-            )
+                ((i shr 2) + (x shl 2)),
+                ((i and 3) + (z shl 2))
+            ),
+            this
         )
     }
 
-    init {
-        logger.info { "ChunkRelay Initialized at x: $x y: $y" }
-        //logger.info { chunks.contentToString() }
-    }
+
 
     var up: ChunkRelay? = null
     var down: ChunkRelay? = null
@@ -69,5 +68,9 @@ class ChunkRelay(x: Int, y: Int) {
 
     fun decommission() {
 
+    }
+
+    override fun toString(): String {
+        return "ChunkRelay: x:$x z:$z"
     }
 }

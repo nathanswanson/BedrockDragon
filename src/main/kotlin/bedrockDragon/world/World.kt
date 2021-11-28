@@ -14,12 +14,12 @@ class World {
     }
 
     fun getOrLoadRelay(position: WorldInt2): ChunkRelay {
-        logger.info { "chunk relay size: ${loadedChunkRelays.size}" }
-        position.toChunkRelaySpace()
+        //logger.info { "chunk relay size: ${loadedChunkRelays.size}" }
+       // position.toChunkRelaySpace()
 
 
         return if (loadedChunkRelays[position] != null) loadedChunkRelays[position]!! else {
-            loadedChunkRelays[position] = ChunkRelay(position)
+           // loadedChunkRelays[position] = ChunkRelay(position)
             loadedChunkRelays[position]!!
         }
 
