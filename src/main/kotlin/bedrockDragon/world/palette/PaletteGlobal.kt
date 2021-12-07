@@ -1,4 +1,4 @@
-package bedrockDragon.resource
+package bedrockDragon.world.palette
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -7,7 +7,7 @@ import kotlinx.serialization.json.decodeFromStream
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
-object RuntimeBlocks {
+object PaletteGlobal {
 
 
 
@@ -15,6 +15,6 @@ object RuntimeBlocks {
     fun parse(): LinkedHashMap<String, Int>
     {
         val runtime = ClassLoader.getSystemResourceAsStream("block.json")
-        return Json.decodeFromStream(runtime)
+        return Json.decodeFromStream(runtime!!)
     }
 }
