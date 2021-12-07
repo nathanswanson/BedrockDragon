@@ -113,7 +113,7 @@ class Chunk(val position: WorldInt2,
             serializersModule = EmptySerializersModule
         }
 
-        val decodedNBT = nbt.decodeFromByteArray<NbtCompound>(byteArray)[""]!!.nbtCompound
+        val decodedNBT = nbt.decodeFromByteArray<NbtCompound>(byteArray)[""]!!.nbtCompound["Level"]!!.nbtCompound
         //todo add safety check for null
         //why is there x y and z pos for chunks...
         status = decodedNBT["Status"]!!.nbtString.value
@@ -124,7 +124,7 @@ class Chunk(val position: WorldInt2,
         isLightOn = decodedNBT["isLightOn"]!!.nbtByte.booleanValue
 
 
-        decodedNBT["sections"]!!.nbtList.map {
+        decodedNBT["Sections"]!!.nbtList.map {
            SubChunk.decodeFromNbt(it.nbtCompound)
         }.toList().toCollection(sections)
         decodedNBT["block_entities"]!!.nbtList.toCollection(blockEntities)
@@ -145,8 +145,12 @@ class Chunk(val position: WorldInt2,
         lateinit var blockStates : NbtCompound
         lateinit var biomes : NbtCompound
         var y: Byte = 0 //signed
-        fun encode() {
-
+        fun encodePayload(): ByteArray {
+            val stream = FastByteArrayOutputStream(1024)
+            stream.write(8)
+            stream.write(2)
+            //storage
+            return stream.array
         }
 
         companion object {

@@ -8,10 +8,13 @@ import java.util.*
 import kotlin.collections.LinkedHashMap
 
 object RuntimeBlocks {
+
+
+
     @OptIn(ExperimentalSerializationApi::class)
     fun parse(): LinkedHashMap<String, Int>
     {
-        val runtime = ClassLoader.getSystemResourceAsStream("block_id.json")
+        val runtime = ClassLoader.getSystemResourceAsStream("block.json")
         return Json.decodeFromStream(runtime)
     }
 }

@@ -119,6 +119,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     val prevExperimental: Boolean = false
     val experimentCount = 0
     val isLockedWorldTemplate: Boolean = false
+    val blockRegistryChecksum = 0L
     override fun encode() {
         try {
             writeVarLong(entityIdSelf)
@@ -192,7 +193,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeString(multiplayerCorId)
             writeBoolean(inventoryServerAuthoritative)
             writeString(serverEngine) //server version
-
+            writeLongLE(blockRegistryChecksum)
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
             println(e.message)
@@ -226,7 +227,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = ""
+            startGamePacket.gameVersion = "1.18.0"
             startGamePacket.limitedWorldWidth = 16
             startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false
