@@ -1,17 +1,29 @@
 package bedrockDragon.util
 
-class FastBitMap(initialSize: Int): Cloneable {
-    private var blockData = ArrayList<Int>()
+import bedrockDragon.world.palette.PaletteSection
 
-    private var paletteResolution = PaletteResolution.B4
+class FastBitMap(val size: Int): Cloneable {
+    var blockData = IntArray(size)
+        private set
+    private var paletteResolution = PaletteSection.PaletteResolution.B4
 
 
     fun setAt(idx: Int, id: Int) {
+
         val bitIndex: Int = idx * paletteResolution.size
         val arrayIndex = bitIndex shr 5
         val offset = bitIndex and 31
+        blockData[arrayIndex] =
+            blockData[arrayIndex] and (paletteResolution.maxSize shl offset).inv() or (id and paletteResolution.maxSize shl offset)
 
-        blockData[arrayIndex] = blockData[arrayIndex] and (paletteResolution.maxSize shl offset).inv() or (id and paletteResolution.maxSize) shl offset
+        if(id != 0)
+        {
+            println(arrayIndex)
+            println(idx)
+            println("${blockData[arrayIndex]} ")
+            println()
+        }
+
     }
 
     fun get(idx: Int): Int {
@@ -22,18 +34,9 @@ class FastBitMap(initialSize: Int): Cloneable {
     }
     //bits are held in int array each int is a bitmask of 32 bits
 
-    private enum class PaletteResolution(val size: Int,val entriesPerWord: Int) {
-        B4(4,8),
-        B5(5, 6),
-        B6(6, 5),
-        B8(8, 4);
-
-        val maxSize = 1 shl size - 1
-
-    }
 
     override fun clone(): FastBitMap {
-        val fastBitMap = FastBitMap(0)
+        val fastBitMap = FastBitMap(size)
         fastBitMap.blockData = blockData
         fastBitMap.paletteResolution = paletteResolution
 

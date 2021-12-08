@@ -1,20 +1,21 @@
 package bedrockDragon.world.palette
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.*
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
 object PaletteGlobal {
 
+    val globalBlockPalette = LinkedHashMap<String, Int>()
 
-
-    @OptIn(ExperimentalSerializationApi::class)
-    fun parse(): LinkedHashMap<String, Int>
+    init
     {
-        val runtime = ClassLoader.getSystemResourceAsStream("block.json")
-        return Json.decodeFromStream(runtime!!)
+        val runtime = ClassLoader.getSystemResourceAsStream("blocks.json")
+        Json.decodeFromStream<JsonObject>(runtime!!).map { globalBlockPalette.put(it.key, it.value.jsonObject["states"]!!.jsonArray[0].jsonObject["id"]!!.jsonPrimitive.int) }
     }
+}
+
+fun main() {
+    println(PaletteGlobal.globalBlockPalette)
 }

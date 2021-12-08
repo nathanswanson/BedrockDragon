@@ -41,9 +41,10 @@ II. (Chunk)
 fun main() {
     val region = Region(0,0)
     region.manifest.readManifest()
-    val relay = region.getRelayAt(1,1)
+    val relay = region.getRelayAt(0,0)
     val chunk = relay.chunks[0]
     chunk.loadFromNbt()
+    val array = chunk.encodePayload()
 
 }
 
@@ -96,10 +97,10 @@ class Region(val x : Int,val z: Int): Iterable<Chunk> {
     }
 
     fun readChunkBinary(chunk: Chunk): ByteArray {
-        val regionPointer = RegionPointer(chunk.position.x, chunk.position.y)
+        val regionPointer = findChunkPointer(chunk.position.x, chunk.position.y)
         RandomAccessFile(fileName.toFile(), "r").use {
-            it.seek(regionPointer.start.toLong() * 4096 + 5)
-            val tempArray = ByteArray(regionPointer.end * 4096)
+            it.seek(regionPointer!!.start.toLong() * 4096 + 5)
+            val tempArray = ByteArray(regionPointer!!.end * 4096)
             it.read(tempArray)
 
 
