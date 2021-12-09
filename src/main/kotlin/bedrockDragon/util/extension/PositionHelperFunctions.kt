@@ -41,16 +41,16 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
+package bedrockDragon.util.extension
 
-/**
- * State of the chunk data
- * @author Nathan Swanson
- * @since ALPHA
- */
-enum class SaveStatus {
-    UNLOADED, //exists but not loaded
-    LOADED, //loaded
-    DIRTY, //needs to be saved
-    EMPTY, //has never been generated
+import bedrockDragon.network.world.WorldInt2
+
+fun WorldInt2.toChunkSpace() {
+    x = x shr 4
+    y = y shr 4
+}
+
+fun WorldInt2.toChunkRelaySpace() {
+    x = x shr 6
+    y = y shr 6
 }

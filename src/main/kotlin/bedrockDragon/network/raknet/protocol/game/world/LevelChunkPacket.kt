@@ -3,13 +3,12 @@ package bedrockDragon.network.raknet.protocol.game.world
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
-import bedrockDragon.world.Chunk
+import bedrockDragon.world.chunk.Chunk
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
-import java.io.OutputStream
 
 class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
     init {
-        chunk.loadFromNbt()
+        chunk.initChunkFromStorage()
         reliability = Reliability.RELIABLE_ORDERED
     }
 

@@ -41,16 +41,25 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
+package bedrockDragon.world
+
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.*
+import kotlin.collections.LinkedHashMap
 
 /**
- * State of the chunk data
+ * PaletteGlobal parses [resources/blocks.json] (A file generated from a vanilla minecraft server).
+ * The parsed information contains a mapping of (name,id).
  * @author Nathan Swanson
  * @since ALPHA
  */
-enum class SaveStatus {
-    UNLOADED, //exists but not loaded
-    LOADED, //loaded
-    DIRTY, //needs to be saved
-    EMPTY, //has never been generated
+@OptIn(ExperimentalSerializationApi::class)
+object PaletteGlobal {
+    val globalBlockPalette = LinkedHashMap<String, Int>()
+
+    init
+    {
+        val runtime = ClassLoader.getSystemResourceAsStream("blocks.json")
+        Json.decodeFromStream<JsonObject>(runtime!!).map { globalBlockPalette.put(it.key, it.value.jsonObject["states"]!!.jsonArray[0].jsonObject["id"]!!.jsonPrimitive.int) }
+    }
 }

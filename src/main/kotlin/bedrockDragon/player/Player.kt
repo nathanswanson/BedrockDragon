@@ -50,7 +50,6 @@ import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
-import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
@@ -63,22 +62,18 @@ import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
 import bedrockDragon.network.raknet.protocol.game.util.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
-import bedrockDragon.network.world.WorldInt2
-import bedrockDragon.reactive.type.ISubscriber
-import bedrockDragon.reactive.type.MovePlayer
+import bedrockDragon.reactive.ISubscriber
+import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.reactive.type.ReactivePacket
 import bedrockDragon.world.*
+import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.io.path.Path
-import kotlin.io.path.inputStream
-import kotlin.io.path.outputStream
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -90,7 +85,7 @@ import kotlin.io.path.outputStream
 class Player(override var uuid: String): Living(), ISubscriber {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
-    //override var position = Float3(1f,8f,1f)
+
     init {
         read()
     }
@@ -115,6 +110,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val adventureSettings = AdventureSettings()
     var chunkRelay = world.getOrLoadRelay(position)
 
+    /**
+     * [playInit] is called as soon as the Player is fully connected and joined the game.
+     */
     fun playInit() {
         //NBT exists for player if so use those settings else use default and create one
 
@@ -140,11 +138,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     }
 
+    /**
+     * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
+     */
     fun sendAttributes() {
         val attributePacket = PlayerAttributePacket()
         nettyQueue.add(attributePacket.gamePacket())
     }
 
+    /**
+     * [sendAdventure]
+     */
     fun sendAdventure() {
         val packet = AdventureSettingsPacket()
 
@@ -161,6 +165,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(packet.gamePacket())
     }
 
+    //todo review
     override fun tick() {
 
     }
@@ -169,6 +174,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
         return ArmorInventory()
     }
 
+    /**
+     * [kill] does multiple things:
+     * 1. sends the deathscreen to the player.
+     * 2. clears inventory, attributes.
+     * 3. sends event.
+     * 4. respawns player.
+     */
     override fun kill() {
         //respawn remove inventory
         //reset attributes to default
@@ -176,6 +188,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
         inventory.clear()
     }
 
+    /**
+     * [sendChunk] will send a chunk to the player
+     */
     fun sendChunk(chunk: Chunk) {
         nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
     }
@@ -187,6 +202,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
         SPECTATOR
     }
 
+    /**
+     * [sendMessage] sends text as raw data to the client.
+     */
     fun sendMessage(text: String, type: Int = 0) {
         val messagePacket = TextPacket()
         messagePacket.type = 0
@@ -195,37 +213,59 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(messagePacket.gamePacket())
     }
 
+    /**
+     * [transfer] will switch a clients worlds used for things like nether portals.
+     * @since TBA
+     */
     fun transfer(world: World, position: Float3) {
 
     }
 
+    /**
+     * [teleport] moves a player with a loading screen if needed.
+     */
     fun teleport(position: Float3) {
         this.position = position
        // nettyQueue.add()
     }
 
+    //todo review
     fun updateAttributes() {
 
     }
 
+    /**
+     * [updateGamemode] sets the player gamemode internaly and also informs the client (adventure settings).
+     */
     fun updateGamemode() {
 
     }
 
+    /**
+     * [updateOp] sets the player op privlages internaly and also informs the client (adventure settings).
+     */
     fun updateOp(boolean: Boolean) {
 
     }
 
+    /**
+     * [disconnect] will both safely deregister the client and also tell the client that the connection
+     * has been terminated.
+     */
     fun disconnect(kickMessage: String?) {
        // chunkRelay.removePlayer(this)
     }
 
+    //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.sender != this) {
 
         }
     }
 
+    /**
+     * [openInventory] opens the inventory UI on the client.
+     */
     fun openInventory(inventory: Inventory) {
         val containerOpenPacket = ContainerOpenPacket()
         containerOpenPacket.type = inventory.type
@@ -260,7 +300,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
 
-               // chunkRelay.invoke(MovePlayer(movePlayerPacket, this))
+               // chunkRelay.invoke(bedrockDragon.reactive.MovePlayer(movePlayerPacket, this))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
@@ -351,7 +391,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
     }
 
-    public fun save() {
+    /**
+     * [save] writes all nbt of the player to disk.
+     */
+    fun save() {
         val playerFile = File("players/$uuid.nbt")
         //playerFile.createNewFile() //only creates if does not exist
         val nbt = Nbt {
@@ -370,19 +413,18 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
 
-
-    override fun read() {
-        //val file = Path("players/$uuid.nbt") //todo change path
-
-        super.read()
-
-    }
-
+    /**
+     * [handleChunkRadius] is called when the client messages its desired view distance.
+     * we either have to match or be less then what they ask if we go over it would crash the client.
+     */
     private fun handleChunkRadius() {
         logger.trace { "sent '$name' update chunk radius" }
         nettyQueue.add(ChunkRadiusUpdatePacket(8).gamePacket())
     }
 
+    /**
+     * [filter] for players makes sure that the sender wasnt themselves as thats pointless.
+     */
     override fun filter(reactivePacket: ReactivePacket<*>): Boolean {
         return reactivePacket.sender != this
     }

@@ -41,16 +41,15 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
+package bedrockDragon.reactive
 
 /**
- * State of the chunk data
- * @author Nathan Swanson
- * @since ALPHA
+ * [ISubscriber] refers to any object that can subscribe to a broadcaster.
  */
-enum class SaveStatus {
-    UNLOADED, //exists but not loaded
-    LOADED, //loaded
-    DIRTY, //needs to be saved
-    EMPTY, //has never been generated
+interface ISubscriber {
+    /**
+     * [filter] is invoked whenever the Isubscriber receives a broadcast. This method quickly
+     * determines if the data is useful to the observer.
+     */
+    fun filter(reactivePacket: ReactivePacket<*>): Boolean
 }

@@ -142,16 +142,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
         channel = bootstrap.bind(bindAddress).sync().channel()
 
-        //Coroutine Entity
-        logger.info { "Starting Entity Thread" }
-        scope.launch { entityLightThread() }
-        //Coroutine World
-        logger.info { "Starting World Thread" }
-        scope.launch { worldLightThread() }
-        //Coroutine Chunk
-        logger.info { "Starting Chunk Thread" }
-        scope.launch { chunkLightThread() }
-        //Start server tick.
+
         //Main thread deals with packets received and sent to client. packets received are converted into objects and sent to the related lightThread
         isRunning = true
         tick()
@@ -171,20 +162,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         return true
     }
 
-    private fun entityLightThread() {
-        val entityTicker = EntityTicker()
-        entityTicker.initialize()
-    }
 
-    private fun worldLightThread() {
-        val worldTicker = WorldTicker()
-        worldTicker.initialize()
-    }
-
-    private fun chunkLightThread() {
-        val chunkTicker = ChunkTicker()
-        chunkTicker.tick()
-    }
 
     fun disconnect(client: RakNetClientPeer, s: String) {
         try {
@@ -203,19 +181,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             throw NullPointerException("Event cannot be null")
         }
         for (listener: RakNetServerListener in listeners) {
-          //  if (listener.javaClass.isAnnotationPresent(ThreadedListener::class.java)) {
-              //  val threadedListener = listener.javaClass.getAnnotation(
-                 //   ThreadedListener::class.java
-             //   )
-            //    object : Thread(
-            //        DragonServer::class.java.simpleName + (if (threadedListener.name.isNotEmpty()) "-" else "")
-            //                + threadedListener.name + "-Thread-" + ++eventThreadCount
-            //    ) {
-              //      override fun run() {
-            //            event.accept(listener)
-              //      }
-             //   }.start()
-           // } else {
                 event.accept(listener)
             }
     }

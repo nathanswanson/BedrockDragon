@@ -41,16 +41,13 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
+package bedrockDragon.util.extension
 
-/**
- * State of the chunk data
- * @author Nathan Swanson
- * @since ALPHA
- */
-enum class SaveStatus {
-    UNLOADED, //exists but not loaded
-    LOADED, //loaded
-    DIRTY, //needs to be saved
-    EMPTY, //has never been generated
+import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
+
+fun FastByteArrayOutputStream.writeLInt(i: Int) {
+    write(i and 0xFF)
+    write((i ushr 8) and 0xFF)
+    write((i ushr 16) and 0xFF)
+    write((i ushr 24) and 0xFF)
 }

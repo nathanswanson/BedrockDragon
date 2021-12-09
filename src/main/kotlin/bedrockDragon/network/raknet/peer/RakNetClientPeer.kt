@@ -80,7 +80,6 @@ import java.net.InetSocketAddress
 /**
  * RaknetClientPeer is the bridge between client -> [raknet -> minecraftPeer -> player] -> reactiveX
  * @author Nathan Swanson
- * @see [God Object]
  * @since ALPHA
  */
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)

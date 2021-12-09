@@ -41,16 +41,23 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
+package bedrockDragon.reactive
+//probably could be enumclass todo
+import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
+import bedrockDragon.player.Player
 
 /**
- * State of the chunk data
+ * [ReactivePacket] is a payload for when an observed event is activated and contains the data for ISubscribers
+ * to use.
  * @author Nathan Swanson
  * @since ALPHA
  */
-enum class SaveStatus {
-    UNLOADED, //exists but not loaded
-    LOADED, //loaded
-    DIRTY, //needs to be saved
-    EMPTY, //has never been generated
+abstract class ReactivePacket<T: PacketPayload>(val payload: T, val sender: ISubscriber) {
+    var tags = emptyArray<Any>()
+    var priority = 0
 }
+
+class MovePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
+class AnimatePlayer()
+class RotatePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
