@@ -113,22 +113,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var skinData: Skin? = null
 
     val adventureSettings = AdventureSettings()
-    //var chunkRelay = world.getOrLoadRelay(WorldInt2(position.xy))
+    var chunkRelay = world.getOrLoadRelay(position)
 
     fun playInit() {
         //NBT exists for player if so use those settings else use default and create one
 
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
-        //chunkRelay.addPlayer(this)
-
-
-        for(x in 1..15) {
-            for(z in 1..15) {
-                nettyQueue.add(LevelChunkPacket.emptyChunk(x - 8,z - 8).gamePacket())
-            }
-        }
-        logger.info { "send chunk." }
+        chunkRelay.addPlayer(this)
 
         val attribute = PlayerAttributePacket()
         attribute.runtimeEntityId = runtimeEntityId.toLong()
@@ -170,6 +162,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     override fun tick() {
+
     }
 
     override fun armor(): ArmorInventory {
@@ -181,6 +174,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //reset attributes to default
         //respawn
         inventory.clear()
+    }
+
+    fun sendChunk(chunk: Chunk) {
+        nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
     }
 
     enum class Gamemode {

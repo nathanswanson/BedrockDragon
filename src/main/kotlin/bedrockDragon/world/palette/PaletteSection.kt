@@ -4,9 +4,7 @@ import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.util.FastBitMap
 import bedrockDragon.util.writeLInt
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
-import net.benwoodworth.knbt.NbtCompound
-import net.benwoodworth.knbt.nbtList
-import net.benwoodworth.knbt.nbtLongArray
+import net.benwoodworth.knbt.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -49,6 +47,7 @@ class PaletteSection {
     }
 
     enum class PaletteResolution(val size: Int,val entriesPerWord: Int) {
+        B2(2, 16),
         B4(4,8),
         B5(5, 6),
         B6(6, 5),
@@ -69,31 +68,48 @@ class PaletteSection {
 
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
     }
-
+    //todo use also to avoid memory assignment
     companion object {
+        val emptyPaletteFooter: ByteArray
+
+        init {
+
+            val emptyPaletteSection = PaletteSection()
+            val stream = FastByteArrayOutputStream()
+            emptyPaletteSection.paletteResolution = PaletteResolution.B2
+            emptyPaletteSection.encode(stream)
+            emptyPaletteFooter = stream.array
+        }
         fun parseBlockStateNBT(nbtCompound: NbtCompound): PaletteSection {
-            val data = nbtCompound["data"]!!.nbtLongArray
-            val blockPalette = PaletteSection()
-            var idx: Int = 0
-            data.forEach {
-               for(i in 60 downTo 0 step 4) {
-                  // print("${it ushr i and 15},")
-                   blockPalette.blockBits.setAt(idx, (it ushr i and 15).toInt())
-                   idx++
 
-               }
-                //println(it)
+            nbtCompound["data"]?.let{ it ->
+                val data = it.nbtLongArray
 
+                val blockPalette = PaletteSection()
+                var idx: Int = 0
+                data.forEach {
+                    for (i in 60 downTo 0 step 4) {
+                        // print("${it ushr i and 15},")
+                        blockPalette.blockBits.setAt(idx, (it ushr i and 15).toInt())
+                        idx++
+
+                    }
+                    //println(it)
+
+                }
+
+                val palette = nbtCompound["palette"]!!.nbtList.toList()
+                palette.forEach {
+                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value]?.let { it1 ->
+                        blockPalette.palette.add(it1)
+                    }
+                }
+
+
+                //determine resolution todo
+                return blockPalette
             }
-
-            val palette = nbtCompound["palette"]!!.nbtList.toList()
-            //blockPalette.palette = palette.toCollection()
-
-
-
-            //determine resolution todo
-            println(blockPalette)
-            return blockPalette
+        return PaletteSection()
         }
     }
 

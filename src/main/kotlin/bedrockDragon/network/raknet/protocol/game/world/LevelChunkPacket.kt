@@ -4,20 +4,23 @@ import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.world.Chunk
+import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
+import java.io.OutputStream
 
-class LevelChunkPacket: PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
+class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
     init {
+        chunk.loadFromNbt()
         reliability = Reliability.RELIABLE_ORDERED
     }
 
 
-    var chunkX = 0
-    var chunkZ = 0
-    var subChunkCount = 16
+    var chunkX = chunk.position.x
+    var chunkZ = chunk.position.y
+    var subChunkCount = chunk.sectionCount()
     var cacheEnabled = false
     var blobIds = emptyArray<Long>()
 
-    lateinit var data: ByteArray
+    var data: FastByteArrayOutputStream = chunk.encodePayload()
 
     override fun encode() {
         writeVarInt(chunkX)
@@ -30,20 +33,10 @@ class LevelChunkPacket: PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
                 writeLongLE(id)
             }
         }
-        writeUnsignedVarInt(data.size)
-        write(*data)
-    }
-
-    companion object {
-        fun emptyChunk(x: Int, z: Int): LevelChunkPacket {
-            val packet = LevelChunkPacket()
-
-            packet.chunkX = x
-            packet.chunkZ = z
-            packet.subChunkCount = 1
-            packet.data = ClassLoader.getSystemResourceAsStream("superflat.bin").readAllBytes()
-
-            return packet
+        data.use {
+            writeUnsignedVarInt(it.length)
+            write(*it.array)
         }
+
     }
 }

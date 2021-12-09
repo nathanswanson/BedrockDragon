@@ -4,6 +4,7 @@ import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.type.ReactivePacket
 import bedrockDragon.util.Region
+import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,7 +38,6 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
     }
 
 
-
     var up: ChunkRelay? = null
     var down: ChunkRelay? = null
     var left: ChunkRelay? = null
@@ -45,6 +45,7 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
 
 
     fun addPlayer(player: Player) {
+        player.sendChunk(chunks[0])
         scope.launch {
             nonMutableFlow.filter { player.filter(it) }
                 .collectLatest {

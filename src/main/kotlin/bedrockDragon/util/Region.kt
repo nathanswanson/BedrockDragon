@@ -38,15 +38,15 @@ II. (Chunk)
 */
 
 
-fun main() {
-    val region = Region(0,0)
-    region.manifest.readManifest()
-    val relay = region.getRelayAt(0,0)
-    val chunk = relay.chunks[0]
-    chunk.loadFromNbt()
-    val array = chunk.encodePayload()
-
-}
+//fun main() {
+//    val region = Region(0,0)
+//    region.manifest.readManifest()
+//    val relay = region.getRelayAt(0,0)
+//    val chunk = relay.chunks[0]
+//    chunk.loadFromNbt()
+//    val array = chunk.encodePayload()
+//
+//}
 
 class Region(val x : Int,val z: Int): Iterable<Chunk> {
     val fileName = Path("world/region/r.$x.$z.mca")

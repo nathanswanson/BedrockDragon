@@ -39,10 +39,6 @@ class Chunk(val position: WorldInt2,
     override val fileName = Path("")
     var loadStatus = SaveStatus.EMPTY
 
-    init {
-        sections.add(SubChunk())
-    }
-
     override fun save(nbtBuilder: NbtCompoundBuilder) {
         nbtBuilder.put("DataVersion", 2230)
         nbtBuilder.put("Level", buildNbtCompound{
@@ -69,23 +65,19 @@ class Chunk(val position: WorldInt2,
         TODO("Not yet implemented")
     }
 
-    fun encodePayload(): OutputStream {
+    fun encodePayload(): FastByteArrayOutputStream {
         val stream = FastByteArrayOutputStream(1024)
-
-
-        //block entities
 
         //sections
         sections.forEach {
             stream.write(it.encodePayload())
         }
         //biome array
-
+        stream.write(ByteArray(256))
         //border blocks
         stream.write(0)
         //block entities
         stream.write(0)
-
 
         return stream
     }
@@ -142,6 +134,9 @@ class Chunk(val position: WorldInt2,
 
     }
 
+    fun sectionCount(): Int {
+        return sections.size
+    }
 
     override fun toString(): String {
         return "Chunk pos: $position"
@@ -152,14 +147,20 @@ class Chunk(val position: WorldInt2,
         lateinit var biomes : NbtCompound
         lateinit var blockLight : NbtByteArray
 
-        lateinit var paletteSection: PaletteSection
+        var paletteSection: PaletteSection? = null
         var y: Byte = 0 //signed
         fun encodePayload(): ByteArray {
-            val stream = FastByteArrayOutputStream(1024)
-            stream.write(8)
-            stream.write(2)
-            //paletteSection.encode(stream)
+            val stream = FastByteArrayOutputStream(128)
+
+            if(paletteSection != null) {
+                stream.write(8)
+                stream.write(2)
+                paletteSection?.encode(stream)
+                stream.write(PaletteSection.emptyPaletteFooter)
+            }
+
             //storage
+            stream.trim()
             return stream.array
         }
 

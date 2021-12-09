@@ -16,14 +16,6 @@ class FastBitMap(val size: Int): Cloneable {
         blockData[arrayIndex] =
             blockData[arrayIndex] and (paletteResolution.maxSize shl offset).inv() or (id and paletteResolution.maxSize shl offset)
 
-        if(id != 0)
-        {
-            println(arrayIndex)
-            println(idx)
-            println("${blockData[arrayIndex]} ")
-            println()
-        }
-
     }
 
     fun get(idx: Int): Int {
