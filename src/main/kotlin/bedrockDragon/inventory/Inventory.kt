@@ -43,7 +43,7 @@
 
 package bedrockDragon.inventory
 
-import bedrockDragon.Item
+import bedrockDragon.item.Item
 import bedrockDragon.player.Player
 
 /**

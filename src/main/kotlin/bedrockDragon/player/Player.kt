@@ -60,11 +60,9 @@ import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
-import bedrockDragon.network.raknet.protocol.game.util.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
-import bedrockDragon.reactive.type.ReactivePacket
 import bedrockDragon.world.*
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
@@ -133,11 +131,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         sendAttributes()
     }
 
-    override fun getDrops(): List<Item> {
-        return emptyList()
-
-    }
-
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
      */
@@ -163,6 +156,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         packet.userId = entityIdSelf
 
         nettyQueue.add(packet.gamePacket())
+    }
+
+    override fun getDrops(): List<bedrockDragon.item.Item> {
+        TODO("Not yet implemented")
     }
 
     //todo review
@@ -206,11 +203,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * [sendMessage] sends text as raw data to the client.
      */
     fun sendMessage(text: String, type: Int = 0) {
-        val messagePacket = TextPacket()
-        messagePacket.type = 0
-        messagePacket.needsTranslate = false
-        messagePacket.message = text
-        nettyQueue.add(messagePacket.gamePacket())
+        //val messagePacket = TextPacket()
+        //messagePacket.type = 0
+        //messagePacket.needsTranslate = false
+        //messagePacket.message = text
+        //nettyQueue.add(messagePacket.gamePacket())
     }
 
     /**
@@ -290,9 +287,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
             }
             MinecraftPacketConstants.TEXT -> {
 
-                val payload = TextPacket()
-                payload.decode(inGamePacket.payload)
-                ChatRail.DEFAULT.invoke(payload.message)
+              //  val payload = TextPacket()
+             //   payload.decode(inGamePacket.payload)
+              //  ChatRail.DEFAULT.invoke(payload.message)
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
             MinecraftPacketConstants.MOVE_PLAYER -> {

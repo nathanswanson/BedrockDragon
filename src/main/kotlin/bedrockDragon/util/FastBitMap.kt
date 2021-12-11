@@ -43,7 +43,8 @@
 
 package bedrockDragon.util
 
-import bedrockDragon.world.data.palette.PaletteSection
+import bedrockDragon.world.chunk.PaletteSubChunk
+
 
 /**
  * FastBitMap is specifically designed for use in chunk palette creation. Normally, a byte array is used
@@ -55,7 +56,7 @@ import bedrockDragon.world.data.palette.PaletteSection
 class FastBitMap(val size: Int): Cloneable {
     var blockData = IntArray(size)
         private set
-    private var paletteResolution = PaletteSection.PaletteResolution.B4
+    private var paletteResolution = PaletteSubChunk.PaletteResolution.B4
 
 
     /**

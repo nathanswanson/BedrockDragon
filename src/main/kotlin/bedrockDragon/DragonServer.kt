@@ -61,9 +61,6 @@ import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
-import bedrockDragon.ticking.ChunkTicker
-import bedrockDragon.ticking.EntityTicker
-import bedrockDragon.ticking.WorldTicker
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
