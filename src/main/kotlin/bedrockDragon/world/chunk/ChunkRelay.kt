@@ -89,7 +89,7 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
      * anything happens we notify this new player as well.
      */
     fun addPlayer(player: Player) {
-        player.sendChunk(chunks[0])
+        //player.sendChunk(chunks[0])
         scope.launch {
             nonMutableFlow.filter { player.filter(it) }
                 .collectLatest {

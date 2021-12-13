@@ -96,7 +96,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.CREATIVE
+    var gamemode = Gamemode.SURVIVAL
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
@@ -425,4 +425,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
     override fun filter(reactivePacket: ReactivePacket<*>): Boolean {
         return reactivePacket.sender != this
     }
+}
+
+fun main() {
+    val player = Player("6704fff8-0844-3f25-a0a5-24b54938243a")
 }

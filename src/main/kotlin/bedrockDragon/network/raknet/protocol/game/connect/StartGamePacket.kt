@@ -227,12 +227,12 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = "1.18.0"
+            startGamePacket.gameVersion = "1.17.40"
             startGamePacket.limitedWorldWidth = 16
             startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false
             startGamePacket.forceExperimental = false
-            startGamePacket.levelId = "1m0AAMIFIgA="
+            startGamePacket.levelId = "dalpha"
             startGamePacket.worldName = "DRAGON"
             startGamePacket.movementType = 0
             startGamePacket.movementRewindSize = 0
