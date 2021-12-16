@@ -56,7 +56,7 @@ import bedrockDragon.world.chunk.PaletteSubChunk
 class FastBitMap(val size: Int): Cloneable {
     var blockData = IntArray(size)
         private set
-    private var paletteResolution = PaletteSubChunk.PaletteResolution.B4
+    private var paletteResolution = PaletteSubChunk.PaletteResolution.B2
 
 
     /**

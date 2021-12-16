@@ -32,7 +32,7 @@ repositories {
 dependencies {
 
     implementation "bedrockDragon:kotlin-math:1.0"
-    implementation "bedrockDragon:Common:1.0.1"
+    implementation "bedrockDragon:Common:1.0.3"
 
     implementation "org.jetbrains.kotlin:kotlin-reflect:1.5.31"
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.5.31'

@@ -74,7 +74,7 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
     //chunks are a 4x4 grid laid in an array and are absolute position in world
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
     // y = idx mod 4     0: 0,4,8,12 1: 1,5,9,13...
-    val chunks = Array<Chunk>(16) { i ->
+    val chunks = Array(16) { i ->
         Chunk(
             WorldInt2(
                 ((i shr 2) + (x shl 2)),
@@ -89,7 +89,11 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
      * anything happens we notify this new player as well.
      */
     fun addPlayer(player: Player) {
-        //player.sendChunk(chunks[0])
+            for(i in 0 until 16) {
+                player.sendChunk(chunks[i])
+                //Temporary loads 16 chunks for testing.
+            }
+
         scope.launch {
             nonMutableFlow.filter { player.filter(it) }
                 .collectLatest {

@@ -24,7 +24,7 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
     override fun encode() {
         writeVarInt(chunkX)
         writeVarInt(chunkZ)
-        writeUnsignedVarInt(subChunkCount)
+        writeUnsignedVarInt(1) //subchunk size
         writeBoolean(cacheEnabled)
         if(cacheEnabled) {
             writeUnsignedVarInt(blobIds.size)
@@ -34,8 +34,14 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
         }
         data.use {
             writeUnsignedVarInt(it.length)
-            write(*it.array)
+            write(it)
         }
 
+    }
+
+    private fun write(fastByteArrayOutputStream: FastByteArrayOutputStream) {
+        for(i in 0 until fastByteArrayOutputStream.length) {
+            write(fastByteArrayOutputStream.array[i])
+        }
     }
 }

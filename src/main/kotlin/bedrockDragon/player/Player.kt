@@ -96,7 +96,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.SURVIVAL
+    var gamemode = Gamemode.CREATIVE
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
@@ -286,7 +286,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 logger.info { "$name has disconnected"  }
             }
             MinecraftPacketConstants.TEXT -> {
-
+                val publisherUpdate = NetworkChunkPublisherPacket()
+                publisherUpdate.position = position
+                publisherUpdate.radius = 4
+                nettyQueue.add(publisherUpdate.gamePacket())
+                println(position)
               //  val payload = TextPacket()
              //   payload.decode(inGamePacket.payload)
               //  ChatRail.DEFAULT.invoke(payload.message)
@@ -416,7 +420,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
      */
     private fun handleChunkRadius() {
         logger.trace { "sent '$name' update chunk radius" }
-        nettyQueue.add(ChunkRadiusUpdatePacket(8).gamePacket())
+        nettyQueue.add(ChunkRadiusUpdatePacket(16).gamePacket())
     }
 
     /**
@@ -425,8 +429,4 @@ class Player(override var uuid: String): Living(), ISubscriber {
     override fun filter(reactivePacket: ReactivePacket<*>): Boolean {
         return reactivePacket.sender != this
     }
-}
-
-fun main() {
-    val player = Player("6704fff8-0844-3f25-a0a5-24b54938243a")
 }

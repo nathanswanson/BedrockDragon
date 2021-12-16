@@ -44,7 +44,11 @@
 package bedrockDragon.world
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import kotlinx.serialization.modules.EmptySerializersModule
+import net.benwoodworth.knbt.*
+import java.util.HashMap
 import kotlin.collections.LinkedHashMap
 
 /**
@@ -55,11 +59,31 @@ import kotlin.collections.LinkedHashMap
  */
 @OptIn(ExperimentalSerializationApi::class)
 object PaletteGlobal {
-    val globalBlockPalette = LinkedHashMap<String, Int>()
+    val globalBlockPalette = HashMap<String, Int>()
 
-    init
-    {
-        val runtime = ClassLoader.getSystemResourceAsStream("blocks.json")
-        Json.decodeFromStream<JsonObject>(runtime!!).map { globalBlockPalette.put(it.key, it.value.jsonObject["states"]!!.jsonArray[0].jsonObject["id"]!!.jsonPrimitive.int) }
+    init {
+        val nbt = Nbt {
+            variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
+            compression = NbtCompression.None // None, Gzip, Zlib
+            compressionLevel = null // in 0..9
+            encodeDefaults = true
+            ignoreUnknownKeys = true
+            serializersModule = EmptySerializersModule
+        }
+        val runtime = ClassLoader.getSystemResourceAsStream("runtime_block_states.dat")
+        val nbtData = nbt.decodeFromStream<NbtCompound>(runtime!!)[""]!!.nbtList
+        nbtData.forEach() {
+             globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, it.nbtCompound["runtimeId"]!!.nbtInt.value)
+        }
+
+        globalBlockPalette["minecraft:grass_block"] = 4997
     }
+    fun getRuntimeIdFromName(name: String) {
+
+    }
+
+    @Serializable
+    data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound, val id: Int, val data: Short, val runtimeId: Int)
+
 }
+

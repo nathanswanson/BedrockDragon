@@ -60,7 +60,7 @@ import kotlin.collections.ArrayList
 class PaletteSubChunk {
 
     private val blockCount = 4096 //16 * 16 * 16
-    private var paletteResolution = PaletteResolution.B4
+    private var paletteResolution = PaletteResolution.B2
 
     private var palette = ArrayList<Int>()
     private val blockBits = FastBitMap(getWordsForSize())
@@ -116,44 +116,49 @@ class PaletteSubChunk {
         VarInt.writeVarInt(palette.size, outputStream)//palette size
 
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
+
+        //empty palette footer
+        outputStream.write(getPaletteHeader(true))
+        for(i in 0 until 256) {
+            outputStream.writeLInt(0)
+        }
+        VarInt.writeVarInt(1 , outputStream)
+        VarInt.writeVarInt(134, outputStream)
     }
     //todo use also to avoid memory assignment
     companion object {
-        val emptyPaletteFooter: ByteArray
 
-        init {
-
-            val emptyPaletteSection = PaletteSubChunk()
-            val stream = FastByteArrayOutputStream()
-            emptyPaletteSection.paletteResolution = PaletteResolution.B2
-            emptyPaletteSection.encode(stream)
-            emptyPaletteFooter = stream.array
-        }
         fun parseBlockStateNBT(nbtCompound: NbtCompound): PaletteSubChunk {
 
             nbtCompound["data"]?.let{ it ->
                 val data = it.nbtLongArray
 
                 val blockPalette = PaletteSubChunk()
+                blockPalette.paletteResolution = PaletteResolution.B2 //todo
                 var idx: Int = 0
-                data.forEach {
-                    for (i in 60 downTo 0 step 4) {
-                        // print("${it ushr i and 15},")
-                        blockPalette.blockBits.setAt(idx, (it ushr i and 15).toInt())
-                        idx++
-
+                for(chunkColumn in 0 until 256) {
+                    for(y in 0 until 16) {
+                        //example assignment as B4
+                        val wordPerLong = 4096 / data.size  //16
+                        val wordSize = 64 / wordPerLong //4
+                        val blockidx = chunkColumn + (y * 256) //range from 0 until 4096
+                        val arrayIdx = blockidx / wordPerLong
+                        val arrayOffset = blockidx % wordPerLong
+                        val block = (data[arrayIdx] ushr (4 * arrayOffset)) and 15
+                        blockPalette.blockBits.setAt(chunkColumn * 16 + y, block.toInt())
                     }
-                    //println(it)
-
                 }
 
                 val palette = nbtCompound["palette"]!!.nbtList.toList()
                 palette.forEach {
-                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value]?.let { it1 ->
+                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value]?.let { it1 -> //double lambda it needs to be specified //todo
                         blockPalette.palette.add(it1)
                     }
                 }
-
+//                blockPalette.palette.add(234)
+//                blockPalette.palette.add(4484)
+//                blockPalette.palette.add(4997)
+//                blockPalette.palette.add(134)
 
                 //determine resolution todo
                 return blockPalette
@@ -161,6 +166,8 @@ class PaletteSubChunk {
         return PaletteSubChunk()
         }
     }
+
+
 
     override fun toString(): String {
         val builder = StringBuilder()

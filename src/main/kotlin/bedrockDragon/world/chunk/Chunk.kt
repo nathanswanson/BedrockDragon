@@ -110,15 +110,14 @@ class Chunk(val position: WorldInt2,
         val stream = FastByteArrayOutputStream(1024)
 
         //sections
-        sections.forEach {
-            stream.write(it.encodePayload())
-        }
+       // sections.forEach {
+            stream.write(sections[0].encodePayload())
+        //}
         //biome array
-        stream.write(ByteArray(256))
+        stream.write(ByteArray(256) {1})
         //border blocks
         stream.write(0)
         //block entities
-        stream.write(0)
 
         return stream
     }
@@ -201,12 +200,12 @@ class Chunk(val position: WorldInt2,
                 stream.write(8)
                 stream.write(2)
                 paletteSubChunk?.encode(stream)
-                stream.write(PaletteSubChunk.emptyPaletteFooter)
+               // stream.write(PaletteSubChunk.emptyPaletteFooter)
             }
 
             //storage
             stream.trim()
-            return stream.array
+            return stream.array.copyOfRange(0, stream.length)
         }
 
         companion object {
