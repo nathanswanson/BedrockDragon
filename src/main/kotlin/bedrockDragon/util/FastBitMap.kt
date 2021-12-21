@@ -53,10 +53,10 @@ import bedrockDragon.world.chunk.PaletteSubChunk
  * @author Nathan Swanson
  * @since ALPHA
  */
-class FastBitMap(val size: Int): Cloneable {
+class FastBitMap(val size: Int, var paletteResolution: PaletteSubChunk.PaletteResolution): Cloneable {
     var blockData = IntArray(size)
         private set
-    private var paletteResolution = PaletteSubChunk.PaletteResolution.B2
+
 
 
     /**
@@ -69,7 +69,7 @@ class FastBitMap(val size: Int): Cloneable {
         if(idx * paletteResolution.size shr 5 >= blockData.size)
             throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
         //int is larger than palette bit size
-        if(id > 1 shl paletteResolution.maxSize)
+        if(id > paletteResolution.maxSize)
             throw IllegalArgumentException("The palette cannot handle an id of $id with a current max bit size of ${paletteResolution.maxSize}")
 
         val bitIndex: Int = idx * paletteResolution.size
@@ -97,7 +97,7 @@ class FastBitMap(val size: Int): Cloneable {
 
 
     override fun clone(): FastBitMap {
-        val fastBitMap = FastBitMap(size)
+        val fastBitMap = FastBitMap(size, paletteResolution)
         fastBitMap.blockData = blockData
         fastBitMap.paletteResolution = paletteResolution
 

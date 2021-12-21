@@ -43,9 +43,11 @@
 
 package bedrockDragon.world.chunk
 
+import bedrockDragon.block.Block
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
+import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
@@ -110,9 +112,9 @@ class Chunk(val position: WorldInt2,
         val stream = FastByteArrayOutputStream(1024)
 
         //sections
-       // sections.forEach {
+        //sections.forEach {
             stream.write(sections[0].encodePayload())
-        //}
+       // }
         //biome array
         stream.write(ByteArray(256) {1})
         //border blocks
@@ -120,6 +122,19 @@ class Chunk(val position: WorldInt2,
         //block entities
 
         return stream
+    }
+
+    fun updateBlockAt(position: Float3, block: Block)  {
+        //x check
+        if(position.x >= 16 || position.x < 0)
+            throw IllegalArgumentException("position x in $position is either greater that 16 or less then 0.")
+        //y check
+        if(position.y >= 255 || position.y < -64)
+            throw IllegalArgumentException("position y in $position is either greater that 255 or less then -64.")
+        //z check
+        if(position.z >= 16 || position.z < 0)
+            throw IllegalArgumentException("position z in $position is either greater that 16 or less then 0.")
+
     }
 
     fun encodeNbtToStorage(): ByteArray {
@@ -157,7 +172,7 @@ class Chunk(val position: WorldInt2,
         isLightOn = decodedNBT["isLightOn"]!!.nbtByte.booleanValue
 
 
-        decodedNBT["sections"]!!.nbtList.map {
+        decodedNBT["sections"]!!.nbtList.filter { it.nbtCompound["Y"]!!.nbtByte.value.toInt() in 1..15 }.map {
             SubChunk.decodeFromNbt(it.nbtCompound)
         }.toList().toCollection(sections)
         decodedNBT["block_entities"]!!.nbtList.toCollection(blockEntities)

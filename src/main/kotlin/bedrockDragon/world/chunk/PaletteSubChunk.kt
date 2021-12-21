@@ -51,19 +51,20 @@ import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import net.benwoodworth.knbt.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.reflect.KClass
 
 /**
  *
  * @author Nathan Swanosn
  * @since ALPHA
  */
-class PaletteSubChunk {
+class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     private val blockCount = 4096 //16 * 16 * 16
-    private var paletteResolution = PaletteResolution.B2
+
 
     private var palette = ArrayList<Int>()
-    private val blockBits = FastBitMap(getWordsForSize())
+    private val blockBits = FastBitMap(getWordsForSize(), paletteResolution)
 
     private fun getPaletteHeader(runtime: Boolean): Int {
         return (paletteResolution.size shl 1) or if (runtime) 1 else 0
@@ -118,7 +119,7 @@ class PaletteSubChunk {
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
 
         //empty palette footer
-        outputStream.write(getPaletteHeader(true))
+        outputStream.write(2 shl 1)
         for(i in 0 until 256) {
             outputStream.writeLInt(0)
         }
@@ -128,42 +129,59 @@ class PaletteSubChunk {
     //todo use also to avoid memory assignment
     companion object {
 
+        private fun getSmallestUsablePallete(size: Int): PaletteResolution {
+
+            if(size <= 3)
+                return PaletteResolution.B2
+            if(size <= 14)
+                return PaletteResolution.B4
+
+            return PaletteResolution.B8 //highest resolution offered
+        }
+
         fun parseBlockStateNBT(nbtCompound: NbtCompound): PaletteSubChunk {
 
             nbtCompound["data"]?.let{ it ->
                 val data = it.nbtLongArray
 
-                val blockPalette = PaletteSubChunk()
-                blockPalette.paletteResolution = PaletteResolution.B2 //todo
-                var idx: Int = 0
+                val palette = nbtCompound["palette"]!!.nbtList.toList()
+                val blockPalette = PaletteSubChunk(getSmallestUsablePallete(palette.size))
+
+                val wordPerLong = 4096 / data.size  //16
+                val wordSize = 64 / wordPerLong //4
+
                 for(chunkColumn in 0 until 256) {
                     for(y in 0 until 16) {
                         //example assignment as B4
-                        val wordPerLong = 4096 / data.size  //16
-                        val wordSize = 64 / wordPerLong //4
+
                         val blockidx = chunkColumn + (y * 256) //range from 0 until 4096
-                        val arrayIdx = blockidx / wordPerLong
-                        val arrayOffset = blockidx % wordPerLong
-                        val block = (data[arrayIdx] ushr (4 * arrayOffset)) and 15
+                        val arrayIdx = blockidx / (64 / wordSize)
+                        val arrayOffset = blockidx % (64 / wordSize) * wordSize
+
+                        //val block = (data[arrayIdx] ushr (4 * arrayOffset)) and 15
+                        /*
+                        l: Long = data[arrayIdx]
+                        mask = ~(1 << wordSize) ex. 1 << 5 = 100000, ~(100000) = 11111
+                         */
+                        val block = (data[arrayIdx] ushr ((64 - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
                         blockPalette.blockBits.setAt(chunkColumn * 16 + y, block.toInt())
                     }
                 }
-
-                val palette = nbtCompound["palette"]!!.nbtList.toList()
+                var fakeId = 0
                 palette.forEach {
-                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value]?.let { it1 -> //double lambda it needs to be specified //todo
-                        blockPalette.palette.add(it1)
+                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value].let { it1 -> //double lambda it needs to be specified //todo
+                        if (it1 != null) {
+                            blockPalette.palette.add(it1)
+                        } else {
+                            blockPalette.palette.add(fakeId++)
+                        }
                     }
                 }
-//                blockPalette.palette.add(234)
-//                blockPalette.palette.add(4484)
-//                blockPalette.palette.add(4997)
-//                blockPalette.palette.add(134)
 
                 //determine resolution todo
                 return blockPalette
             }
-        return PaletteSubChunk()
+        return PaletteSubChunk(PaletteResolution.B2) // empty
         }
     }
 

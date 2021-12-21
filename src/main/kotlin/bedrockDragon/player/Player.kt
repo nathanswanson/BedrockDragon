@@ -45,6 +45,7 @@ package bedrockDragon.player
 
 import bedrockDragon.Item
 import bedrockDragon.chat.ChatRail
+import bedrockDragon.command.CommandRegistry
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
@@ -52,6 +53,7 @@ import bedrockDragon.inventory.PlayerInventory
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
+import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
@@ -60,9 +62,11 @@ import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
+import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
+import bedrockDragon.resource.ServerProperties
 import bedrockDragon.world.*
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
@@ -96,7 +100,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.CREATIVE
+    var gamemode = Gamemode.SURVIVAL
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
@@ -106,7 +110,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var skinData: Skin? = null
 
     val adventureSettings = AdventureSettings()
-    var chunkRelay = world.getOrLoadRelay(position)
+    var renderDistance = 8
+    var chunkRelays = world.getOrLoadAllRelaysWithRange(position, 3)
 
     /**
      * [playInit] is called as soon as the Player is fully connected and joined the game.
@@ -116,15 +121,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
-        chunkRelay.addPlayer(this)
-
+        chunkRelays.forEach { it.addPlayer(this) }
         val attribute = PlayerAttributePacket()
         attribute.runtimeEntityId = runtimeEntityId.toLong()
         nettyQueue.add(attribute.gamePacket())
 
         val publisherUpdate = NetworkChunkPublisherPacket()
         publisherUpdate.position = position
-        publisherUpdate.radius = 4
+        publisherUpdate.radius = ServerProperties.getProperty("view-distance").toInt()
         nettyQueue.add(publisherUpdate.gamePacket())
 
         sendAdventure()
@@ -203,11 +207,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * [sendMessage] sends text as raw data to the client.
      */
     fun sendMessage(text: String, type: Int = 0) {
-        //val messagePacket = TextPacket()
-        //messagePacket.type = 0
-        //messagePacket.needsTranslate = false
-        //messagePacket.message = text
-        //nettyQueue.add(messagePacket.gamePacket())
+        val messagePacket = TextPacket()
+        messagePacket.type = 0
+        messagePacket.needsTranslate = false
+        messagePacket.message = text
+        nettyQueue.add(messagePacket.gamePacket())
     }
 
     /**
@@ -286,14 +290,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 logger.info { "$name has disconnected"  }
             }
             MinecraftPacketConstants.TEXT -> {
-                val publisherUpdate = NetworkChunkPublisherPacket()
-                publisherUpdate.position = position
-                publisherUpdate.radius = 4
-                nettyQueue.add(publisherUpdate.gamePacket())
-                println(position)
-              //  val payload = TextPacket()
-             //   payload.decode(inGamePacket.payload)
-              //  ChatRail.DEFAULT.invoke(payload.message)
+
+                val payload = TextPacket()
+                payload.decode(inGamePacket.payload)
+                ChatRail.DEFAULT.invoke(payload.message)
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
             MinecraftPacketConstants.MOVE_PLAYER -> {
@@ -338,7 +338,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
-               // logger.info { actionPacket.toString() }
+                logger.info { actionPacket.toString() }
             }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }
@@ -360,15 +360,22 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.ADVENTURE_SETTINGS -> {
                 val adventurePacket = AdventureSettingsPacket()
                 adventurePacket.decode(inGamePacket.payload)
-                //logger.info { adventurePacket.toString() }
+                logger.info { adventurePacket.toString() }
                 nettyQueue.add(adventurePacket.gamePacket())
             }
             MinecraftPacketConstants.PLAYER_INPUT -> { println("PLAYER_INPUT") }
             MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { println("SET_PLAYER_GAME_TYPE") }
             MinecraftPacketConstants.MAP_INFO_REQUEST -> { println("MAP_INFO_REQUEST") }
-            MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> { handleChunkRadius() }
+            MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> {
+                handleChunkRadius(8)
+            }
             MinecraftPacketConstants.ITEMFRAME_DROP_ITEM -> { println("ITEMFRAME_DROP_ITEM") }
-            MinecraftPacketConstants.COMMAND_REQUEST -> { println("COMMAND_REQUEST") }
+            MinecraftPacketConstants.COMMAND_REQUEST -> {
+                val commandPacket = CommandRequestPacket()
+                commandPacket.decode(inGamePacket.payload)
+                CommandRegistry.invoke(commandPacket.command)
+
+            }
             MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }
             MinecraftPacketConstants.RESOURCE_PACK_CHUNK_REQUEST -> { println("RESOURCE_PACK_CHUNK_REQUEST") }
             MinecraftPacketConstants.PURCHASE_RECEIPT -> { println("PURCHASE_RECEIPT") }
@@ -413,14 +420,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
     }
 
-
     /**
      * [handleChunkRadius] is called when the client messages its desired view distance.
      * we either have to match or be less then what they ask if we go over it would crash the client.
      */
-    private fun handleChunkRadius() {
+    private fun handleChunkRadius(max: Int) {
         logger.trace { "sent '$name' update chunk radius" }
-        nettyQueue.add(ChunkRadiusUpdatePacket(16).gamePacket())
+        nettyQueue.add(ChunkRadiusUpdatePacket(max.coerceAtMost(ServerProperties["view-distance"] as Int)).gamePacket())
     }
 
     /**

@@ -110,9 +110,11 @@ class Region(val x : Int,val z: Int): Iterable<Chunk> {
      *
      */
     fun getRelayAt(x: Int, z: Int): ChunkRelay {
+        if(x < 0 || z < 0)
+            throw IllegalArgumentException("Cannot get relay with negative index at x:$x and/or z:$z")
         val relativePos = (x shl 3) + z
         if (relayGrid[relativePos] == null) {
-            relayGrid[relativePos] = ChunkRelay(x + (this.x shl 5), z + (this.z shl 5), this)
+            relayGrid[relativePos] = ChunkRelay(x, z, this)
         }
         return relayGrid[relativePos]!!
     }
@@ -290,6 +292,9 @@ class Region(val x : Int,val z: Int): Iterable<Chunk> {
         }
     }
 
+    override fun toString(): String {
+        return "Region: x:$x z:$z"
+    }
     data class RegionPointer(val start: Int, val end: Int)
 
     /**
