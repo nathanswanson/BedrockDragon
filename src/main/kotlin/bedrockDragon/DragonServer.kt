@@ -53,6 +53,7 @@ import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketHandler
 import bedrockDragon.network.raknet.handler.connect.ConnectedPingHandler
 import bedrockDragon.network.raknet.handler.connect.ConnectionRequestHandlerPost
+import bedrockDragon.network.raknet.handler.connect.DisconnectHandler
 import bedrockDragon.network.raknet.handler.connect.IncomingConnectionHandler
 import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerOne
 import bedrockDragon.network.raknet.handler.login.LoginHandler
@@ -189,7 +190,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
      * @since ALPHA
      */
     fun handleMessage(sender: InetSocketAddress, packet: RakNetPacket) {
-
         if(clients.containsKey(sender)) {
                 clients[sender]!!.incomingPacket(packet)
         } else {
@@ -222,6 +222,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         var mtu = 0
 
         fun createPacketHandle(sender: InetSocketAddress, packet: RakNetPacket, channel: Channel) : PacketHandler {
+
             return when(packet.id.toInt()) {
                 PacketConstants.UNCONNECTED_PING -> LoginHandler(sender, packet, channel, pongId)
                 PacketConstants.CLIENT_TO_SERVER_HANDSHAKE_1 -> ConnectionRequestHandlerOne(sender, packet, channel, guid)
@@ -232,10 +233,12 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         }
 
         fun createEncapsulatedPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
+
             return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
                 PacketConstants.CONNECTED_PING -> ConnectedPingHandler(sender, packet, channel)
                 PacketConstants.CONNECTION_REQUEST -> ConnectionRequestHandlerPost(sender, packet, channel)
                 PacketConstants.NEW_INCOMING_CONNECTION -> IncomingConnectionHandler(sender as RakNetClientPeer, packet, channel)
+                PacketConstants.CLIENT_DISCONNECT -> DisconnectHandler(sender as RakNetClientPeer, packet, channel)
                 else -> throw IllegalArgumentException("Unknown packet sent to factory.")
             }
 

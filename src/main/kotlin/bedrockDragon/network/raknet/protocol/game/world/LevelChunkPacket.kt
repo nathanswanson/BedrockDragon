@@ -12,19 +12,19 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
         reliability = Reliability.RELIABLE_ORDERED
     }
 
+    var data: FastByteArrayOutputStream = chunk.encodePayload()
 
     var chunkX = chunk.position.x
     var chunkZ = chunk.position.y
-    var subChunkCount = chunk.sectionCount()
+    var subChunkCount = chunk.readyNonEmptySectionCount()
     var cacheEnabled = false
     var blobIds = emptyArray<Long>()
 
-    var data: FastByteArrayOutputStream = chunk.encodePayload()
 
     override fun encode() {
         writeVarInt(chunkX)
         writeVarInt(chunkZ)
-        writeUnsignedVarInt(1) //subchunk size
+        writeUnsignedVarInt(subChunkCount) //subchunk size
         writeBoolean(cacheEnabled)
         if(cacheEnabled) {
             writeUnsignedVarInt(blobIds.size)

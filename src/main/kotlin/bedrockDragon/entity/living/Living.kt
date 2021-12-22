@@ -34,7 +34,7 @@ abstract class Living: Entity() {
 
 
     abstract fun getDrops(): List<Item>
-    abstract fun tick()
+    abstract suspend fun tick()
     abstract fun armor(): ArmorInventory
     open fun kill() {
         print("todo")

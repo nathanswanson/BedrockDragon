@@ -60,7 +60,7 @@ import java.util.*
  */
 class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var entityIdSelf: Long = 1 //VarLong
-    var runtimeEntityId: ULong = 2u //VarLong
+    var runtimeEntityId: ULong = 1u //VarLong
     var playerGamemode: Int = 0 //sVarInt
     lateinit var spawn: Float3
     lateinit var rotation: Float2 //vector2
@@ -227,7 +227,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = "1.17.41"
+            startGamePacket.gameVersion = "1.17.40"
             startGamePacket.limitedWorldWidth = 16
             startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false
@@ -237,7 +237,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.movementType = 0
             startGamePacket.movementRewindSize = 0
             startGamePacket.serverAuthoritativeBlockBreaking = false
-            startGamePacket.currentTick = 100000
+            startGamePacket.currentTick = 0
             startGamePacket.enchantSeed = 12356
             startGamePacket.blockProperties = emptyArray()
             startGamePacket.inventoryServerAuthoritative = false

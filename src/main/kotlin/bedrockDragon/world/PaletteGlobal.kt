@@ -76,7 +76,10 @@ object PaletteGlobal {
              globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, it.nbtCompound["runtimeId"]!!.nbtInt.value)
         }
 
-        globalBlockPalette["minecraft:grass_block"] = 4997
+        //Aliases Java -> Bedrock
+        globalBlockPalette["minecraft:grass_block"] = globalBlockPalette["minecraft:grass"]!!
+        globalBlockPalette["minecraft:cave_air"] = globalBlockPalette["minecraft:air"]!!
+        globalBlockPalette["minecraft:dead_bush"] = globalBlockPalette["minecraft:deadbush"]!!
     }
     fun getRuntimeIdFromName(name: String) {
 

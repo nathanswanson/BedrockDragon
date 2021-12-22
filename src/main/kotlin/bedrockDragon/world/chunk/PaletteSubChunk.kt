@@ -48,6 +48,7 @@ import bedrockDragon.util.FastBitMap
 import bedrockDragon.util.extension.writeLInt
 import bedrockDragon.world.PaletteGlobal
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
+import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -55,12 +56,13 @@ import kotlin.reflect.KClass
 
 /**
  *
- * @author Nathan Swanosn
+ * @author Nathan Swanson
  * @since ALPHA
  */
 class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     private val blockCount = 4096 //16 * 16 * 16
+    val logger = KotlinLogging.logger {}
 
 
     private var palette = ArrayList<Int>()
@@ -119,7 +121,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
 
         //empty palette footer
-        outputStream.write(2 shl 1)
+        outputStream.write(5)
         for(i in 0 until 256) {
             outputStream.writeLInt(0)
         }
@@ -144,6 +146,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
             nbtCompound["data"]?.let{ it ->
                 val data = it.nbtLongArray
 
+                var unknownPaletteId = false
                 val palette = nbtCompound["palette"]!!.nbtList.toList()
                 val blockPalette = PaletteSubChunk(getSmallestUsablePallete(palette.size))
 
@@ -167,16 +170,22 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                         blockPalette.blockBits.setAt(chunkColumn * 16 + y, block.toInt())
                     }
                 }
-                var fakeId = 0
                 palette.forEach {
                     PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value].let { it1 -> //double lambda it needs to be specified //todo
                         if (it1 != null) {
                             blockPalette.palette.add(it1)
                         } else {
-                            blockPalette.palette.add(fakeId++)
+                            unknownPaletteId = true
+                            blockPalette.palette.add(134)
                         }
                     }
                 }
+
+                if(unknownPaletteId)
+                    blockPalette.logger.warn { """Unknown Block was loaded from world file with attempted Palette:
+                        $palette
+                        palette runtimeId Attempt: ${blockPalette.palette}
+                            """ }
 
                 //determine resolution todo
                 return blockPalette
@@ -185,7 +194,9 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
         }
     }
 
-
+    fun isEmpty(): Boolean {
+        return palette.size <= 1
+    }
 
     override fun toString(): String {
         val builder = StringBuilder()

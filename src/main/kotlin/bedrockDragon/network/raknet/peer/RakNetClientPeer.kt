@@ -61,18 +61,13 @@ import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
-import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
-import bedrockDragon.network.raknet.protocol.game.world.AdventureSettingsPacket
-import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.zlib.PacketCompression
 import bedrockDragon.player.Player
 import com.nimbusds.jose.JWSObject
-import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream
-import mu.KotlinLogging
 import org.jetbrains.annotations.Nullable
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
@@ -201,9 +196,9 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             //send one chunk through netty then say play status good
             //debug chunk
 
-            val entityDataPacket = EntityDataPacket()
-            entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
-            sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket())
+            //val entityDataPacket = EntityDataPacket()
+            //entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
+            //sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket())
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 

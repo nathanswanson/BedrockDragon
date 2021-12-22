@@ -67,6 +67,7 @@ class Chunk(val position: WorldInt2,
     private var inhabitedTime = 0L
     private var isLightOn: Boolean = true
     private var status = "empty"
+    private var sectionCount = 0
 
     private var sections = ArrayList<SubChunk>()
     private var fluidTicks = ArrayList<NbtTag>()
@@ -112,9 +113,11 @@ class Chunk(val position: WorldInt2,
         val stream = FastByteArrayOutputStream(1024)
 
         //sections
-        //sections.forEach {
-            stream.write(sections[0].encodePayload())
-       // }
+        sections.forEach {
+            stream.write(it.encodePayload())
+        }
+
+
         //biome array
         stream.write(ByteArray(256) {1})
         //border blocks
@@ -122,6 +125,10 @@ class Chunk(val position: WorldInt2,
         //block entities
 
         return stream
+    }
+
+    fun readyNonEmptySectionCount(): Int {
+        return sectionCount
     }
 
     fun updateBlockAt(position: Float3, block: Block)  {
@@ -172,7 +179,10 @@ class Chunk(val position: WorldInt2,
         isLightOn = decodedNBT["isLightOn"]!!.nbtByte.booleanValue
 
 
-        decodedNBT["sections"]!!.nbtList.filter { it.nbtCompound["Y"]!!.nbtByte.value.toInt() in 1..15 }.map {
+        decodedNBT["sections"]!!.nbtList.filter{
+            it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
+        }.map {
+            sectionCount++
             SubChunk.decodeFromNbt(it.nbtCompound)
         }.toList().toCollection(sections)
         decodedNBT["block_entities"]!!.nbtList.toCollection(blockEntities)
@@ -223,6 +233,9 @@ class Chunk(val position: WorldInt2,
             return stream.array.copyOfRange(0, stream.length)
         }
 
+        fun isEmpty(): Boolean {
+            return paletteSubChunk?.isEmpty() == false
+        }
         companion object {
             fun decodeFromNbt(data: NbtCompound): SubChunk {
                 val subChunk = SubChunk()

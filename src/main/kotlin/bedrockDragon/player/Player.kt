@@ -43,17 +43,21 @@
 
 package bedrockDragon.player
 
-import bedrockDragon.Item
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandRegistry
+import bedrockDragon.entity.DataTag.DATA_FLAGS
+import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
+import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
+import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
+import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
@@ -67,10 +71,12 @@ import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.world.*
+import bedrockDragon.world.Dimension
+import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
@@ -89,7 +95,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val logger = KotlinLogging.logger {}
 
     init {
-        read()
+        read() //read nbt and load into fields
     }
 
     var isConfirmed = false
@@ -97,17 +103,18 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
     var name = ""
-    val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
-    val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
+    private val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
+    private val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
     var gamemode = Gamemode.SURVIVAL
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
     var dimension = Dimension.Overworld
-    val inventory = PlayerInventory()
+    private val inventory = PlayerInventory()
 
     var skinData: Skin? = null
+    private val playerMeta =  MetaTag()
 
     val adventureSettings = AdventureSettings()
     var renderDistance = 8
@@ -122,6 +129,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
         chunkRelays.forEach { it.addPlayer(this) }
+        scope.launch { tick() }
         val attribute = PlayerAttributePacket()
         attribute.runtimeEntityId = runtimeEntityId.toLong()
         nettyQueue.add(attribute.gamePacket())
@@ -130,15 +138,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
         publisherUpdate.position = position
         publisherUpdate.radius = ServerProperties.getProperty("view-distance").toInt()
         nettyQueue.add(publisherUpdate.gamePacket())
-
         sendAdventure()
         sendAttributes()
+
+
+        sendMeta()
     }
 
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
      */
-    fun sendAttributes() {
+    private fun sendAttributes() {
         val attributePacket = PlayerAttributePacket()
         nettyQueue.add(attributePacket.gamePacket())
     }
@@ -146,7 +156,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [sendAdventure]
      */
-    fun sendAdventure() {
+    private fun sendAdventure() {
         val packet = AdventureSettingsPacket()
 
         for(type in AdventureSettings.Type.values()) {
@@ -167,8 +177,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     //todo review
-    override fun tick() {
-
+    override suspend fun tick() {
+        //while (true) {
+           // sendMeta()
+        //    delay(50)
+        //}
     }
 
     override fun armor(): ArmorInventory {
@@ -187,6 +200,22 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //reset attributes to default
         //respawn
         inventory.clear()
+    }
+
+    /**
+     * Meta controls gravity, size, air, total air ...
+     */
+    fun sendMeta() {
+        var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
+        flag = flag xor (1L shl DATA_FLAG_BREATHING)
+        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
+
+        val entityDataPacket = EntityDataPacket()
+        entityDataPacket.runtimeEntityId = runtimeEntityId.toLong()
+        entityDataPacket.tick = 0 //todo
+        entityDataPacket.metaTag = playerMeta
+
+        nettyQueue.add(entityDataPacket.gamePacket())
     }
 
     /**
@@ -236,14 +265,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     /**
-     * [updateGamemode] sets the player gamemode internaly and also informs the client (adventure settings).
+     * [updateGamemode] sets the player game-mode internally and also informs the client (adventure settings).
      */
     fun updateGamemode() {
 
     }
 
     /**
-     * [updateOp] sets the player op privlages internaly and also informs the client (adventure settings).
+     * [updateOp] sets the player op privileges internally and also informs the client (adventure settings).
      */
     fun updateOp(boolean: Boolean) {
 
@@ -290,7 +319,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 logger.info { "$name has disconnected"  }
             }
             MinecraftPacketConstants.TEXT -> {
-
+                sendMeta()
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
                 ChatRail.DEFAULT.invoke(payload.message)
@@ -326,13 +355,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
                         openInventory(inventory)
                     }
                 }
-               // println(interact.targetRuntimeEntityId)
-               // println(interact.actionId)
+
             }
             MinecraftPacketConstants.BLOCK_PICK_REQUEST -> {
                 val blockPickRequestPacket = BlockPickRequestPacket()
                 blockPickRequestPacket.decode(inGamePacket.payload)
                 println(blockPickRequestPacket)
+
             }
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
@@ -402,6 +431,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [save] writes all nbt of the player to disk.
      */
+    @OptIn(ExperimentalSerializationApi::class)
     fun save() {
         val playerFile = File("players/$uuid.nbt")
         //playerFile.createNewFile() //only creates if does not exist
