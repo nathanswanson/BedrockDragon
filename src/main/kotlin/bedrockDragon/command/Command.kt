@@ -1,50 +1,37 @@
-/*
- *      ##### ##                  ##                                    /                 ##### ##
- *   ######  /##                   ##                                 #/               /#####  /##
- *  /#   /  / ##                   ##                                 ##             //    /  / ###
- * /    /  /  ##                   ##                                 ##            /     /  /   ###
- *     /  /   /                    ##                                 ##                 /  /     ###
- *    ## ##  /        /##      ### ##  ###  /###     /###     /###    ##  /##           ## ##      ## ###  /###     /###     /###      /###   ###  /###
- *    ## ## /        / ###    ######### ###/ #### / / ###  / / ###  / ## / ###          ## ##      ##  ###/ #### / / ###  / /  ###  / / ###  / ###/ #### /
- *    ## ##/        /   ###  ##   ####   ##   ###/ /   ###/ /   ###/  ##/   /           ## ##      ##   ##   ###/ /   ###/ /    ###/ /   ###/   ##   ###/
- *    ## ## ###    ##    ### ##    ##    ##       ##    ## ##         ##   /            ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *    ## ##   ###  ########  ##    ##    ##       ##    ## ##         ##  /             ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *    #  ##     ## #######   ##    ##    ##       ##    ## ##         ## ##             #  ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *       /      ## ##        ##    ##    ##       ##    ## ##         ######               /       /    ##       ##    ## ##     ## ##    ##    ##    ##
- *   /##/     ###  ####    / ##    /#    ##       ##    ## ###     /  ##  ###         /###/       /     ##       ##    /# ##     ## ##    ##    ##    ##
- *  /  ########     ######/   ####/      ###       ######   ######/   ##   ### /     /   ########/      ###       ####/ ## ########  ######     ###   ###
- * /     ####        #####     ###        ###       ####     #####     ##   ##/     /       ####         ###       ###   ##  ### ###  ####       ###   ###
- * #                                                                                #                                             ###
- *  ##                                                                               ##                                     ####   ###
- *                                                                                                                        /######  /#
- *                                                                                                                       /     ###/
- * the MIT License (MIT)
- *
- * Copyright (c) 2021-2021 Nathan Swanson
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * the above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package bedrockDragon.command
 
-abstract class Command() {
-    fun invoke(string: Array<String>) {
+import kotlin.reflect.KClass
 
+
+//View Model DSL
+fun Command(block: CommandBuilder.() -> Unit): Command { return CommandBuilder().apply(block).build() }
+
+data class Command(val name: String,val args: List<CommandTag>)
+data class CommandTag(val type: KClass<*>, val check: String, val optional: Boolean)
+
+
+
+class COMMANDARGS: ArrayList<CommandTag>(){
+    fun tag(block: CommandTagBuilder.() -> Unit) {
+        add(CommandTagBuilder().apply(block).build())
     }
+}
+
+class CommandTagBuilder {
+    var type: KClass<*>? = null
+    var check = ""
+    var optional = false
+
+    fun build() : CommandTag = CommandTag(type!!, check, optional)
+}
+
+class CommandBuilder {
+    var name = ""
+    private val args = ArrayList<CommandTag>()
+
+    fun args(block: COMMANDARGS.() -> Unit) {
+        args.addAll(COMMANDARGS().apply(block))
+    }
+
+    fun build(): Command = Command(name, args)
 }

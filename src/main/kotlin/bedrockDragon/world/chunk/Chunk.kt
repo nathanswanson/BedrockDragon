@@ -195,7 +195,7 @@ class Chunk(val position: WorldInt2,
     }
 
     fun initChunkFromStorage() {
-        val data = parent!!.parent!!.readChunkBinary(this)
+        val data = parent!!.region.readChunkBinary(this)
         decodeNbtFromStorage(data)
     }
 

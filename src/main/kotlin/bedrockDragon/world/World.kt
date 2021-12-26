@@ -44,6 +44,7 @@
 package bedrockDragon.world
 
 import bedrockDragon.network.world.WorldInt2
+import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
 import bedrockDragon.world.region.Region
 import dev.romainguy.kotlin.math.Float3
@@ -75,31 +76,6 @@ class World {
         return relayParentRegion.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
     }
 
-    fun getOrLoadAllRelaysWithRange(absolutePosition: Float3, radiusInChunks: Int): Array<ChunkRelay> {
-        val chunkRelays = ArrayList<ChunkRelay>()
-        val relayRange = (radiusInChunks + 3 and 0x03.inv()) shr 2
-
-        val absPositionRelay = getOrLoadRelay(absolutePosition)
-        val centerRegionPositionX = absolutePosition.x.toInt() shr 10
-        val centerRegionPositionZ = absolutePosition.z.toInt() shr 10
-
-        val startX = absPositionRelay.x - relayRange
-        val startZ = absPositionRelay.z - relayRange
-
-        for(x in startX until startX + relayRange*2) {
-            for(z in startZ until startZ + relayRange*2) {
-
-                //players will commonly load two regions at once when on border of them.
-                val currentRegion = getOrLoadRegionIdx(WorldInt2(
-                    if(x < 0) centerRegionPositionX - 1 else if(x > 8) centerRegionPositionX + 1 else centerRegionPositionX,
-                    if(z < 0) centerRegionPositionZ - 1 else if(z > 8) centerRegionPositionZ + 1 else centerRegionPositionZ
-                ))
-
-                chunkRelays.add(currentRegion.getRelayAt(x.mod(8), z.mod(8)))
-            }
-        }
-        return chunkRelays.toTypedArray()
-    }
     /**
      * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
      * if it has not been created yet it will make a new one and return that.
@@ -109,18 +85,28 @@ class World {
 
 
         return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y)
+            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
             loadedRegions[intPosition]!!
         }
+    }
+
+    fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
+        val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
+        return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
     }
 
     fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
         return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y)
+            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
             loadedRegions[intPosition]!!
         }
     }
 
+//    fun offset(x: Int, z: Int) : ChunkRelay {
+//        println(x)
+//        println(z)
+//        return this
+//    }
 
     companion object {
         val tempDefault = World()

@@ -45,9 +45,12 @@ package bedrockDragon.world
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import kotlinx.serialization.modules.EmptySerializersModule
 import net.benwoodworth.knbt.*
+import java.io.FileOutputStream
+import java.io.FileWriter
 import java.util.HashMap
 import kotlin.collections.LinkedHashMap
 
@@ -59,8 +62,7 @@ import kotlin.collections.LinkedHashMap
  */
 @OptIn(ExperimentalSerializationApi::class)
 object PaletteGlobal {
-    val globalBlockPalette = HashMap<String, Int>()
-
+    private val globalBlockPalette = HashMap<String, ArrayList<PaletteEntry>>()
     init {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
@@ -70,23 +72,68 @@ object PaletteGlobal {
             ignoreUnknownKeys = true
             serializersModule = EmptySerializersModule
         }
+
         val runtime = ClassLoader.getSystemResourceAsStream("runtime_block_states.dat")
         val nbtData = nbt.decodeFromStream<NbtCompound>(runtime!!)[""]!!.nbtList
-        nbtData.forEach() {
-             globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, it.nbtCompound["runtimeId"]!!.nbtInt.value)
+        nbtData.forEach {
+            val entryCompound = it.nbtCompound
+            globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, ArrayList())
+
+            val paletteEntry = PaletteEntry(entryCompound["name"]!!.nbtString.value,
+                entryCompound["version"]!!.nbtInt.value,
+                entryCompound["states"]!!.nbtCompound,
+                entryCompound["id"]!!.nbtInt.value,
+                entryCompound["data"]!!.nbtShort.value,
+                entryCompound["runtimeId"]!!.nbtInt.value
+                )
+
+            globalBlockPalette[it.nbtCompound["name"]!!.nbtString.value]!!.add(paletteEntry)
         }
 
+
+        val fos = FileWriter("D:/log.json")
+        globalBlockPalette.forEach { it1 ->
+            fos.write("""${it1.key}
+                ${it1.value.forEach {
+                 it.name
+                    it.states
+                    it.version
+            }}""".trimMargin())
+        }
+        fos.close()
+        //temporary until I generate own world files
         //Aliases Java -> Bedrock
         globalBlockPalette["minecraft:grass_block"] = globalBlockPalette["minecraft:grass"]!!
+        globalBlockPalette["minecraft:grass"] = globalBlockPalette["minecraft:tallgrass"]!!
         globalBlockPalette["minecraft:cave_air"] = globalBlockPalette["minecraft:air"]!!
         globalBlockPalette["minecraft:dead_bush"] = globalBlockPalette["minecraft:deadbush"]!!
+        globalBlockPalette["minecraft:oak_planks"] = globalBlockPalette["minecraft:planks"]!!
+        globalBlockPalette["minecraft:polished_andesite"] = getEntryFromName("minecraft:stone", 6)
+        globalBlockPalette["minecraft:dirt_path"] = globalBlockPalette["minecraft:grass_path"]!!
+        globalBlockPalette["minecraft:oak_leaves"] = getEntryFromName("minecraft:leaves", 0)
+        globalBlockPalette["minecraft:white_bed"] = getEntryFromName("minecraft:bed", 0)
+        globalBlockPalette["minecraft:oak_trapdoor"] = globalBlockPalette["minecraft:trapdoor"]!!
+        globalBlockPalette["minecraft:poppy"] = globalBlockPalette["minecraft:red_flower"]!!
     }
-    fun getRuntimeIdFromName(name: String) {
 
+    fun getRuntimeIdFromName(name: String, data: Int = 0): Int {
+        return globalBlockPalette[name]?.get(data)?.runtimeId ?: -1
     }
+
+    fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
+        return arrayListOf(globalBlockPalette[name]?.get(data) ?: globalBlockPalette["minecraft:bedrock"]!![0])
+    }
+//
+//    fun generateEntry(paletteEntry: PaletteEntry) {
+//        val oldCopy = paletteEntry.copy()
+//        oldCopy.d
+//    }
 
     @Serializable
     data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound, val id: Int, val data: Short, val runtimeId: Int)
 
 }
 
+fun main() {
+    PaletteGlobal
+}

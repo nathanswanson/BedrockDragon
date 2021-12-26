@@ -85,7 +85,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
    // var cacheEnabled = false
 
     fun destroy() {
-        clientPeer!!.player!!.save()
+      //  clientPeer!!.player!!.save()
     }
 
     fun attemptMinecraftHandoff() {
@@ -180,8 +180,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         fun fireJoinSequence() {
             player = Player(uuid)
 
-            //println("Entity Identifier packet")
-
             sendMessage(Reliability.RELIABLE_ORDERED, 0, StartGamePacket.capture(player!!).gamePacket())
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0 , BiomeDefinitionPacket().gamePacket())
@@ -189,16 +187,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
-
-
-
-
-            //send one chunk through netty then say play status good
-            //debug chunk
-
-            //val entityDataPacket = EntityDataPacket()
-            //entityDataPacket.runtimeEntityId = player!!.runtimeEntityId.toLong()
-            //sendMessage(Reliability.UNRELIABLE, 0, entityDataPacket.gamePacket())
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
@@ -210,8 +198,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
 
             player!!.playInit()
-
-
         }
     }
 

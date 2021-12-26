@@ -43,6 +43,7 @@
 
 package bedrockDragon.command
 
+import bedrockDragon.player.Player
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -66,10 +67,10 @@ object CommandRegistry {
         return registeredCommands[name.split(" ")[0]]?.createInstance()
     }
 
-    fun invoke(name: String): Boolean {
-        val args = name.split(" ")
-
-        return registeredCommands[args[0]]?.createInstance()?.invoke(args.toTypedArray()) != null
+    fun invoke(sender: Player, command: String): Boolean {
+        val args = command.split(" ")
+        return TODO()
+        //return registeredCommands[args[0]]?.createInstance()?.invoke(sender, args.toTypedArray()) != null
 
     }
 
@@ -77,6 +78,7 @@ object CommandRegistry {
      * Default commands for Bedrock Dragon. If you wish to remove them as a plugin use [unRegister()].
      */
     init {
-      register("/debug", Debug::class)
+      //  register("/debug", Debug::class)
+      //  register("/gamemode", GamemodeCommand::class)
     }
 }

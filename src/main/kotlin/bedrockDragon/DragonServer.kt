@@ -168,7 +168,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             clients.remove(client.sender)
             playerCount--
         } catch (e: java.lang.NullPointerException) {
-            logger.info { "$client does not exist but disconnect was called!" }
+            logger.info { "$client does not exist but disconnect was called! $clients" }
         }
     }
     //TODO COMPLETE REDO
@@ -199,6 +199,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.clientmtu, channel, sender)
                 //todo playercount incremented when minecraft login finalized not when raknet is.
                 playerCount++
+                logger.info { "Added Player" }
             }
         }
 

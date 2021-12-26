@@ -52,6 +52,7 @@ import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.ceil
 import kotlin.reflect.KClass
 
 /**
@@ -98,13 +99,17 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
         paletteResolution = PaletteResolution.values()[paletteResolution.ordinal+1]
     }
 
+
+    /**
+     * Please note, entriesPerWord is for Int32 NOT Long64 entries would be 2x.
+     */
     enum class PaletteResolution(val size: Int,val entriesPerWord: Int) {
         B2(2, 16),
         B4(4,8),
         B5(5, 6),
         B6(6, 5),
-        B8(8, 4);
-
+        B8(8, 4),
+        RAW(15, 4);
         val maxSize = (1 shl size) - 1
 
     }
@@ -137,8 +142,13 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 return PaletteResolution.B2
             if(size <= 14)
                 return PaletteResolution.B4
-
-            return PaletteResolution.B8 //highest resolution offered
+            if(size <= 31)
+                return PaletteResolution.B5
+            if(size <= 63)
+                return PaletteResolution. B6
+            if(size <= 255)
+                return PaletteResolution.B8 //highest resolution offered
+            return PaletteResolution.RAW
         }
 
         fun parseBlockStateNBT(nbtCompound: NbtCompound): PaletteSubChunk {
@@ -150,35 +160,44 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 val palette = nbtCompound["palette"]!!.nbtList.toList()
                 val blockPalette = PaletteSubChunk(getSmallestUsablePallete(palette.size))
 
-                val wordPerLong = 4096 / data.size  //16
+                val wordPerLong = ceil(4096.0 / data.size).toInt()  //16
                 val wordSize = 64 / wordPerLong //4
-
-                for(chunkColumn in 0 until 256) {
+                var tempIdx = 0
+                for(x in 0 until 16) {
                     for(y in 0 until 16) {
-                        //example assignment as B4
+                        for(z in 0 until 16) {
+                            //example assignment as B4
+                            //todo use bitwise
+                            //needs to be rotated I think 90deg
+                            val blockidx = (15 - x) + y * 16 + (z * 16 * 16) //range from 0 until 4096
+                            val arrayIdx = blockidx / (64 / wordSize)
+                            val arrayOffset = blockidx % (64 / wordSize) * wordSize
 
-                        val blockidx = chunkColumn + (y * 256) //range from 0 until 4096
-                        val arrayIdx = blockidx / (64 / wordSize)
-                        val arrayOffset = blockidx % (64 / wordSize) * wordSize
+                            /*
+                            l: Long = data[arrayIdx]
+                            mask = ~(1 << wordSize) ex. 1 << 5 = 100000, ~(100000) = 11111
+                             */
+                            try {
+                                val block = (data[arrayIdx] ushr ((64 - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
+                                blockPalette.blockBits.setAt(z + y * 16 + (x * 16 * 16), block.toInt())
+                                tempIdx++
+                            } catch (e: ArrayIndexOutOfBoundsException) {
+                                println()
+                            }
 
-                        //val block = (data[arrayIdx] ushr (4 * arrayOffset)) and 15
-                        /*
-                        l: Long = data[arrayIdx]
-                        mask = ~(1 << wordSize) ex. 1 << 5 = 100000, ~(100000) = 11111
-                         */
-                        val block = (data[arrayIdx] ushr ((64 - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
-                        blockPalette.blockBits.setAt(chunkColumn * 16 + y, block.toInt())
+                        }
                     }
                 }
                 palette.forEach {
-                    PaletteGlobal.globalBlockPalette[it.nbtCompound["Name"]!!.nbtString.value].let { it1 -> //double lambda it needs to be specified //todo
-                        if (it1 != null) {
-                            blockPalette.palette.add(it1)
+                    val entry = PaletteGlobal.getRuntimeIdFromName(it.nbtCompound["Name"]!!.nbtString.value)//double lambda it needs to be specified //todo
+                        if (entry != -1) {
+                            blockPalette.palette.add(entry)
                         } else {
                             unknownPaletteId = true
-                            blockPalette.palette.add(134)
+                            println(it.nbtCompound["Name"]!!.nbtString.value)
+                            blockPalette.palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:bedrock"))
                         }
-                    }
+
                 }
 
                 if(unknownPaletteId)

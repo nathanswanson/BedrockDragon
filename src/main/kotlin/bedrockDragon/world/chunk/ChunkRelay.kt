@@ -43,22 +43,20 @@
 
 package bedrockDragon.world.chunk
 
-import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.MovePlayer
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.world.region.Region
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import dev.romainguy.kotlin.math.Float3
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
 
 /**
  * [ChunkRelay] is not a minecraft concept, This is a grouping much like a [Region], that
@@ -66,18 +64,21 @@ import java.util.concurrent.ConcurrentHashMap
  * @author Nathan Swanson
  * @since ALPHA
  */
-class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
+class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     constructor(float2: WorldInt2, region: Region) : this(float2.x.toInt(), float2.y.toInt(), region)
+
+
 
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
-    //private val subscribers = HashSet<ISubscriber>() //TODO not thread safe very bad and wont work with more then one relay
     private val subscriptionSharedFlow = MutableSharedFlow<ReactivePacket<*>>()
     private val nonMutableFlow = subscriptionSharedFlow.asSharedFlow()
-    private val chunksLoadedForPlayersMask = ConcurrentHashMap<Player, UShort>()
+    private val playerLastPublishPosition = ConcurrentHashMap<Player, Float3>()
+    private val jobs = HashMap<Player, Job>()
     //chunks are a 4x4 grid laid in an array and are absolute position in world
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
     // y = idx mod 4     0: 0,4,8,12 1: 1,5,9,13...
+
     val chunks = Array(16) { i ->
         Chunk(
             WorldInt2(
@@ -93,27 +94,100 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
      * anything happens we notify this new player as well.
      */
     fun addPlayer(player: Player) {
-            for(i in 0 until 16) {
-                player.sendChunk(chunks[i])
-                //Temporary loads 16 chunks for testing.
-            }
+        playerLastPublishPosition[player] = player.position
+        player.updateChunkPublisherPosition()
+        sendAllChunksForPlayer(player)
 
-        scope.launch {
-            nonMutableFlow.filter { player.filter(it) }
+        jobs[player] = scope.launch {
+            nonMutableFlow.filter { true }
                 .collectLatest {
-                player.emitReactiveCommand(it)
-            }
-        }
-    }
-
-    fun watchForChunkChanges() {
-        scope.launch {
-            nonMutableFlow.filter { it is MovePlayer }
-                .collectLatest {
-
+                    if(it is MovePlayer) {
+                        checkChunkNeeds(it.sender as Player)
+                    }
+                    player.emitReactiveCommand(it)
                 }
         }
     }
+
+    private fun sendAllChunksForPlayer(player: Player) {
+        val relayRender = (player.renderDistance + 3 and 0x03.inv()) shr 2
+
+        val startX = x - relayRender
+        val startZ = z - relayRender
+
+        for(x in startX until startX + relayRender*2) {
+            for(z in startZ until startZ + relayRender*2) {
+                val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(x,z))
+                relayProvider.chunks.forEach { player.sendChunk(it) }
+            }
+        }
+
+    }
+
+    private fun addPlayerFromAdjacentRelay(player: Player) {
+        playerLastPublishPosition[player] = player.position
+        player.updateChunkPublisherPosition()
+        player.chunkRelay = this
+
+//        sendDeltaChunksForPlayer(player, lastDeltaMovement.x.toInt() shr 6, lastDeltaMovement.z.toInt() shr 6)
+
+        jobs[player] = scope.launch {
+            nonMutableFlow.filter { true }
+                .collectLatest {
+                    player.emitReactiveCommand(it)
+                    if(it is MovePlayer) {
+                        checkChunkNeeds(it.sender as Player)
+                    }
+                }
+        }
+    }
+
+    private fun checkChunkNeeds(player: Player) {
+
+        val worldPosition = getWorldCoordinates()
+        val xOffset = worldPosition.x shl 6
+        val zOffset = worldPosition.y shl 6
+
+        val deltaMovement = player.position.minus(playerLastPublishPosition[player] ?: Float3(0f,0f,0f))
+        //check if entered new chunk
+        if(abs(deltaMovement.x) > 16 || abs(deltaMovement.z) > 16) {
+            //check if entered new region
+
+            sendDeltaChunksForPlayer(player, deltaMovement.x.toInt() / 16, deltaMovement.z.toInt() / 16)
+
+            if(!(player.position.x.toInt() in xOffset..xOffset + 64 && player.position.z.toInt() in zOffset..zOffset + 64 )) {
+                //transfer player to new relay
+                //playerLastPublishPosition[it.sender as Player] = (it.payload as MovePlayerPacket).position
+                //get relay adjacent
+                val newRelayPosition = WorldInt2(player.position.x.toInt() shr 6, player.position.z.toInt() shr 6)
+                passToNewRelay(player, region.world.getOrLoadRelayIdx(newRelayPosition))
+            }
+
+            playerLastPublishPosition[player] = player.position
+            player.updateChunkPublisherPosition()
+        }
+    }
+
+    private fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
+        val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
+        val relayOffsetX = (player.position.x.toInt() shr 5) % 4
+        val relayOffsetZ = (player.position.z.toInt() shr 5) % 4
+        val actualCoordinates = getWorldCoordinates()
+
+        if(x != 0) {
+            for(eastWest in -player.renderDistance until player.renderDistance) {
+
+                val relay = region.world.getOrLoadRelayIdx(WorldInt2(actualCoordinates.x  + viewDistanceToRelay, actualCoordinates.y + (eastWest shr 2)))
+                val chunkGrabbed = relay.getChunk2D(relayOffsetX.mod(4), (relayOffsetZ + eastWest).mod(4))
+                player.sendChunk(chunkGrabbed)
+            }
+        }
+    }
+
+    private fun getWorldCoordinates(): WorldInt2 {
+        return WorldInt2((region.x * 8) + x, (region.z * 8) + z)
+    }
+
     /**
      * [invoke] either the chunk or another subscriber can use this method to broadcast information
      * to every subscriber.
@@ -127,15 +201,17 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
     /**
      * [removePlayer] will unsubscribe a player from a relay.
      */
-    fun removePlayer(player: Player) {
-
+    private fun removePlayer(player: Player) {
+        jobs[player]?.cancel()
+        jobs.remove(player)
     }
 
     /**
      * [passToNewRelay] allows fast transfer of a player from one relay to another.
      */
-    fun passToNewRelay() {
-
+    private fun passToNewRelay(player: Player, relay: ChunkRelay) {
+        removePlayer(player)
+        relay.addPlayerFromAdjacentRelay(player)
     }
 
     /**
@@ -145,7 +221,11 @@ class ChunkRelay(val x: Int,val z: Int,val parent: Region?) {
 
     }
 
+    fun getChunk2D(x: Int, z: Int) : Chunk {
+        return chunks[(x shl 2) + z]
+    }
+
     override fun toString(): String {
-        return "ChunkRelay: x:$x z:$z in Region: $parent"
+        return "ChunkRelay: x:$x z:$z in Region: $region"
     }
 }

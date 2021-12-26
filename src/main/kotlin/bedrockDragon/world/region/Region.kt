@@ -44,6 +44,7 @@
 package bedrockDragon.world.region
 
 import bedrockDragon.util.SaveStatus
+import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
 import kotlinx.serialization.modules.EmptySerializersModule
@@ -85,7 +86,7 @@ II. (Chunk)
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Region(val x : Int,val z: Int): Iterable<Chunk> {
+class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
     val fileName = Path("world/region/r.$x.$z.mca")
     val logger = KotlinLogging.logger {}
     val relayGrid = arrayOfNulls<ChunkRelay>(64) //make private is public atm for testing

@@ -43,4 +43,10 @@
 
 package bedrockDragon.command
 
-class Debug: Command()
+import bedrockDragon.player.Player
+
+class Debug {
+    fun invoke(sender: Player, string: Array<String>) {
+        TODO("Not yet implemented")
+    }
+}

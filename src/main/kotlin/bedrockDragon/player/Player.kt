@@ -59,13 +59,12 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
+import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
+import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
-import bedrockDragon.network.raknet.protocol.game.player.InteractPacket
-import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
-import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
-import bedrockDragon.network.raknet.protocol.game.player.PlayerAttributePacket
+import bedrockDragon.network.raknet.protocol.game.player.*
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
@@ -91,7 +90,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @since ALPHA
  */
 class Player(override var uuid: String): Living(), ISubscriber {
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
 
     init {
@@ -103,10 +101,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
     var name = ""
-    private val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
+    val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     private val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
     var gamemode = Gamemode.SURVIVAL
+        set(value) {
+            //send gamemodepacket
+            val gamemodePacket = PlayerGameTypePacket()
+            gamemodePacket.gamemode = value.ordinal
+            nettyQueue.add(gamemodePacket.gamePacket())
+            field = value
+        }
     var isOp = false
 
     var world = World.tempDefault //Todo shared world
@@ -118,7 +123,21 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     val adventureSettings = AdventureSettings()
     var renderDistance = 8
-    var chunkRelays = world.getOrLoadAllRelaysWithRange(position, 3)
+    var chunkRelay = world.getOrLoadRelay(position)
+    private var lastPublishPosition = position
+    /*
+        NBT ENABLED VAR
+     */
+
+    var foodLevel: Byte = 20
+        set(value) {
+            field = value
+
+            //update client food level
+            refreshAndSendAttribute()
+        }
+    var foodExhaustionLevel: Byte = 0
+    var foodSaturationLevel: Byte = 0
 
     /**
      * [playInit] is called as soon as the Player is fully connected and joined the game.
@@ -128,16 +147,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
-        chunkRelays.forEach { it.addPlayer(this) }
-        scope.launch { tick() }
+        chunkRelay.addPlayer(this)
+       // scope.launch { tick() }
         val attribute = PlayerAttributePacket()
         attribute.runtimeEntityId = runtimeEntityId.toLong()
         nettyQueue.add(attribute.gamePacket())
 
-        val publisherUpdate = NetworkChunkPublisherPacket()
-        publisherUpdate.position = position
-        publisherUpdate.radius = ServerProperties.getProperty("view-distance").toInt()
-        nettyQueue.add(publisherUpdate.gamePacket())
         sendAdventure()
         sendAttributes()
 
@@ -145,6 +160,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
         sendMeta()
     }
 
+    fun updateChunkPublisherPosition() {
+        val publisherUpdate = NetworkChunkPublisherPacket()
+        publisherUpdate.position = position
+        publisherUpdate.radius = ServerProperties.getProperty("view-distance").toInt()
+        nettyQueue.add(publisherUpdate.gamePacket())
+    }
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
      */
@@ -176,12 +197,19 @@ class Player(override var uuid: String): Living(), ISubscriber {
         TODO("Not yet implemented")
     }
 
-    //todo review
     override suspend fun tick() {
-        //while (true) {
-           // sendMeta()
-        //    delay(50)
-        //}
+        while (true) { //20 tps aprox.
+            runWithDyanamicDelay {
+               // checkIfChunkUpdateRequired()
+            }
+            delay(1000)
+        }
+
+
+    }
+
+    fun runWithDyanamicDelay(tasks: () -> Unit) {
+        tasks.invoke()
     }
 
     override fun armor(): ArmorInventory {
@@ -225,6 +253,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
     }
 
+    fun refreshAndSendAttribute() {
+
+    }
+
     enum class Gamemode {
         SURVIVAL,
         CREATIVE,
@@ -265,13 +297,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     /**
-     * [updateGamemode] sets the player game-mode internally and also informs the client (adventure settings).
-     */
-    fun updateGamemode() {
-
-    }
-
-    /**
      * [updateOp] sets the player op privileges internally and also informs the client (adventure settings).
      */
     fun updateOp(boolean: Boolean) {
@@ -289,7 +314,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.sender != this) {
-
+            println("emit")
         }
     }
 
@@ -330,7 +355,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
 
-               // chunkRelay.invoke(bedrockDragon.reactive.MovePlayer(movePlayerPacket, this))
+                chunkRelay.invoke(bedrockDragon.reactive.MovePlayer(movePlayerPacket, this))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
@@ -367,7 +392,20 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
-                logger.info { actionPacket.toString() }
+
+                //action type switch
+                when(actionPacket.action) {
+                    PlayerActionPacket.ACTION_START_BREAK -> {
+                        val levelEventPacket = LevelEventPacket()
+                        levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
+                        levelEventPacket.position = actionPacket.coord
+                        levelEventPacket.data = 4369 //todo break time
+                        println(levelEventPacket)
+                        nettyQueue.add(levelEventPacket.gamePacket())
+                    }
+                }
+
+                logger.info { actionPacket.action }
             }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }
@@ -402,7 +440,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.COMMAND_REQUEST -> {
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
-                CommandRegistry.invoke(commandPacket.command)
+                CommandRegistry.invoke(this, commandPacket.command)
 
             }
             MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }
