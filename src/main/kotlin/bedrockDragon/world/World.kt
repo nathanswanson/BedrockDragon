@@ -43,6 +43,7 @@
 
 package bedrockDragon.world
 
+import bedrockDragon.block.Block
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
@@ -102,11 +103,10 @@ class World {
         }
     }
 
-//    fun offset(x: Int, z: Int) : ChunkRelay {
-//        println(x)
-//        println(z)
-//        return this
-//    }
+    fun getBlockAt(position: Float3): Block {
+        val relayWithDesiredBlock = getOrLoadRelay(position)
+        return TODO()
+    }
 
     companion object {
         val tempDefault = World()

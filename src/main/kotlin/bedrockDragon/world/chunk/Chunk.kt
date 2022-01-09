@@ -47,6 +47,7 @@ import bedrockDragon.block.Block
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
+import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import kotlinx.serialization.decodeFromByteArray
@@ -144,6 +145,10 @@ class Chunk(val position: WorldInt2,
 
     }
 
+    fun getBlockAt(position: Float3): Block {
+        return sections[0].paletteSubChunk!!.getBlock(position)
+    }
+
     fun encodeNbtToStorage(): ByteArray {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
@@ -177,7 +182,6 @@ class Chunk(val position: WorldInt2,
         lastUpdate = decodedNBT["LastUpdate"]!!.nbtLong.value
         inhabitedTime = decodedNBT["InhabitedTime"]!!.nbtLong.value
         isLightOn = decodedNBT["isLightOn"]!!.nbtByte.booleanValue
-
 
         decodedNBT["sections"]!!.nbtList.filter{
             it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
@@ -239,6 +243,7 @@ class Chunk(val position: WorldInt2,
         companion object {
             fun decodeFromNbt(data: NbtCompound): SubChunk {
                 val subChunk = SubChunk()
+
                 subChunk.blockStates = data["block_states"]!!.nbtCompound
                 subChunk.paletteSubChunk = PaletteSubChunk.parseBlockStateNBT(subChunk.blockStates)
                 subChunk.biomes = data["biomes"]!!.nbtCompound

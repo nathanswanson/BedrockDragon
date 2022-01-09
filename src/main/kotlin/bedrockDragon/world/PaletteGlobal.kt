@@ -43,6 +43,7 @@
 
 package bedrockDragon.world
 
+import bedrockDragon.block.Block
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -63,6 +64,8 @@ import kotlin.collections.LinkedHashMap
 @OptIn(ExperimentalSerializationApi::class)
 object PaletteGlobal {
     private val globalBlockPalette = HashMap<String, ArrayList<PaletteEntry>>()
+    val blockRegistry = HashMap<String, Block>() //contract needed for private access todo
+
     init {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
@@ -90,30 +93,45 @@ object PaletteGlobal {
             globalBlockPalette[it.nbtCompound["name"]!!.nbtString.value]!!.add(paletteEntry)
         }
 
-
-        val fos = FileWriter("D:/log.json")
-        globalBlockPalette.forEach { it1 ->
-            fos.write("""${it1.key}
-                ${it1.value.forEach {
-                 it.name
-                    it.states
-                    it.version
-            }}""".trimMargin())
-        }
-        fos.close()
         //temporary until I generate own world files
         //Aliases Java -> Bedrock
         globalBlockPalette["minecraft:grass_block"] = globalBlockPalette["minecraft:grass"]!!
         globalBlockPalette["minecraft:grass"] = globalBlockPalette["minecraft:tallgrass"]!!
         globalBlockPalette["minecraft:cave_air"] = globalBlockPalette["minecraft:air"]!!
         globalBlockPalette["minecraft:dead_bush"] = globalBlockPalette["minecraft:deadbush"]!!
-        globalBlockPalette["minecraft:oak_planks"] = globalBlockPalette["minecraft:planks"]!!
+
         globalBlockPalette["minecraft:polished_andesite"] = getEntryFromName("minecraft:stone", 6)
         globalBlockPalette["minecraft:dirt_path"] = globalBlockPalette["minecraft:grass_path"]!!
-        globalBlockPalette["minecraft:oak_leaves"] = getEntryFromName("minecraft:leaves", 0)
         globalBlockPalette["minecraft:white_bed"] = getEntryFromName("minecraft:bed", 0)
         globalBlockPalette["minecraft:oak_trapdoor"] = globalBlockPalette["minecraft:trapdoor"]!!
+        //todo side of log
+        globalBlockPalette["minecraft:oak_log"] = getEntryFromName("minecraft:wood", 0)
+        globalBlockPalette["minecraft:wall_torch"] = globalBlockPalette["minecraft:torch"]!!
+        globalBlockPalette["minecraft:beetroots"] = globalBlockPalette["minecraft:beetroot"]!!
+        globalBlockPalette["minecraft:dark_oak_log"] = getEntryFromName("minecraft:wood", 5)
+        globalBlockPalette["minecraft:dark_oak_leaves"] = getEntryFromName("minecraft:leaves", 3)
+        globalBlockPalette["minecraft:magma_block"] = globalBlockPalette["minecraft:magma"]!!
+        globalBlockPalette["minecraft:chiseled_quartz_block"] = getEntryFromName("minecraft:quartz_block", 1)
+        globalBlockPalette["minecraft:quartz_pillar"] = getEntryFromName("minecraft:quartz_block", 3)
+        globalBlockPalette["minecraft:bricks"] = globalBlockPalette["minecraft:brick_block"]!!
+        globalBlockPalette["minecraft:sea_lantern"] = globalBlockPalette["minecraft:seaLantern"]!!
+
+        //leaves
+        globalBlockPalette["minecraft:acacia_leaves"] = getEntryFromName("minecraft:leaves2")
+        globalBlockPalette["minecraft:oak_leaves"] = getEntryFromName("minecraft:leaves", 0)
+
+        //flora
+        globalBlockPalette["minecraft:blue_orchid"] = getEntryFromName("minecraft:red_flower", 1)
+        globalBlockPalette["minecraft:dandelion"] = globalBlockPalette["minecraft:yellow_flower"]!!
         globalBlockPalette["minecraft:poppy"] = globalBlockPalette["minecraft:red_flower"]!!
+
+        val jsonData = Json.decodeFromStream<JsonObject>(ClassLoader.getSystemResourceAsStream("blockAlias.json")!!)
+        jsonData.forEach {
+            it.value.jsonArray.forEachIndexed { idx, blockEntry ->
+                globalBlockPalette[blockEntry.jsonPrimitive.content] = getEntryFromName("minecraft:${it.key}", idx)
+            }
+        }
+
     }
 
     fun getRuntimeIdFromName(name: String, data: Int = 0): Int {
@@ -123,11 +141,6 @@ object PaletteGlobal {
     fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
         return arrayListOf(globalBlockPalette[name]?.get(data) ?: globalBlockPalette["minecraft:bedrock"]!![0])
     }
-//
-//    fun generateEntry(paletteEntry: PaletteEntry) {
-//        val oldCopy = paletteEntry.copy()
-//        oldCopy.d
-//    }
 
     @Serializable
     data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound, val id: Int, val data: Short, val runtimeId: Int)

@@ -44,7 +44,6 @@
 package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
-import bedrockDragon.command.CommandRegistry
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
 import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
@@ -104,7 +103,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     private val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.SURVIVAL
+    var gamemode = Gamemode.CREATIVE
         set(value) {
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
@@ -122,7 +121,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     private val playerMeta =  MetaTag()
 
     val adventureSettings = AdventureSettings()
-    var renderDistance = 8
+    var renderDistance = 4
     var chunkRelay = world.getOrLoadRelay(position)
     private var lastPublishPosition = position
     /*
@@ -347,7 +346,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 sendMeta()
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
+                updateChunkPublisherPosition()
                 ChatRail.DEFAULT.invoke(payload.message)
+
+
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
             MinecraftPacketConstants.MOVE_PLAYER -> {
@@ -440,7 +442,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.COMMAND_REQUEST -> {
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
-                CommandRegistry.invoke(this, commandPacket.command)
+                    //CommandRegistry.invoke(this, commandPacket.command)
 
             }
             MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }

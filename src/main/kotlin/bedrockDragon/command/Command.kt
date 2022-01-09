@@ -9,8 +9,6 @@ fun Command(block: CommandBuilder.() -> Unit): Command { return CommandBuilder()
 data class Command(val name: String,val args: List<CommandTag>)
 data class CommandTag(val type: KClass<*>, val check: String, val optional: Boolean)
 
-
-
 class COMMANDARGS: ArrayList<CommandTag>(){
     fun tag(block: CommandTagBuilder.() -> Unit) {
         add(CommandTagBuilder().apply(block).build())

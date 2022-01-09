@@ -43,17 +43,19 @@
 
 package bedrockDragon.world.chunk
 
+import bedrockDragon.block.Block
+import bedrockDragon.block.block
 import bedrockDragon.network.raknet.VarInt
-import bedrockDragon.util.FastBitMap
+import bedrockDragon.util.EvenParityBitMap
+import bedrockDragon.util.OddParityBitMap
 import bedrockDragon.util.extension.writeLInt
 import bedrockDragon.world.PaletteGlobal
+import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
-import kotlin.reflect.KClass
 
 /**
  *
@@ -66,8 +68,12 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     val logger = KotlinLogging.logger {}
 
 
-    private var palette = ArrayList<Int>()
-    private val blockBits = FastBitMap(getWordsForSize(), paletteResolution)
+    private val palette = ArrayList<Int>()
+    private val paletteString = ArrayList<String>()
+
+    private val blockBits = if (paletteResolution.size * paletteResolution.entriesPerWord == 32)
+        EvenParityBitMap(getWordsForSize(), paletteResolution) else
+            OddParityBitMap(getWordsForSize(), paletteResolution)
 
     private fun getPaletteHeader(runtime: Boolean): Int {
         return (paletteResolution.size shl 1) or if (runtime) 1 else 0
@@ -75,6 +81,14 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     fun set(idx: Int, id: Int) {
         blockBits.setAt(idx, global2SectionId(id))
+    }
+
+    fun get(idx: Int): Int {
+        return blockBits.get(idx)
+    }
+
+    fun getBlock(position: Float3): Block {
+        return PaletteGlobal.blockRegistry[paletteString[get((position.x + (position.y * 16) + (position.z * 16 * 16)).toInt())]]!! //todo air should be constant
     }
 
     fun getWordsForSize(): Int {
@@ -122,7 +136,6 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
         }
 
         VarInt.writeVarInt(palette.size, outputStream)//palette size
-
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
 
         //empty palette footer
@@ -148,6 +161,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 return PaletteResolution. B6
             if(size <= 255)
                 return PaletteResolution.B8 //highest resolution offered
+
             return PaletteResolution.RAW
         }
 
@@ -155,32 +169,29 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
             nbtCompound["data"]?.let{ it ->
                 val data = it.nbtLongArray
-
                 var unknownPaletteId = false
                 val palette = nbtCompound["palette"]!!.nbtList.toList()
                 val blockPalette = PaletteSubChunk(getSmallestUsablePallete(palette.size))
-
                 val wordPerLong = ceil(4096.0 / data.size).toInt()  //16
                 val wordSize = 64 / wordPerLong //4
-                var tempIdx = 0
+                val parityOffset = 64 - (blockPalette.paletteResolution.size * blockPalette.paletteResolution.entriesPerWord)
                 for(x in 0 until 16) {
                     for(y in 0 until 16) {
                         for(z in 0 until 16) {
                             //example assignment as B4
                             //todo use bitwise
                             //needs to be rotated I think 90deg
+                            //15 - x rotates to normal
                             val blockidx = (15 - x) + y * 16 + (z * 16 * 16) //range from 0 until 4096
-                            val arrayIdx = blockidx / (64 / wordSize)
-                            val arrayOffset = blockidx % (64 / wordSize) * wordSize
-
+                            val arrayIdx = blockidx / wordPerLong
+                            val arrayOffset = (blockidx % wordPerLong) * wordSize
                             /*
                             l: Long = data[arrayIdx]
                             mask = ~(1 << wordSize) ex. 1 << 5 = 100000, ~(100000) = 11111
                              */
                             try {
-                                val block = (data[arrayIdx] ushr ((64 - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
+                                val block = (data[arrayIdx] ushr (((wordSize * wordPerLong) - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
                                 blockPalette.blockBits.setAt(z + y * 16 + (x * 16 * 16), block.toInt())
-                                tempIdx++
                             } catch (e: ArrayIndexOutOfBoundsException) {
                                 println()
                             }
@@ -188,7 +199,9 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                         }
                     }
                 }
+
                 palette.forEach {
+                    blockPalette.paletteString.add(it.nbtCompound["Name"]!!.nbtString.value)
                     val entry = PaletteGlobal.getRuntimeIdFromName(it.nbtCompound["Name"]!!.nbtString.value)//double lambda it needs to be specified //todo
                         if (entry != -1) {
                             blockPalette.palette.add(entry)
@@ -219,9 +232,9 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     override fun toString(): String {
         val builder = StringBuilder()
-        for(i in 1..512) {
+        for(i in 0 until 4096) {
             builder.append("${blockBits.get(i)} ")
-            if(i % 16 == 0) {
+            if((i + 1)% 16 == 0) {
                 builder.appendLine()
             }
         }

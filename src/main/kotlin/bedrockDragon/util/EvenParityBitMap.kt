@@ -53,25 +53,20 @@ import bedrockDragon.world.chunk.PaletteSubChunk
  * @author Nathan Swanson
  * @since ALPHA
  */
-class FastBitMap(val size: Int, var paletteResolution: PaletteSubChunk.PaletteResolution): Cloneable {
-    var blockData = IntArray(size)
-        private set
-
-
+class EvenParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResolution): BitMap(size, paletteResolution) {
 
     /**
      * The setAt() method handles the proper positioning of bits; the idx input should be the block position in
      * the backing array.
      *
      */
-    fun setAt(idx: Int, id: Int) {
+    override fun setAt(idx: Int, id: Int) {
         //idx out of bounds
         if(idx * paletteResolution.size shr 5 >= blockData.size)
             throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
         //int is larger than palette bit size
         if(id > paletteResolution.maxSize)
             throw IllegalArgumentException("The palette cannot handle an id of $id with a current max bit size of ${paletteResolution.maxSize}")
-
         val bitIndex: Int = idx * paletteResolution.size
         val arrayIndex = bitIndex shr 5
         val offset = bitIndex and 31
@@ -80,11 +75,12 @@ class FastBitMap(val size: Int, var paletteResolution: PaletteSubChunk.PaletteRe
 
     }
 
+
     /**
      * If this method is being used for the palette assume that the idx range is 1..4096. 4096 represents
-     * the 16x16x16 subchunk blocks IDs.
+     * the 16x16x16 subchunk blocks IDs.-
      */
-    fun get(idx: Int): Int {
+    override fun get(idx: Int): Int {
         //idx out of bounds
         if(idx * paletteResolution.size shr 5 >= blockData.size)
             throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
@@ -93,14 +89,5 @@ class FastBitMap(val size: Int, var paletteResolution: PaletteSubChunk.PaletteRe
         val arrayIndex = bitIndex shr 5
         val wordOffset = bitIndex and 31
         return blockData[arrayIndex] ushr wordOffset and paletteResolution.maxSize
-    }
-
-
-    override fun clone(): FastBitMap {
-        val fastBitMap = FastBitMap(size, paletteResolution)
-        fastBitMap.blockData = blockData
-        fastBitMap.paletteResolution = paletteResolution
-
-        return fastBitMap
     }
 }
