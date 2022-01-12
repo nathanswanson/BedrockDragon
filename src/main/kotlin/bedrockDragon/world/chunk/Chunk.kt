@@ -67,7 +67,7 @@ class Chunk(val position: WorldInt2,
     var lastUpdate = 0L
     private var inhabitedTime = 0L
     private var isLightOn: Boolean = true
-    private var status = "empty"
+    private var status = "empty" //this isnt actually being used very well TODO
     private var sectionCount = 0
 
     private var sections = ArrayList<SubChunk>()
@@ -146,7 +146,7 @@ class Chunk(val position: WorldInt2,
     }
 
     fun getBlockAt(position: Float3): Block {
-        return sections[0].paletteSubChunk!!.getBlock(position)
+        return sections[position.y.toInt() shl 5].paletteSubChunk!!.getBlock(position)
     }
 
     fun encodeNbtToStorage(): ByteArray {
@@ -203,14 +203,6 @@ class Chunk(val position: WorldInt2,
         decodeNbtFromStorage(data)
     }
 
-    /**
-     * [sectionCount] determines the amount of chunks are generated/loaded. Since we only want
-     * to send non-empty chunks to the client this method is detremental.
-     */
-    fun sectionCount(): Int {
-        return sections.size
-    }
-
     override fun toString(): String {
         return "Chunk pos: $position"
     }
@@ -237,9 +229,6 @@ class Chunk(val position: WorldInt2,
             return stream.array.copyOfRange(0, stream.length)
         }
 
-        fun isEmpty(): Boolean {
-            return paletteSubChunk?.isEmpty() == false
-        }
         companion object {
             fun decodeFromNbt(data: NbtCompound): SubChunk {
                 val subChunk = SubChunk()

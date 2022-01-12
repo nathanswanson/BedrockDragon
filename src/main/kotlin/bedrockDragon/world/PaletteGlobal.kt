@@ -44,6 +44,7 @@
 package bedrockDragon.world
 
 import bedrockDragon.block.Block
+import bedrockDragon.block.VanillaBlocks
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -75,6 +76,9 @@ object PaletteGlobal {
             ignoreUnknownKeys = true
             serializersModule = EmptySerializersModule
         }
+
+        //Create Minecraft Block Objects.
+        VanillaBlocks
 
         val runtime = ClassLoader.getSystemResourceAsStream("runtime_block_states.dat")
         val nbtData = nbt.decodeFromStream<NbtCompound>(runtime!!)[""]!!.nbtList

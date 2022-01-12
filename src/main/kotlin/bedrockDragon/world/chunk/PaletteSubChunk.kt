@@ -44,7 +44,6 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
-import bedrockDragon.block.block
 import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.util.EvenParityBitMap
 import bedrockDragon.util.OddParityBitMap
@@ -88,7 +87,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     }
 
     fun getBlock(position: Float3): Block {
-        return PaletteGlobal.blockRegistry[paletteString[get((position.x + (position.y * 16) + (position.z * 16 * 16)).toInt())]]!! //todo air should be constant
+        return PaletteGlobal.blockRegistry[paletteString[get((position.y + (position.x * 16) + (position.z * 16 * 16)).toInt() and 4095)]]!!
     }
 
     fun getWordsForSize(): Int {
@@ -149,7 +148,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     //todo use also to avoid memory assignment
     companion object {
 
-        private fun getSmallestUsablePallete(size: Int): PaletteResolution {
+        private fun getSmallestUsablePalette(size: Int): PaletteResolution {
 
             if(size <= 3)
                 return PaletteResolution.B2
@@ -171,10 +170,9 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 val data = it.nbtLongArray
                 var unknownPaletteId = false
                 val palette = nbtCompound["palette"]!!.nbtList.toList()
-                val blockPalette = PaletteSubChunk(getSmallestUsablePallete(palette.size))
+                val blockPalette = PaletteSubChunk(getSmallestUsablePalette(palette.size))
                 val wordPerLong = ceil(4096.0 / data.size).toInt()  //16
                 val wordSize = 64 / wordPerLong //4
-                val parityOffset = 64 - (blockPalette.paletteResolution.size * blockPalette.paletteResolution.entriesPerWord)
                 for(x in 0 until 16) {
                     for(y in 0 until 16) {
                         for(z in 0 until 16) {
@@ -219,7 +217,6 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                         palette runtimeId Attempt: ${blockPalette.palette}
                             """ }
 
-                //determine resolution todo
                 return blockPalette
             }
         return PaletteSubChunk(PaletteResolution.B2) // empty
