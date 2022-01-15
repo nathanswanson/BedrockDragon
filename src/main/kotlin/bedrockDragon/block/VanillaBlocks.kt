@@ -7,6 +7,8 @@ object VanillaBlocks {
         registerBlock("minecraft") {
             block {
                 name = "grass_block"
+                hardness = 0.6
+                blastResistance = 0.6
             }
             block {
                 name = "air"

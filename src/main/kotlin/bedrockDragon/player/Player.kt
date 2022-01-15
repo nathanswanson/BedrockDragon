@@ -95,6 +95,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         read() //read nbt and load into fields
     }
 
+    //has player sent confirmation packet.
     var isConfirmed = false
     //Outgoing Packets
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
@@ -103,7 +104,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
     private val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
 
-    var gamemode = Gamemode.CREATIVE
+    var gamemode = Gamemode.SURVIVAL
         set(value) {
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
@@ -198,7 +199,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     override suspend fun tick() {
         while (true) { //20 tps aprox.
-            runWithDyanamicDelay {
+            runWithDynamicDelay {
                // checkIfChunkUpdateRequired()
             }
             delay(1000)
@@ -207,7 +208,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     }
 
-    fun runWithDyanamicDelay(tasks: () -> Unit) {
+    private fun runWithDynamicDelay(tasks: () -> Unit) {
         tasks.invoke()
     }
 
@@ -232,7 +233,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * Meta controls gravity, size, air, total air ...
      */
-    fun sendMeta() {
+    private fun sendMeta() {
         var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
         flag = flag xor (1L shl DATA_FLAG_BREATHING)
         playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
@@ -252,7 +253,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
     }
 
-    fun refreshAndSendAttribute() {
+    private fun refreshAndSendAttribute() {
 
     }
 
@@ -261,6 +262,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         CREATIVE,
         ADVENTURE,
         SPECTATOR
+    }
+
+    fun sendMessage(text: Any, type: Int = 0) {
+        sendMessage(text.toString(), type)
     }
 
     /**
@@ -296,18 +301,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     /**
-     * [updateOp] sets the player op privileges internally and also informs the client (adventure settings).
-     */
-    fun updateOp(boolean: Boolean) {
-
-    }
-
-    /**
      * [disconnect] will both safely deregister the client and also tell the client that the connection
      * has been terminated.
      */
     fun disconnect(kickMessage: String?) {
-       // chunkRelay.removePlayer(this)
+        chunkRelay.removePlayer(this)
     }
 
     //todo review
@@ -387,9 +385,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.BLOCK_PICK_REQUEST -> {
                 val blockPickRequestPacket = BlockPickRequestPacket()
                 blockPickRequestPacket.decode(inGamePacket.payload)
-                println(blockPickRequestPacket)
-
+                sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
+                sendMessage(world.getChunkAt(position))
             }
+
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
@@ -398,10 +397,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
+                        println("breaking")
                         val levelEventPacket = LevelEventPacket()
+                        val block = world.getBlockAt(actionPacket.coord)
                         levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
                         levelEventPacket.position = actionPacket.coord
-                        levelEventPacket.data = 4369 //todo break time
+                        levelEventPacket.data = (block.hardness * 5).toInt() //todo break time
                         println(levelEventPacket)
                         nettyQueue.add(levelEventPacket.gamePacket())
                     }
@@ -436,7 +437,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { println("SET_PLAYER_GAME_TYPE") }
             MinecraftPacketConstants.MAP_INFO_REQUEST -> { println("MAP_INFO_REQUEST") }
             MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> {
-                handleChunkRadius(8)
+                handleChunkRadius(RequestChunkRadiusPacket().let {
+                    it.decode(inGamePacket.payload)
+                    it.chunkRadius
+                })
             }
             MinecraftPacketConstants.ITEMFRAME_DROP_ITEM -> { println("ITEMFRAME_DROP_ITEM") }
             MinecraftPacketConstants.COMMAND_REQUEST -> {
@@ -492,15 +496,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     /**
      * [handleChunkRadius] is called when the client messages its desired view distance.
-     * we either have to match or be less then what they ask if we go over it would crash the client.
+     * we either have to match or be less than what they ask if we go over it would crash the client.
      */
     private fun handleChunkRadius(max: Int) {
-        logger.trace { "sent '$name' update chunk radius" }
-        nettyQueue.add(ChunkRadiusUpdatePacket(max.coerceAtMost(ServerProperties["view-distance"] as Int)).gamePacket())
+        //todo this needs to apply chunk radius to player object
+        renderDistance = max.coerceAtMost(ServerProperties["view-distance"] as Int)
+        logger.trace { "sent '$name' update chunk radius $renderDistance " }
+        nettyQueue.add(ChunkRadiusUpdatePacket(renderDistance).gamePacket())
     }
 
     /**
-     * [filter] for players makes sure that the sender wasnt themselves as thats pointless.
+     * [filter] for players makes sure that the sender wasn't themselves as that's pointless.
      */
     override fun filter(reactivePacket: ReactivePacket<*>): Boolean {
         return reactivePacket.sender != this

@@ -171,9 +171,6 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
         val relayOffsetX = (player.position.x.toInt() shr 4).mod(4)
         val relayOffsetZ = (player.position.z.toInt() shr 4).mod(4)
-        logger.info { player.position.x.toInt() shr 6 }
-        logger.info { "player x: ${player.position.x}" }
-        logger.info { "offset: $relayOffsetX" }
         if(x != 0) {
             for(eastWest in -player.renderDistance until player.renderDistance) {
                 for(eastDepth in 0 toward x) {
@@ -181,9 +178,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
                     val relay = region.world.getOrLoadRelayIdx(WorldInt2((playerLastPublishPosition[player]!!.x.toInt() shr 6)  + (viewDistanceToRelay * step), (playerLastPublishPosition[player]!!.z.toInt() shr 6) + (eastWest shr 2)))
 
-                    logger.info { relay }
                     val chunkGrabbed = relay.getChunk2D((relayOffsetX - step).mod(4), (relayOffsetZ + eastWest).mod(4))
-                    logger.info { "$chunkGrabbed in region ${relay.region}" }
                     player.sendChunk(chunkGrabbed)
                 }
             }
@@ -225,7 +220,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     /**
      * [removePlayer] will unsubscribe a player from a relay.
      */
-    private fun removePlayer(player: Player) {
+    fun removePlayer(player: Player) {
         jobs[player]?.cancel()
         jobs.remove(player)
     }

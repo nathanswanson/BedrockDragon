@@ -53,6 +53,7 @@ import dev.romainguy.kotlin.math.pow
 import mu.KotlinLogging
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /**
  * [World] holds the region objects and finds [Chunk] or [ChunkRelay] at given coordinates.
@@ -61,8 +62,7 @@ import kotlin.collections.ArrayList
  */
 class World {
 
-    private val loadedChunkRelays = Hashtable<WorldInt2, ChunkRelay>()
-    private val loadedRegions = Hashtable<WorldInt2, Region>()
+    private val loadedRegions = HashMap<WorldInt2, Region>()
     val logger = KotlinLogging.logger {}
 
     /**
@@ -81,7 +81,7 @@ class World {
      * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
      * if it has not been created yet it will make a new one and return that.
      */
-    fun getOrLoadRegion(absolutePosition: Float3): Region {
+    private fun getOrLoadRegion(absolutePosition: Float3): Region {
         val intPosition = WorldInt2(absolutePosition.x.toInt() shr 10, absolutePosition.z.toInt() shr 10)
 
 
@@ -96,16 +96,23 @@ class World {
         return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
     }
 
-    fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
+    private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
         return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
             loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
             loadedRegions[intPosition]!!
         }
     }
 
+    fun getChunkAt(position: Float3): Chunk {
+        return getOrLoadRelay(position).getChunk2D(
+            (position.x.toInt() shr 4).mod(4),
+            (position.z.toInt() shr 4).mod(4)
+        )
+    }
+
     fun getBlockAt(position: Float3): Block {
-        val relayWithDesiredBlock = getOrLoadRelay(position)
-        return TODO()
+        //convert player position to relay space
+        return getChunkAt(position).getBlockAt(position)
     }
 
     companion object {

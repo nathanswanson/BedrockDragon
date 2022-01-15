@@ -146,7 +146,7 @@ class Chunk(val position: WorldInt2,
     }
 
     fun getBlockAt(position: Float3): Block {
-        return sections[position.y.toInt() shl 5].paletteSubChunk!!.getBlock(position)
+        return sections[(position.y.toInt() shr 5) shr 2].paletteSubChunk!!.getBlock(position)
     }
 
     fun encodeNbtToStorage(): ByteArray {
@@ -199,12 +199,17 @@ class Chunk(val position: WorldInt2,
     }
 
     fun initChunkFromStorage() {
-        val data = parent!!.region.readChunkBinary(this)
-        decodeNbtFromStorage(data)
+        if(loadStatus == SaveStatus.EMPTY) {
+            val data = parent!!.region.readChunkBinary(this)
+            decodeNbtFromStorage(data)
+            loadStatus = SaveStatus.LOADED
+        }
     }
 
     override fun toString(): String {
-        return "Chunk pos: $position"
+        return """Chunk: 
+            |pos: $position
+            |region: $parent""".trimMargin()
     }
 
     private class SubChunk {

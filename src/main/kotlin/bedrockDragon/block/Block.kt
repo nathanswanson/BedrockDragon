@@ -17,8 +17,8 @@ class Block(var name: String = "mod:block") {
 
     var stackSize = 64
     var breakTool: Item? = null
-    var blastResistance = 0
-    var hardness = 0
+    var blastResistance = 0.0
+    var hardness = 0.0
     var luminant = false
     var transparent = false
     var flammable = false
