@@ -188,7 +188,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeLongLE(currentTick)
             writeVarInt(enchantSeed)
             writeUnsignedVarInt(0) //blockmanifest
-            writeUnsignedVarInt(0)//writeManifest()
+            writeManifest()
 
             writeString(multiplayerCorId)
             writeBoolean(inventoryServerAuthoritative)
@@ -246,7 +246,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     }
 
     fun writeManifest() {
-        val manifest = RuntimeItemState.parse()
+        val manifest = RuntimeItemState.runtimeIdStates
         writeUnsignedVarInt(manifest.size)
         for(entry in manifest) {
             writeString(entry.name)

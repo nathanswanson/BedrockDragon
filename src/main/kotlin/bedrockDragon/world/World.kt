@@ -44,6 +44,7 @@
 package bedrockDragon.world
 
 import bedrockDragon.block.Block
+import bedrockDragon.entity.Entity
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
@@ -113,6 +114,10 @@ class World {
     fun getBlockAt(position: Float3): Block {
         //convert player position to relay space
         return getChunkAt(position).getBlockAt(position)
+    }
+
+    fun spawnEntity(position: Float3, entity: Entity): Boolean {
+        return false
     }
 
     companion object {

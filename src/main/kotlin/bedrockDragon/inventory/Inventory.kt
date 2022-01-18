@@ -43,7 +43,8 @@
 
 package bedrockDragon.inventory
 
-import bedrockDragon.item.Item
+import bedrockDragon.Item
+import bedrockDragon.network.raknet.protocol.game.inventory.InventoryContentPacket
 import bedrockDragon.player.Player
 
 /**
@@ -52,8 +53,10 @@ import bedrockDragon.player.Player
  * @since ALPHA
  */
 abstract class Inventory(val size: Int) {
-    private val viewers: Array<Player> = emptyArray()
-    private val slots: Array<Item?> = arrayOfNulls<Item>(size)
+    private val viewers = ArrayList<Player>()
+    private val slots: Array<Item?> = arrayOfNulls(size)
+
+
     var type = -1
     val windowId = 0
 
@@ -61,7 +64,9 @@ abstract class Inventory(val size: Int) {
         slots.contains(item)
     }
 
-
+    fun getContents(): Array<Item?> {
+        return slots
+    }
 
     /**
      * [addItem] attempts to add the inputed item in the first available slot.
@@ -69,7 +74,7 @@ abstract class Inventory(val size: Int) {
      */
     fun addItem(item: Item): Boolean {
         return try {
-            slots[slots.indexOfFirst { it == null }]
+            slots[slots.indexOfFirst { it == null }] = item
             true
         } catch (e: IndexOutOfBoundsException) {
             false
@@ -107,6 +112,19 @@ abstract class Inventory(val size: Int) {
         return true
     }
 
+    fun sendPacketContents(player: Player) {
+        player.nettyQueue.add(InventoryContentPacket().let {
+            it.itemStacks = slots
+            it.inventoryId = player.windowId[this]!!
+            it.gamePacket()
+        })
+    }
+
+    fun sendPacketContents(player: Array<Player>) {
+        slots.forEach {
+
+        }
+    }
     /**
      * [clear] will completely remove the contents of an inventory
      */
@@ -114,5 +132,12 @@ abstract class Inventory(val size: Int) {
         slots.fill(null)
     }
 
+    fun addViewer(player: Player) {
+        viewers.add(player)
+    }
+
+    fun isOpenedBy(player: Player): Boolean {
+        return viewers.contains(player)
+    }
     abstract fun openInventory()
 }

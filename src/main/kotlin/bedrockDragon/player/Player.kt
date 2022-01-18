@@ -43,6 +43,7 @@
 
 package bedrockDragon.player
 
+import bedrockDragon.Item
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
@@ -62,6 +63,7 @@ import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
+import bedrockDragon.network.raknet.protocol.game.inventory.InventorySlotPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
 import bedrockDragon.network.raknet.protocol.game.player.*
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
@@ -79,6 +81,7 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -116,7 +119,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     var world = World.tempDefault //Todo shared world
     var dimension = Dimension.Overworld
+
     private val inventory = PlayerInventory()
+    val windowId = ConcurrentHashMap<Inventory, Int>()
 
     var skinData: Skin? = null
     private val playerMeta =  MetaTag()
@@ -155,9 +160,19 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
         sendAdventure()
         sendAttributes()
-
-
         sendMeta()
+
+        loadDefaultInventories()
+    }
+
+    fun loadDefaultInventories() {
+        addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
+
+
+        for(i in 0 until 40) {
+            inventory.addItem(Item.testItem())
+        }
+        inventory.sendPacketContents(this)
     }
 
     fun updateChunkPublisherPosition() {
@@ -193,8 +208,32 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(packet.gamePacket())
     }
 
-    override fun getDrops(): List<bedrockDragon.item.Item> {
-        TODO("Not yet implemented")
+    override fun getDrops(): List<Item> {
+        return inventory.getContents().filterNotNull()
+    }
+
+    fun addWindow(inventory: Inventory, optionalId: Int = -1, isPermanent: Boolean = false, isAlwaysOpen: Boolean = false): Int {
+        if(windowId.contains(inventory)) {
+            return windowId[inventory]!!
+        }
+
+
+
+        val newWinId = if(optionalId == -1) windowId.size else optionalId
+        windowId[inventory] = newWinId
+
+
+        if(inventory.isOpenedBy(this)) {
+            return newWinId
+        } else if (!isAlwaysOpen) {
+            //todo make sure not deleted by wipe
+        } else {
+            inventory.addViewer(this)
+
+            return -1
+        }
+
+        return newWinId
     }
 
     override suspend fun tick() {
@@ -323,7 +362,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         containerOpenPacket.type = inventory.type
         containerOpenPacket.position = position
         containerOpenPacket.entityId = entityIdSelf
-        containerOpenPacket.windowId = 0
+        containerOpenPacket.windowId = inventory.windowId
         nettyQueue.add(containerOpenPacket.gamePacket())
     }
 
@@ -346,7 +385,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 payload.decode(inGamePacket.payload)
                 updateChunkPublisherPosition()
                 ChatRail.DEFAULT.invoke(payload.message)
-
 
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
@@ -387,6 +425,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 blockPickRequestPacket.decode(inGamePacket.payload)
                 sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
                 sendMessage(world.getChunkAt(position))
+                val invSlotPac = InventorySlotPacket()
+                invSlotPac.slot = 10
+                invSlotPac.inventoryId = inventory.windowId
+                invSlotPac.item = Item.testItem()
+                nettyQueue.add(invSlotPac.gamePacket())
             }
 
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
