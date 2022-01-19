@@ -44,10 +44,10 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.entity.Entity
-import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.MovePlayer
 import bedrockDragon.reactive.ReactivePacket
+import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.region.Region
 import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.*

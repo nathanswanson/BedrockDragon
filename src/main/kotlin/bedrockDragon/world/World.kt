@@ -45,7 +45,7 @@ package bedrockDragon.world
 
 import bedrockDragon.block.Block
 import bedrockDragon.entity.Entity
-import bedrockDragon.network.world.WorldInt2
+import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
 import bedrockDragon.world.region.Region

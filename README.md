@@ -1,13 +1,7 @@
 # BedrockDragon
 
-This is a passion project by me to create the most efficent decentralized server I can. 
-
-Please note that my common code is still private as I finish up some touches. 
-
-This is required to run and develop this project which means this code is unusable unless you have access to my private Space.
-
-I will release the common code alpha soon.
-
+This is a passion project by me to create the most efficient decentralized server I can. This project uses zero minecraft code and is built from scratch
+.
 
 ## Framework
 
@@ -17,19 +11,24 @@ coroutine network.
 
 ## Current Status
 
-Currently I am devleoping this as my main project. The server as of Nov. 10 lets players joins and they can move around a super flat world and use chat. 
+Currently, I am developing this as my main project.
 
+- Players can join
+- World is loaded from save with some bugs
+- basic inventory system
+- custom block and item DSL
+- Players can move around world
+- chat
+- chunk loading with some bugs
+- basic block interaction
 ## Current Todo
 
-- finish text packet
-- finish abstract framework for reactive.
-- make sure chats are on one coroutine.
-- fix MOTD
-- find bug where player gets stuck on connecting on server
-- unsubscribe leaving players
-- make sure all information is handled when player leaves.
+- fix chunk loading bugs
+- fix odd parity palettes in chunk loading from looking odd.
+- skins
 
-- NBT and save files
+
+
 
 ## Contributing
 
@@ -41,4 +40,3 @@ You must have:
 - A copy of Windows 10 Minecraft
 - Intelij IDEA. I'm sure another editor would work but this is built to support IDEA
 
-There is two jar dependencies kotlin-math, and Common both which are found on our jetbrains space.

@@ -1,9 +1,9 @@
 package bedrockDragon.entity.living
 
-import bedrockDragon.Item
 import bedrockDragon.entity.Entity
 import bedrockDragon.entity.effects.Effect
 import bedrockDragon.inventory.ArmorInventory
+import bedrockDragon.item.Item
 import dev.romainguy.kotlin.math.Float3
 
 abstract class Living: Entity() {

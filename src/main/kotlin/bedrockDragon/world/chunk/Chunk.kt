@@ -44,9 +44,9 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
-import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
+import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream

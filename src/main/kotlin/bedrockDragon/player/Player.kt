@@ -43,7 +43,6 @@
 
 package bedrockDragon.player
 
-import bedrockDragon.Item
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
@@ -52,6 +51,7 @@ import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
+import bedrockDragon.item.Item
 import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket

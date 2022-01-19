@@ -1,8 +1,8 @@
 package bedrockDragon.block
 
-import bedrockDragon.Item
 import bedrockDragon.block.builder.BlockDSL
 import bedrockDragon.block.tileEntity.Tile
+import bedrockDragon.item.Item
 import bedrockDragon.player.Player
 
 @BlockDSL
