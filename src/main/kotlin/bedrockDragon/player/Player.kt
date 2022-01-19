@@ -166,9 +166,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
 
-        for(i in 0 until 40) {
-            inventory.addItem(Item.testItem())
-        }
+        //for(i in 5 until 24) {
+        inventory.addItem(Item.testItem())
+        inventory.addItem(Item.testItem())
+
+        //}
         inventory.sendPacketContents(this)
     }
 

@@ -54,7 +54,7 @@ import bedrockDragon.player.Player
  */
 abstract class Inventory(val size: Int) {
     private val viewers = ArrayList<Player>()
-    private val slots: Array<Item?> = arrayOfNulls(size)
+    internal val slots: Array<Item?> = arrayOfNulls(size)
 
 
     var type = -1
@@ -112,19 +112,7 @@ abstract class Inventory(val size: Int) {
         return true
     }
 
-    fun sendPacketContents(player: Player) {
-        player.nettyQueue.add(InventoryContentPacket().let {
-            it.itemStacks = slots
-            it.inventoryId = player.windowId[this]!!
-            it.gamePacket()
-        })
-    }
 
-    fun sendPacketContents(player: Array<Player>) {
-        slots.forEach {
-
-        }
-    }
     /**
      * [clear] will completely remove the contents of an inventory
      */

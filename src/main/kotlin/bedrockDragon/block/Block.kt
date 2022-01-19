@@ -29,6 +29,7 @@ class Block(var name: String = "mod:block") {
     //todo bounding box
     //todo texture tag
     //todo recipe builder
+    //todo runtimeId assign
     //events
 
     var onInteract: ((Player) -> Unit)? = null

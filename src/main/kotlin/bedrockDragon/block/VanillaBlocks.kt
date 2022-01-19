@@ -19,6 +19,10 @@ object VanillaBlocks {
             block {
                 name = "dirt"
             }
+            block {
+                name = "stone"
+                hardness = 0.6
+            }
         }
     }
 }

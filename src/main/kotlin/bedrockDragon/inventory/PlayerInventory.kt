@@ -43,18 +43,35 @@
 
 package bedrockDragon.inventory
 
+import bedrockDragon.network.raknet.protocol.game.inventory.InventoryContentPacket
+import bedrockDragon.player.Player
+
 /**
  * [PlayerInventory] represents the crafting 2x2, armor, hotbar, and inventory for a player.
  * @author Nathan Swanson
  * @since ALPHA
  */
-class PlayerInventory(): Inventory(40) {
+class PlayerInventory: Inventory(36) {
     init {
         type = -1
     }
 
-    //TODO review
     override fun openInventory() {
+        TODO("Not yet implemented")
+    }
 
+    fun sendPacketContents(player: Player) {
+        player.nettyQueue.add(InventoryContentPacket().let {
+            it.itemStacks = slots
+            it.size = size
+            it.inventoryId = player.windowId[this]!!
+            it.gamePacket()
+        })
+    }
+
+    fun sendPacketContents(player: Array<Player>) {
+        slots.forEach {
+
+        }
     }
 }
