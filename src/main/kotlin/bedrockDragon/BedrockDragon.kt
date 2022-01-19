@@ -46,6 +46,7 @@ package bedrockDragon
 import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.resource.WorldRegistry
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
@@ -109,6 +110,9 @@ fun main() {
         ServerProperties.getProperty("server-ip"),
         ServerProperties.getProperty("server-port").toInt()
     )
+
+    //world registry
+    WorldRegistry.register(0, World("world"))
 
     val server = DragonServer(bindAddress)
     server.start()

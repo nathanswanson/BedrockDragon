@@ -71,6 +71,7 @@ import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.resource.WorldRegistry
 import bedrockDragon.world.Dimension
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
@@ -104,8 +105,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
     var name = ""
-    val runtimeEntityId: ULong = /*UUID.randomUUID().mostSignificantBits.toULong()*/ 1u
-    private val entityIdSelf: Long = /*runtimeEntityId.toLong()*/ 1
+    private val entityIdSelf = runtimeEntityId
 
     var gamemode = Gamemode.SURVIVAL
         set(value) {
@@ -117,8 +117,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
     var isOp = false
 
-    var world = World.tempDefault //Todo shared world
-    var dimension = Dimension.Overworld
+    var world = WorldRegistry.getWorld(0)!!
 
     private val inventory = PlayerInventory()
     val windowId = ConcurrentHashMap<Inventory, Int>()
@@ -126,10 +125,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var skinData: Skin? = null
     private val playerMeta =  MetaTag()
 
-    val adventureSettings = AdventureSettings()
     var renderDistance = 4
     var chunkRelay = world.getOrLoadRelay(position)
-    private var lastPublishPosition = position
     /*
         NBT ENABLED VAR
      */
@@ -155,7 +152,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         chunkRelay.addPlayer(this)
        // scope.launch { tick() }
         val attribute = PlayerAttributePacket()
-        attribute.runtimeEntityId = runtimeEntityId.toLong()
+        attribute.runtimeEntityId = runtimeEntityId
         nettyQueue.add(attribute.gamePacket())
 
         sendAdventure()
@@ -165,7 +162,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         loadDefaultInventories()
     }
 
-    fun loadDefaultInventories() {
+    private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
 
@@ -477,7 +474,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 nettyQueue.add(adventurePacket.gamePacket())
             }
             MinecraftPacketConstants.PLAYER_INPUT -> { println("PLAYER_INPUT") }
-            MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { println("SET_PLAYER_GAME_TYPE") }
+            MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { /*reject*/ }
             MinecraftPacketConstants.MAP_INFO_REQUEST -> { println("MAP_INFO_REQUEST") }
             MinecraftPacketConstants.REQUEST_CHUNK_RADIUS -> {
                 handleChunkRadius(RequestChunkRadiusPacket().let {

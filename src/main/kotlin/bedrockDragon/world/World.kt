@@ -61,11 +61,11 @@ import kotlin.collections.HashMap
  * @author Nathan Swanson
  * @since ALPHA
  */
-class World {
+class World(name: String) {
 
     private val loadedRegions = HashMap<WorldInt2, Region>()
     val logger = KotlinLogging.logger {}
-
+    var playerCount = 0
     /**
      * [getOrLoadRelay] will take a position in the world and return the [ChunkRelay] that it is contained in.
      * if it has not been created yet it will make a new one and return that.
@@ -118,9 +118,5 @@ class World {
 
     fun spawnEntity(position: Float3, entity: Entity): Boolean {
         return false
-    }
-
-    companion object {
-        val tempDefault = World()
     }
 }

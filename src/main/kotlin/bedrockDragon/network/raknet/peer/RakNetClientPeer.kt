@@ -198,6 +198,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
 
             player!!.playInit()
+            server.playerCount++
         }
     }
 

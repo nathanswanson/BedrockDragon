@@ -101,7 +101,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
     private val startTimeStamp = System.currentTimeMillis()
     private var bootstrap: Bootstrap = Bootstrap()
     private var group: NioEventLoopGroup = NioEventLoopGroup()
-    private var playerCount = 0
+    var playerCount = 0
     //TODO MAKE PRIVATE
     var clients: ConcurrentHashMap<InetSocketAddress, RakNetClientPeer> = ConcurrentHashMap()
 
@@ -128,9 +128,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         handle = RakNetServerHandler(this)
 
         bootstrap.group(group)
-        //bootstrap.handler(handle)
 
-        //TODO add TCP and HTTP support
         bootstrap.channel(NioDatagramChannel::class.java)
         bootstrap.handler(RakNetServerHandler(this))
         bootstrap.option(ChannelOption.SO_BROADCAST, true).option(ChannelOption.SO_REUSEADDR, false)
@@ -141,7 +139,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         channel = bootstrap.bind(bindAddress).sync().channel()
 
 
-        //Main thread deals with packets received and sent to client. packets received are converted into objects and sent to the related lightThread
         isRunning = true
         tick()
         return true
@@ -198,7 +195,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             if(packetHandler is ConnectionRequestHandlerTwo && packetHandler.finished) {
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.clientmtu, channel, sender)
                 //todo playercount incremented when minecraft login finalized not when raknet is.
-                playerCount++
                 logger.info { "Added Player" }
             }
         }

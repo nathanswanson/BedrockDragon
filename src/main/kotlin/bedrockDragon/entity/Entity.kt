@@ -80,10 +80,10 @@ abstract class Entity: ISavable {
     var silent: Boolean? = null
     var tags: Array<NbtTag> = emptyArray()
     var ticksFrozen: Int? = null
-    open var uuid: String = "nathan"
+    open var uuid: String = "Lia"
 
-
-
+    companion object { var nextId = 1L }
+    val runtimeEntityId = nextId++
 
     override fun save(builder: NbtCompoundBuilder) {
         builder.put("Air", air)

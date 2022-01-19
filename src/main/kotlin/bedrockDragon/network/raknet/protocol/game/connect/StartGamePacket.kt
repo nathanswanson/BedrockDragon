@@ -206,8 +206,8 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     companion object {
         fun capture(player: Player): StartGamePacket {
             val startGamePacket = StartGamePacket()
-            //startGamePacket.entityIdSelf = player.entityIdSelf
-            //startGamePacket.runtimeEntityId = player.runtimeEntityId
+            startGamePacket.entityIdSelf = player.runtimeEntityId
+            startGamePacket.runtimeEntityId = player.runtimeEntityId.toULong()
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = player.position
             startGamePacket.rotation = Float2(0f,0f)

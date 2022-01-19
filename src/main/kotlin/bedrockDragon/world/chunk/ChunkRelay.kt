@@ -43,6 +43,7 @@
 
 package bedrockDragon.world.chunk
 
+import bedrockDragon.entity.Entity
 import bedrockDragon.network.world.WorldInt2
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.MovePlayer
@@ -90,6 +91,9 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         )
     }
 
+    fun addEntity(entity: Entity) {
+
+    }
     /**
      * [addPlayer] will subscribe a new player to this relay so when
      * anything happens we notify this new player as well.
@@ -231,13 +235,6 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     private fun passToNewRelay(player: Player, relay: ChunkRelay) {
         removePlayer(player)
         relay.addPlayerFromAdjacentRelay(player)
-    }
-
-    /**
-     * [decommission] safely frees up the memory of this chunk relay.
-     */
-    fun decommission() {
-
     }
 
     fun getChunk2D(x: Int, z: Int) : Chunk {
