@@ -12,13 +12,18 @@ import kotlinx.serialization.json.decodeFromStream
 @OptIn(ExperimentalSerializationApi::class)
 object RuntimeItemState {
     var runtimeIdStates : Array<RuntimeEntry>
+
+    var runtimeIdRegistry = HashMap<String, Int>()
     lateinit var binaryItemStatePayload : ByteArray
     init {
         val runtimeJson = ClassLoader.getSystemResourceAsStream("runtime_item_states.json")
-        runtimeIdStates = Json.decodeFromStream<Array<RuntimeEntry>>(runtimeJson!!)
+        runtimeIdStates = Json.decodeFromStream(runtimeJson!!)
+        runtimeIdStates.forEach{runtimeIdRegistry[it.name] = it.id}
         generateIdPayload()
     }
-
+    fun getRuntimeIdFromName(name: String): Int {
+        return runtimeIdRegistry[name] ?: -1
+    }
     private fun generateIdPayload() {
         binaryItemStatePayload = Packet().let {
             it.writeUnsignedVarInt(runtimeIdStates.size)
@@ -33,8 +38,4 @@ object RuntimeItemState {
     }
     @Serializable
     data class RuntimeEntry(val name: String, val id: Int)
-}
-
-fun main() {
-    val t = RuntimeItemState
 }

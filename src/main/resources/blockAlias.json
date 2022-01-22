@@ -50,5 +50,32 @@
     "minecraft:jungle_planks",
     "minecraft:acacia_planks",
     "minecraft:dark_oak_planks"
+  ],
+  "stone": [
+    "minecraft:stoneNull",
+    "minecraft:granite",
+    "minecraft:granite_smooth",
+    "minecraft:diorite",
+    "minecraft:diorite_smooth",
+    "minecraft:andesite",
+    "minecraft:andesite_smooth"
+  ],
+  "leaves": [
+    "minecraft:oak_leaves",
+    "minecraft:spruce_leaves",
+    "minecraft:birch_leaves",
+    "minecraft:jungle_leaves"
+  ],
+  "leaves2": [
+    "minecraft:acacia_leaves",
+    "minecraft:dark_oak_leaves",
+    "minecraft:birch_leaves",
+    "minecraft:jungle_leaves"
+  ],
+  "log": [
+    "minecraft:oak_log",
+    "minecraft:spruce_log",
+    "minecraft:birch_log",
+    "minecraft:jungle_log"
   ]
 }

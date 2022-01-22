@@ -60,7 +60,7 @@ import java.util.*
  */
 class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var entityIdSelf: Long = 1 //VarLong
-    var runtimeEntityId: ULong = 1u //VarLong
+    var runtimeEntityId: Long = 1 //VarLong
     var playerGamemode: Int = 0 //sVarInt
     lateinit var spawn: Float3
     lateinit var rotation: Float2 //vector2
@@ -207,7 +207,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
         fun capture(player: Player): StartGamePacket {
             val startGamePacket = StartGamePacket()
             startGamePacket.entityIdSelf = player.runtimeEntityId
-            startGamePacket.runtimeEntityId = player.runtimeEntityId.toULong()
+            startGamePacket.runtimeEntityId = player.runtimeEntityId
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = player.position
             startGamePacket.rotation = Float2(0f,0f)

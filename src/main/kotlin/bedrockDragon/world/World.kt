@@ -61,7 +61,7 @@ import kotlin.collections.HashMap
  * @author Nathan Swanson
  * @since ALPHA
  */
-class World(name: String) {
+class World(val name: String) {
 
     private val loadedRegions = HashMap<WorldInt2, Region>()
     val logger = KotlinLogging.logger {}

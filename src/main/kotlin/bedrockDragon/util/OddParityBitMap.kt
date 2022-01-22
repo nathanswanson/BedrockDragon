@@ -3,7 +3,6 @@ package bedrockDragon.util
 import bedrockDragon.world.chunk.PaletteSubChunk
 
 class OddParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResolution) : BitMap(size, paletteResolution) {
-    private val intSpace = paletteResolution.entriesPerWord * paletteResolution.size
 
 
     /**
@@ -31,9 +30,6 @@ class OddParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResol
     }
 
     override fun get(idx: Int): Int {
-        //idx out of bounds
-        if(idx * paletteResolution.size shr 5 >= blockData.size)
-            throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
 
         val arrayIndex = idx / paletteResolution.entriesPerWord
         val wordOffset = (idx % paletteResolution.entriesPerWord) * paletteResolution.size

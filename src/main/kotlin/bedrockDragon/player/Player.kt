@@ -71,8 +71,8 @@ import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.resource.WorldRegistry
-import bedrockDragon.world.Dimension
+import bedrockDragon.registry.WorldRegistry
+import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
@@ -107,7 +107,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var name = ""
     private val entityIdSelf = runtimeEntityId
 
-    var gamemode = Gamemode.SURVIVAL
+    var gamemode = Gamemode.CREATIVE
         set(value) {
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
@@ -170,6 +170,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
         inventory.addItem(Item.testItem())
         inventory.addItem(Item.testItem())
 
+        val woodenSword = PaletteGlobal.itemRegistry["minecraft:wooden_sword"]!!
+        woodenSword.iDurability = 20
+        woodenSword.count = 1
+
+        val diamondPickAxe = PaletteGlobal.itemRegistry["minecraft:diamond_pickaxe"]!!
+        diamondPickAxe.iDurability = 20
+        diamondPickAxe.count = 1
+
+        inventory.addItem(diamondPickAxe)
+
+        inventory.addItem(woodenSword)
         //}
         inventory.sendPacketContents(this)
     }
@@ -185,6 +196,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
      */
     private fun sendAttributes() {
         val attributePacket = PlayerAttributePacket()
+        attributePacket.attributes[5].value = 0.1f
         nettyQueue.add(attributePacket.gamePacket())
     }
 
@@ -277,7 +289,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
 
         val entityDataPacket = EntityDataPacket()
-        entityDataPacket.runtimeEntityId = runtimeEntityId.toLong()
+        entityDataPacket.runtimeEntityId = runtimeEntityId
         entityDataPacket.tick = 0 //todo
         entityDataPacket.metaTag = playerMeta
 
@@ -343,13 +355,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * has been terminated.
      */
     fun disconnect(kickMessage: String?) {
+     //   save()
         chunkRelay.removePlayer(this)
     }
 
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.sender != this) {
-            println("emit")
         }
     }
 
@@ -401,12 +413,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.INVENTORY_TRANSACTION -> {
                 val inventoryTransactionPacket = InventoryTransactionPacket()
                 inventoryTransactionPacket.decode(inGamePacket.payload)
-                println(inventoryTransactionPacket)
             }
             MinecraftPacketConstants.MOB_EQUIPMENT -> {
                 val mobEquipmentPacket = MobEquipmentPacket()
                 mobEquipmentPacket.decode(inGamePacket.payload)
-                println(mobEquipmentPacket)
             }
             MinecraftPacketConstants.MOB_ARMOR_EQUIPMENT -> { println("MOB_ARMOR_EQUIPMENT") }
             MinecraftPacketConstants.INTERACT -> {
@@ -422,24 +432,19 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.BLOCK_PICK_REQUEST -> {
                 val blockPickRequestPacket = BlockPickRequestPacket()
                 blockPickRequestPacket.decode(inGamePacket.payload)
-                sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
+               // sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
                 sendMessage(world.getChunkAt(position))
-                val invSlotPac = InventorySlotPacket()
-                invSlotPac.slot = 10
-                invSlotPac.inventoryId = inventory.windowId
-                invSlotPac.item = Item.testItem()
-                nettyQueue.add(invSlotPac.gamePacket())
+                sendMessage(position.y.toInt() / 16)
             }
 
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
-
+                println(actionPacket.action)
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
-                        println("breaking")
                         val levelEventPacket = LevelEventPacket()
                         val block = world.getBlockAt(actionPacket.coord)
                         levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
@@ -448,9 +453,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
                         println(levelEventPacket)
                         nettyQueue.add(levelEventPacket.gamePacket())
                     }
+                    PlayerActionPacket.ACTION_JUMP -> {
+
+                    }
                 }
 
-                logger.info { actionPacket.action }
             }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }

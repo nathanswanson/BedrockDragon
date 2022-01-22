@@ -15,6 +15,12 @@ class RegisterBlock(var modName: String) {
     @BlockRegistryDSL
     fun block(lambda: Block.() -> Unit = {}) {
         val block = Block().apply(lambda)
+        if(block.runtimeId == -1) {
+            block.runtimeId = PaletteGlobal.getRuntimeIdFromName("$modName:${block.name}")
+        } else {
+            //PaletteGlobal.globalBlockPalette["$modName:${block.name}"] = block.runtimeId
+            //todo create palette entry
+        }
         PaletteGlobal.blockRegistry["$modName:${block.name}"] = block
     }
 }

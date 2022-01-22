@@ -122,11 +122,15 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
         for(x in startX until startX + relayRender*2) {
             for(z in startZ until startZ + relayRender*2) {
-                val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(x,z))
-                relayProvider.chunks.forEach { player.sendChunk(it) }
+               provideChunkAt(player, x, z)
             }
         }
 
+    }
+
+    private fun provideChunkAt(player: Player, x: Int, z: Int) {
+        val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(x,z))
+        relayProvider.chunks.forEach { player.sendChunk(it) }
     }
 
     private fun addPlayerFromAdjacentRelay(player: Player) {

@@ -25,7 +25,7 @@ class Block(var name: String = "mod:block") {
     var drops = emptyArray<Item>()
     var gravity = GravityEffect.FLOAT
     var tileEntity: Tile? = null
-
+    var runtimeId = -1
     //todo bounding box
     //todo texture tag
     //todo recipe builder
@@ -41,6 +41,7 @@ class Block(var name: String = "mod:block") {
     fun build(): Block {
         return this
     }
+
     enum class GravityEffect {
         FLOAT,
         FALL,

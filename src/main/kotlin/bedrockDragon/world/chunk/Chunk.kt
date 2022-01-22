@@ -175,14 +175,13 @@ class Chunk(val position: WorldInt2,
         val decodedNBT = nbt.decodeFromByteArray<NbtCompound>(byteArray)[""]!!.nbtCompound
         //todo add safety check for null
         //why is there x y and z pos for chunks...
-        status = decodedNBT["Status"]!!.nbtString.value
-        position.x = decodedNBT["xPos"]!!.nbtInt.value
+        status = decodedNBT["Status"]?.nbtString?.value ?: "empty"
+        position.x = decodedNBT["xPos"]?.nbtInt?.value ?: 0
         //position.y = decodedNBT["yPos"]!!.nbtInt.value.toFloat()
-        position.y = decodedNBT["zPos"]!!.nbtInt.value
-        lastUpdate = decodedNBT["LastUpdate"]!!.nbtLong.value
-        inhabitedTime = decodedNBT["InhabitedTime"]!!.nbtLong.value
-        isLightOn = decodedNBT["isLightOn"]!!.nbtByte.booleanValue
-
+        position.y = decodedNBT["zPos"]?.nbtInt?.value ?: 0
+        lastUpdate = decodedNBT["LastUpdate"]?.nbtLong?.value ?: 0L
+        inhabitedTime = decodedNBT["InhabitedTime"]?.nbtLong?.value ?: 0L
+        isLightOn = decodedNBT["isLightOn"]?.nbtByte?.booleanValue ?: false
         decodedNBT["sections"]!!.nbtList.filter{
             it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
         }.map {

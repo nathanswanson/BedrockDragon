@@ -1,5 +1,6 @@
-package bedrockDragon.block
+package bedrockDragon.registry
 
+import bedrockDragon.block.Block
 import bedrockDragon.block.builder.registerBlock
 
 object VanillaBlocks {
@@ -22,6 +23,10 @@ object VanillaBlocks {
             block {
                 name = "stone"
                 hardness = 0.6
+            }
+            block {
+                name = "anvil"
+                gravity = Block.GravityEffect.FALL
             }
         }
     }

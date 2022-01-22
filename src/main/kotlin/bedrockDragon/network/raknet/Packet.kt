@@ -32,6 +32,7 @@ package bedrockDragon.network.raknet
 import bedrockDragon.item.Item
 import bedrockDragon.network.raknet.stream.PacketDataInputStream
 import bedrockDragon.network.raknet.stream.PacketDataOutputStream
+import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.EmptyByteBuf
@@ -1392,15 +1393,17 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         return this
     }
 
-    fun writeItem(item: Item?) {
+    fun writeItem(item: Item?, instance: Boolean = false) {
         //varInt runtimeId
         if(item != null) {
             writeVarInt(item.runtimeId) //runtimeId
             writeShortLE(item.count) //count
-            writeUnsignedVarInt(0) // damage
-            writeBoolean(true) //instance
-            writeVarInt(0) //instance
-            writeVarInt(152) //blockid
+            writeUnsignedVarInt(if (item.iDurability == -1) 0 else item.iDurability) // damage
+            if(!instance) {
+                writeBoolean(true) //instance
+                writeVarInt(0) //instance
+            }
+            writeVarInt(PaletteGlobal.getRuntimeIdFromName(item.name)) //blockid
             //last payload size todo
             writeUnsignedVarInt(10)
             writeShortLE(0) // no meta

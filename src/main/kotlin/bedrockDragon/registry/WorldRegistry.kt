@@ -1,4 +1,4 @@
-package bedrockDragon.resource
+package bedrockDragon.registry
 
 import bedrockDragon.world.World
 

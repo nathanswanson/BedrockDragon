@@ -55,6 +55,7 @@ import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
+import kotlin.math.floor
 
 /**
  *
@@ -152,7 +153,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
             if(size <= 3)
                 return PaletteResolution.B2
-            if(size <= 14)
+            if(size <= 15)
                 return PaletteResolution.B4
             if(size <= 31)
                 return PaletteResolution.B5
@@ -173,23 +174,39 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 val blockPalette = PaletteSubChunk(getSmallestUsablePalette(palette.size))
                 val wordPerLong = ceil(4096.0 / data.size).toInt()  //16
                 val wordSize = 64 / wordPerLong //4
+                val remainder = floor(64.0 % (wordPerLong * wordSize)).toInt()
+                palette.forEach {
+                    blockPalette.paletteString.add(it.nbtCompound["Name"]!!.nbtString.value)
+                    val entry = PaletteGlobal.getRuntimeIdFromName(it.nbtCompound["Name"]!!.nbtString.value)//double lambda it needs to be specified //todo
+                    if (entry != -1) {
+                        blockPalette.palette.add(entry)
+                    } else {
+                        unknownPaletteId = true
+                        // println(it.nbtCompound["Name"]!!.nbtString.value)
+                        blockPalette.palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:bedrock"))
+                    }
+
+                }
+                if(blockPalette.paletteString.contains("minecraft:grass_block")) {
+                    println("grass")
+                }
                 for(x in 0 until 16) {
                     for(y in 0 until 16) {
                         for(z in 0 until 16) {
-                            //example assignment as B4
                             //todo use bitwise
-                            //needs to be rotated I think 90deg
-                            //15 - x rotates to normal
-                            val blockidx = (15 - x) + y * 16 + (z * 16 * 16) //range from 0 until 4096
+                            val blockidx = y*16*16 + z*16 + x //range from 0 until 4096
                             val arrayIdx = blockidx / wordPerLong
                             val arrayOffset = (blockidx % wordPerLong) * wordSize
                             /*
                             l: Long = data[arrayIdx]
-                            mask = ~(1 << wordSize) ex. 1 << 5 = 100000, ~(100000) = 11111
                              */
                             try {
-                                val block = (data[arrayIdx] ushr (((wordSize * wordPerLong) - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
-                                blockPalette.blockBits.setAt(z + y * 16 + (x * 16 * 16), block.toInt())
+
+                                //val block = (data[arrayIdx] ushr (((wordSize * wordPerLong) - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
+                                val block = (data[arrayIdx] ushr arrayOffset) and (blockPalette.paletteResolution.maxSize.toLong())
+
+
+                                blockPalette.blockBits.setAt((x*16*16) + z*16 + y, block.toInt())
                             } catch (e: ArrayIndexOutOfBoundsException) {
                                 println()
                             }
@@ -198,24 +215,12 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                     }
                 }
 
-                palette.forEach {
-                    blockPalette.paletteString.add(it.nbtCompound["Name"]!!.nbtString.value)
-                    val entry = PaletteGlobal.getRuntimeIdFromName(it.nbtCompound["Name"]!!.nbtString.value)//double lambda it needs to be specified //todo
-                        if (entry != -1) {
-                            blockPalette.palette.add(entry)
-                        } else {
-                            unknownPaletteId = true
-                            println(it.nbtCompound["Name"]!!.nbtString.value)
-                            blockPalette.palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:bedrock"))
-                        }
 
-                }
-
-                if(unknownPaletteId)
-                    blockPalette.logger.warn { """Unknown Block was loaded from world file with attempted Palette:
-                        $palette
-                        palette runtimeId Attempt: ${blockPalette.palette}
-                            """ }
+               // if(unknownPaletteId)
+                   // blockPalette.logger.warn { """Unknown Block was loaded from world file with attempted Palette:
+                     //   $palette
+                     //   palette runtimeId Attempt: ${blockPalette.palette}
+                     //       """ }
 
                 return blockPalette
             }
@@ -235,6 +240,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                 builder.appendLine()
             }
         }
+        builder.append(paletteString)
 
         return builder.toString()
     }

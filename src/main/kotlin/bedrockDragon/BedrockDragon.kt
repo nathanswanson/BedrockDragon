@@ -46,12 +46,11 @@ package bedrockDragon
 import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.resource.WorldRegistry
+import bedrockDragon.registry.WorldRegistry
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
-import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -112,7 +111,7 @@ fun main() {
     )
 
     //world registry
-    WorldRegistry.register(0, World("world"))
+    WorldRegistry.register(0, World("noOcean"))
 
     val server = DragonServer(bindAddress)
     server.start()

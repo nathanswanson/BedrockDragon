@@ -87,15 +87,15 @@ II. (Chunk)
  * @since ALPHA
  */
 class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
-    val fileName = Path("world/region/r.$x.$z.mca")
+    val fileName = Path("${world.name}/region/r.$x.$z.mca")
     val logger = KotlinLogging.logger {}
     val relayGrid = arrayOfNulls<ChunkRelay>(64) //make private is public atm for testing
     var manifest: RegionManifest = RegionManifest(fileName)
 
     init {
         //make sure region file exists
-        if (!Path("world/region").exists()) {
-            Path("world/region").createDirectory()
+        if (!Path("${world.name}/region").exists()) {
+            Path("${world.name}/region").createDirectory()
         }
         //load or create region file
         if (!fileName.exists()) {
