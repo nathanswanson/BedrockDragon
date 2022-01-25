@@ -184,9 +184,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                     val step = sign(x.toDouble()).toInt()
 
                     val relay = region.world.getOrLoadRelayIdx(WorldInt2((player.position.x.toInt() shr 6)  + (viewDistanceToRelay * step), ((player.position.z.toInt() shr 4) + eastWest) shr 5))
-                    println(relay)
                     val chunkGrabbed = relay.getChunk2D((relayOffsetX - step).mod(4), (relayOffsetZ + eastWest).mod(4))
-                    println(chunkGrabbed.position)
                     player.sendChunk(chunkGrabbed)
                 }
             }
@@ -197,10 +195,8 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                     val step = sign(z.toDouble()).toInt()
 
                     val relay = region.world.getOrLoadRelayIdx(WorldInt2(((player.position.x.toInt() shr 4) + northSouth) shr 5, (player.position.z.toInt() shr 6)  + (viewDistanceToRelay * step)))
-                    println(relay)
 
                     val chunkGrabbed = relay.getChunk2D((relayOffsetX + northSouth).mod(4), (relayOffsetZ - step).mod(4))
-                    println(chunkGrabbed.position)
                     player.sendChunk(chunkGrabbed)
                 }
             }

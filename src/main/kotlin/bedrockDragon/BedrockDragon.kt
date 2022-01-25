@@ -44,6 +44,8 @@
 package bedrockDragon
 
 import bedrockDragon.mod.loader.ModLoader
+import bedrockDragon.registry.CommandRegistry
+import bedrockDragon.registry.NativeCommands
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.registry.WorldRegistry
@@ -109,6 +111,10 @@ fun main(args: Array<String>) {
         ServerProperties.getProperty("server-ip"),
         ServerProperties.getProperty("server-port").toInt()
     )
+
+    //register commands
+    NativeCommands
+
 
     //world registry
     WorldRegistry.register(0, World("noOcean"))

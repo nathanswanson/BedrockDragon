@@ -44,6 +44,7 @@
 package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
+import bedrockDragon.command.CommandEngine
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
 import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
@@ -57,8 +58,10 @@ import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
+import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
+import bedrockDragon.network.raknet.protocol.game.entity.MoveEntityDeltaPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
@@ -70,6 +73,7 @@ import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
+import bedrockDragon.registry.CommandRegistry
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.registry.WorldRegistry
 import bedrockDragon.world.PaletteGlobal
@@ -84,6 +88,7 @@ import net.benwoodworth.knbt.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.math.log
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -166,7 +171,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
 
-        //for(i in 5 until 24) {
         inventory.addItem(Item.testItem())
         inventory.addItem(Item.testItem())
 
@@ -181,7 +185,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         inventory.addItem(diamondPickAxe)
 
         inventory.addItem(woodenSword)
-        //}
         inventory.sendPacketContents(this)
     }
 
@@ -223,7 +226,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         return inventory.getContents().filterNotNull()
     }
 
-    fun addWindow(inventory: Inventory, optionalId: Int = -1, isPermanent: Boolean = false, isAlwaysOpen: Boolean = false): Int {
+    private fun addWindow(inventory: Inventory, optionalId: Int = -1, isPermanent: Boolean = false, isAlwaysOpen: Boolean = false): Int {
         if(windowId.contains(inventory)) {
             return windowId[inventory]!!
         }
@@ -341,8 +344,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * [teleport] moves a player with a loading screen if needed.
      */
     fun teleport(position: Float3) {
-        this.position = position
-       // nettyQueue.add()
+        //this.position = position
+        println(position)
+//        MoveEntityDeltaPacket().let {
+//            it.
+//        }
     }
 
     //todo review
@@ -355,7 +361,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * has been terminated.
      */
     fun disconnect(kickMessage: String?) {
-     //   save()
+     //   save() todo
+        nettyQueue.add(DisconnectPacket().let {
+            it.kickMessage = kickMessage ?: ""
+            it.hideDisconnectScreen = kickMessage == null
+            it.encode()
+            it.gamePacket()
+        })
         chunkRelay.removePlayer(this)
     }
 
@@ -391,10 +403,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 logger.info { "$name has disconnected"  }
             }
             MinecraftPacketConstants.TEXT -> {
-                sendMeta()
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
-                updateChunkPublisherPosition()
                 ChatRail.DEFAULT.invoke(payload.message)
 
             }
@@ -422,6 +432,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.INTERACT -> {
                 val interact = InteractPacket()
                 interact.decode(inGamePacket.payload)
+                logger.info { interact }
                 when(interact.actionId.toInt()) {
                     6 -> {
                         openInventory(inventory)
@@ -441,7 +452,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
-                println(actionPacket.action)
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
@@ -495,7 +505,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.COMMAND_REQUEST -> {
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
-                    //CommandRegistry.invoke(this, commandPacket.command)
+                val commandArgs = commandPacket.command.split(" ")
+                CommandRegistry.getCommand(commandArgs[0])?.let {
+                    //it.invoke?.let { it1 -> it1(this, commandArgs.subList(1,commandArgs.size).toTypedArray()) }
+                    CommandEngine.invokeWith(commandArgs.subList(1,commandArgs.size).toTypedArray(), it, this)
+                }
+
 
             }
             MinecraftPacketConstants.COMMAND_BLOCK_UPDATE -> { println("COMMAND_BLOCK_UPDATE") }

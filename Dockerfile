@@ -5,7 +5,7 @@ RUN gradle build --no-daemon shadowJar
 
 FROM openjdk:17-jdk
 
-EXPOSE 27772
+EXPOSE 27772/udp
 
 RUN mkdir /app
 
@@ -13,5 +13,4 @@ COPY --from=build /home/gradle/src/build/libs/bedrock-dragon-1.0-all.jar /app/be
 WORKDIR /app
 
 
-#ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/bedrock-dragon.jar"]
 CMD ["java","-jar","bedrock-dragon.jar"]

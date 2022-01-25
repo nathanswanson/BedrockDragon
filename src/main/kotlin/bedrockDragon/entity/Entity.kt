@@ -106,7 +106,7 @@ abstract class Entity: ISavable {
             add(position.y.toDouble())
             add(position.z.toDouble())
         }
-        builder.putNbtList<NbtDouble>("Rotation") {
+        builder.putNbtList("Rotation") {
             add(rotation.x.toDouble())
             add(rotation.y.toDouble())
         }
