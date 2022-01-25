@@ -3,8 +3,11 @@ plugins {
     id('com.diffplug.spotless') version '5.16.0'
     id('org.jetbrains.kotlin.jvm') version '1.6.0'
     id('org.jetbrains.kotlin.plugin.serialization') version '1.6.0'
-
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
+
+apply plugin: 'application'
+
 
 group 'com.bedrockdragon'
 version '1.0'
@@ -14,6 +17,9 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
+
+
+
 
 dependencies {
 
@@ -40,6 +46,17 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+
+mainClassName = 'bedrockDragon.BedrockDragonKt'
+archivesBaseName = 'bedrock-dragon'
+
+
+jar {
+    manifest {
+        attributes('Main-Class': 'bedrockDragon.BedrockDragonkt')
+    }
 }
 
 test {

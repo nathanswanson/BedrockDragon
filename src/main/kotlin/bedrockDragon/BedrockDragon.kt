@@ -65,7 +65,7 @@ const val SERVER_VERSION = "ALPHA"
  * @author Nathan Swanson
  * @since Bedrock Dragon ALPHA
  */
-fun main() {
+fun main(args: Array<String>) {
 
 
     logger.info { "Starting Bedrock Dragon." }

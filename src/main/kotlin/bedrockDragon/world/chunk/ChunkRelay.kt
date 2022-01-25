@@ -84,8 +84,8 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     val chunks = Array(16) { i ->
         Chunk(
             WorldInt2(
-                ((i shr 2) + (x shl 2)),
-                ((i and 3) + (z shl 2))
+                ((i shr 2) + (getWorldCoordinates().x shl 2)),
+                ((i and 3) + (getWorldCoordinates().y shl 2))
             ),
             this
         )
@@ -175,18 +175,18 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     }
 
     private fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
-
         val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
         val relayOffsetX = (player.position.x.toInt() shr 4).mod(4)
         val relayOffsetZ = (player.position.z.toInt() shr 4).mod(4)
-        if(x != 0) {
+            if(x != 0) {
             for(eastWest in -player.renderDistance until player.renderDistance) {
                 for(eastDepth in 0 toward x) {
                     val step = sign(x.toDouble()).toInt()
 
-                    val relay = region.world.getOrLoadRelayIdx(WorldInt2((playerLastPublishPosition[player]!!.x.toInt() shr 6)  + (viewDistanceToRelay * step), (playerLastPublishPosition[player]!!.z.toInt() shr 6) + (eastWest shr 2)))
-
+                    val relay = region.world.getOrLoadRelayIdx(WorldInt2((player.position.x.toInt() shr 6)  + (viewDistanceToRelay * step), ((player.position.z.toInt() shr 4) + eastWest) shr 5))
+                    println(relay)
                     val chunkGrabbed = relay.getChunk2D((relayOffsetX - step).mod(4), (relayOffsetZ + eastWest).mod(4))
+                    println(chunkGrabbed.position)
                     player.sendChunk(chunkGrabbed)
                 }
             }
@@ -196,8 +196,11 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 for(northDepth in 0 toward z) {
                     val step = sign(z.toDouble()).toInt()
 
-                    val relay = region.world.getOrLoadRelayIdx(WorldInt2((playerLastPublishPosition[player]!!.x.toInt() shr 6) + (northSouth shr 2), (playerLastPublishPosition[player]!!.z.toInt() shr 6)  + (viewDistanceToRelay * step)))
+                    val relay = region.world.getOrLoadRelayIdx(WorldInt2(((player.position.x.toInt() shr 4) + northSouth) shr 5, (player.position.z.toInt() shr 6)  + (viewDistanceToRelay * step)))
+                    println(relay)
+
                     val chunkGrabbed = relay.getChunk2D((relayOffsetX + northSouth).mod(4), (relayOffsetZ - step).mod(4))
+                    println(chunkGrabbed.position)
                     player.sendChunk(chunkGrabbed)
                 }
             }
