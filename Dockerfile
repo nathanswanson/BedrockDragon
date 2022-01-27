@@ -5,7 +5,7 @@ RUN gradle build --no-daemon shadowJar
 
 FROM openjdk:17-jdk
 
-EXPOSE 27772/udp
+EXPOSE 19132/udp
 
 RUN mkdir /app
 

@@ -44,6 +44,7 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
+import bedrockDragon.player.Player
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.WorldInt2
@@ -63,6 +64,8 @@ import kotlin.io.path.Path
  */
 class Chunk(val position: WorldInt2,
             val parent: ChunkRelay?): ISavable  {
+
+    var playersUpToDate = HashSet<Player>()
 
     var lastUpdate = 0L
     private var inhabitedTime = 0L
@@ -184,6 +187,7 @@ class Chunk(val position: WorldInt2,
         isLightOn = decodedNBT["isLightOn"]?.nbtByte?.booleanValue ?: false
         decodedNBT["sections"]!!.nbtList.filter{
             it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
+            //it.nbtCompound["Y"]?.nbtByte?.value!! in 0..15
         }.map {
             sectionCount++
             SubChunk.decodeFromNbt(it.nbtCompound)

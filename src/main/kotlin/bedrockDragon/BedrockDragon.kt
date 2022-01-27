@@ -53,6 +53,7 @@ import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
+import kotlin.math.log
 
 private val logger = KotlinLogging.logger {}
 
@@ -87,12 +88,10 @@ fun main(args: Array<String>) {
         logger.info { "Warning dev mode enabled." }
 
     logger.info { "Loading world." }
-    //Todo unsafe
     if (File("world").listFiles().isEmpty()) {
         logger.warn { "World not found. Generating..." }
     }
 
-    val world: World
 
     logger.info { "Registering mods." }
     registerMods()
@@ -107,18 +106,19 @@ fun main(args: Array<String>) {
     logger.info { "STARTING DRAGON SERVER." }
     logger.info { "=====================" }
 
-    val bindAddress = InetSocketAddress(
-        ServerProperties.getProperty("server-ip"),
-        ServerProperties.getProperty("server-port").toInt()
-    )
+//    val bindAddress = InetSocketAddress(
+//        ServerProperties.getProperty("server-ip"),
+//        ServerProperties.getProperty("server-port").toInt()
+//    )
 
     //register commands
     NativeCommands
 
-
+    //todo temp
+    val bindAddress = InetSocketAddress(19132)
     //world registry
     WorldRegistry.register(0, World("noOcean"))
-
+    logger.info { bindAddress }
     val server = DragonServer(bindAddress)
     server.start()
 

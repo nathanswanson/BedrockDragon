@@ -33,19 +33,16 @@ abstract class Living: Entity() {
     abstract fun getDrops(): List<Item>
     abstract suspend fun tick()
     abstract fun armor(): ArmorInventory
+
     open fun kill() {
         print("todo")
     }
+
     fun damage(amount: Float) {
         health-=amount
+
         if(health < 0) {
             kill()
         }
-    }
-
-
-
-    fun setHealth() {
-
     }
 }

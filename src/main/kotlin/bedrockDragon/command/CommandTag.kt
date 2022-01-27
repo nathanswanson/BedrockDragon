@@ -5,6 +5,15 @@ abstract class CommandTag<T>() {
     abstract val message: String
     abstract var optional: Boolean
     abstract var default: T
+
+    fun asOptional(): CommandTag<T> {
+        optional = true
+        return this
+    }
+    fun asDefault(value: T): CommandTag<T> {
+        default = value
+        return this
+    }
 }
 class CommandIntTag : CommandTag<Int>() {
     override val message: String = "I"

@@ -57,6 +57,7 @@ import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
+import bedrockDragon.network.raknet.protocol.game.command.AvailableCommandsPacket
 import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
 import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
@@ -76,6 +77,8 @@ import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.registry.CommandRegistry
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.registry.WorldRegistry
+import bedrockDragon.util.WorldInt2
+import bedrockDragon.util.bgRed
 import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
@@ -89,6 +92,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.log
+import kotlin.text.StringBuilder
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -109,7 +113,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
     //Outgoing Packets
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
 
-    var name = ""
     private val entityIdSelf = runtimeEntityId
 
     var gamemode = Gamemode.CREATIVE
@@ -124,17 +127,20 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     var world = WorldRegistry.getWorld(0)!!
 
-    private val inventory = PlayerInventory()
+    val inventory = PlayerInventory()
     val windowId = ConcurrentHashMap<Inventory, Int>()
 
     var skinData: Skin? = null
     private val playerMeta =  MetaTag()
 
-    var renderDistance = 4
+    var renderDistance = 8
     var chunkRelay = world.getOrLoadRelay(position)
     /*
         NBT ENABLED VAR
      */
+
+    //temp
+    var sendChunkCoord = ArrayList<WorldInt2>()
 
     var foodLevel: Byte = 20
         set(value) {
@@ -167,6 +173,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
         loadDefaultInventories()
     }
 
+    fun addItemToPlayerInventory(item: Item) {
+        inventory.addItem(item)
+        inventory.sendPacketContents(this)
+    }
+
     private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
@@ -197,12 +208,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
      */
-    private fun sendAttributes() {
+     fun sendAttributes() {
         val attributePacket = PlayerAttributePacket()
+        attributePacket.attributes[4].value = health
         attributePacket.attributes[5].value = 0.1f
         nettyQueue.add(attributePacket.gamePacket())
     }
+    private fun sendCommands() {
+        AvailableCommandsPacket().let {
 
+        }
+    }
     /**
      * [sendAdventure]
      */
@@ -304,6 +320,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
      */
     fun sendChunk(chunk: Chunk) {
         nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
+        sendChunkCoord.add(chunk.position)
+
+
+
     }
 
     private fun refreshAndSendAttribute() {
@@ -509,7 +529,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 CommandRegistry.getCommand(commandArgs[0])?.let {
                     //it.invoke?.let { it1 -> it1(this, commandArgs.subList(1,commandArgs.size).toTypedArray()) }
                     CommandEngine.invokeWith(commandArgs.subList(1,commandArgs.size).toTypedArray(), it, this)
-                }
+                } ?: sendMessage("Unknown command, use /help for a list of commands. ")
 
 
             }
@@ -533,6 +553,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { println("CLIENT_CACHE_STATUS") }
             MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
             MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }
+
         }
     }
 

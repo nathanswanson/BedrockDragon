@@ -57,7 +57,14 @@ import kotlin.io.path.inputStream
  * @author Nathan Swanson
  * @since ALPHA
  */
-abstract class Entity: ISavable {
+
+@EntityDSL
+fun entity(name: String, entity: Entity.() -> Unit): Entity {
+    return Entity(name).apply(entity).build()
+}
+
+@EntityDSL
+open class Entity(val name: String = "entity"): ISavable {
     override val fileName: Path
         get() = Path("Players/$uuid.nbt")
 
@@ -85,6 +92,10 @@ abstract class Entity: ISavable {
     companion object { var nextId = 1L }
     val runtimeEntityId = nextId++
 
+    fun build(): Entity {
+        return this //for future use
+    }
+
     override fun save(builder: NbtCompoundBuilder) {
         builder.put("Air", air)
         builder.put("FallDistance", fallDistance)
@@ -92,7 +103,7 @@ abstract class Entity: ISavable {
         builder.put("Glowing", glowing)
         builder.put("HasVisualFire", hasVisualFire)
         builder.put("Invulnerable", invulnerable)
-        builder.putNbtList<NbtDouble>("Motion") {
+        builder.putNbtList("Motion") {
             add(0.0)
             add(0.0)
             add(0.0)
@@ -101,7 +112,7 @@ abstract class Entity: ISavable {
         builder.put("OnGround", onGround)
         //put("Passengers", passengers)
         builder.put("PortalCooldown", portalCooldown)
-        builder.putNbtList<NbtDouble>("Pos") {
+        builder.putNbtList("Pos") {
             add(position.x.toDouble())
             add(position.y.toDouble())
             add(position.z.toDouble())

@@ -59,6 +59,7 @@ import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.sign
+import kotlin.math.truncate
 
 /**
  * [ChunkRelay] is not a minecraft concept, This is a grouping much like a [Region], that
@@ -75,7 +76,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     val logger = KotlinLogging.logger {}
     private val subscriptionSharedFlow = MutableSharedFlow<ReactivePacket<*>>()
     private val nonMutableFlow = subscriptionSharedFlow.asSharedFlow()
-    private val playerLastPublishPosition = ConcurrentHashMap<Player, Float3>()
+    private val playerLastPublishPosition = ConcurrentHashMap<Player, WorldInt2>()
     private val jobs = HashMap<Player, Job>()
     //chunks are a 4x4 grid laid in an array and are absolute position in world
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
@@ -99,7 +100,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
      * anything happens we notify this new player as well.
      */
     fun addPlayer(player: Player) {
-        playerLastPublishPosition[player] = player.position
+        playerLastPublishPosition[player] = getChunkAbsolute(player)
         player.updateChunkPublisherPosition()
         sendAllChunksForPlayer(player)
 
@@ -115,26 +116,38 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     }
 
     private fun sendAllChunksForPlayer(player: Player) {
-        val relayRender = (player.renderDistance + 3 and 0x03.inv()) shr 2
 
-        val startX = x - relayRender
-        val startZ = z - relayRender
 
-        for(x in startX until startX + relayRender*2) {
-            for(z in startZ until startZ + relayRender*2) {
-               provideChunkAt(player, x, z)
+        val offsetInRelayX = (player.position.x.toInt() shr 4) and 3
+        val offsetInRelayz = (player.position.z.toInt() shr 4) and 3
+
+        for(x in -player.renderDistance until player.renderDistance + 1) {
+            for(z in -player.renderDistance until player.renderDistance + 1) {
+                val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(
+                    this.x + (x + offsetInRelayX).floorDiv(4),
+                    this.z + (z + offsetInRelayz).floorDiv(4),
+                ))
+                player.sendChunk(relayProvider.getChunk2D((x + offsetInRelayX).mod(4),(z + offsetInRelayz).mod(4)))
             }
         }
-
-    }
-
-    private fun provideChunkAt(player: Player, x: Int, z: Int) {
-        val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(x,z))
-        relayProvider.chunks.forEach { player.sendChunk(it) }
+//        var stringB = StringBuilder()
+//
+//        for(x in -10..10) {
+//            for(z in -10..10) {
+//                if(player.sendChunkCoord.contains(WorldInt2(x,z))) {
+//                    stringB.append("x")
+//                } else {
+//                    stringB.append("-")
+//                }
+//            }
+//            stringB.append("\n")
+//        }
+//        println(stringB)
+//        println(player.sendChunkCoord.size)
     }
 
     private fun addPlayerFromAdjacentRelay(player: Player) {
-        playerLastPublishPosition[player] = player.position
+        playerLastPublishPosition[player] = getChunkAbsolute(player)
         player.updateChunkPublisherPosition()
         player.chunkRelay = this
 
@@ -148,19 +161,22 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 }
         }
     }
-
+    private fun getChunkAbsolute(player: Player): WorldInt2 {
+        return WorldInt2(player.position.x.toInt() shr 4, player.position.z.toInt() shr 4)
+    }
     private fun checkChunkNeeds(player: Player) {
 
         val worldPosition = getWorldCoordinates()
         val xOffset = worldPosition.x shl 6
         val zOffset = worldPosition.y shl 6
 
-        val deltaMovement = player.position.minus(playerLastPublishPosition[player] ?: Float3(0f,0f,0f))
+        val currentChunkPos = getChunkAbsolute(player)
+        val deltaMovement = WorldInt2(currentChunkPos.x - (playerLastPublishPosition[player]?.x ?: 0), currentChunkPos.y - (playerLastPublishPosition[player]?.y ?: 0) )
         //check if entered new chunk
-        if(abs(deltaMovement.x) > 16 || abs(deltaMovement.z) > 16) {
+        if(deltaMovement != WorldInt2(0,0)) {
             //check if entered new region
 
-            sendDeltaChunksForPlayer(player, deltaMovement.x.toInt() / 16, deltaMovement.z.toInt() / 16)
+            sendDeltaChunksForPlayer(player, deltaMovement.x, deltaMovement.y)
 
             if(!(player.position.x.toInt() in xOffset..xOffset + 64 && player.position.z.toInt() in zOffset..zOffset + 64 )) {
                 //transfer player to new relay
@@ -169,38 +185,69 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 passToNewRelay(player, region.world.getOrLoadRelayIdx(newRelayPosition))
             }
 
-            playerLastPublishPosition[player] = player.position
+            playerLastPublishPosition[player] = getChunkAbsolute(player)
             player.updateChunkPublisherPosition()
         }
     }
 
     private fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
+        val deltaChunks = ArrayList<WorldInt2>()
+        //todo efficency
         val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
-        val relayOffsetX = (player.position.x.toInt() shr 4).mod(4)
-        val relayOffsetZ = (player.position.z.toInt() shr 4).mod(4)
+        val relayOffsetX = truncate((player.position.x / 16.0).mod(4f)).toInt()
+        val relayOffsetZ = truncate((player.position.z / 16.0).mod(4f)).toInt()
             if(x != 0) {
-            for(eastWest in -player.renderDistance until player.renderDistance) {
-                for(eastDepth in 0 toward x) {
-                    val step = sign(x.toDouble()).toInt()
+            for(eastWest in -player.renderDistance until player.renderDistance + 1) {
 
-                    val relay = region.world.getOrLoadRelayIdx(WorldInt2((player.position.x.toInt() shr 6)  + (viewDistanceToRelay * step), ((player.position.z.toInt() shr 4) + eastWest) shr 5))
-                    val chunkGrabbed = relay.getChunk2D((relayOffsetX - step).mod(4), (relayOffsetZ + eastWest).mod(4))
-                    player.sendChunk(chunkGrabbed)
-                }
+                val step = sign(x.toDouble()).toInt()
+                val playerChunkPos = getChunkAbsolute(player)
+
+                val relay = region.world.getOrLoadRelayIdx(WorldInt2((player.position.x.toInt() shr 6)  + (viewDistanceToRelay * step), (eastWest + playerChunkPos.y).floorDiv(4)))
+                val chunkGrabbed = relay.getChunk2D((relayOffsetX), (relayOffsetZ + eastWest).mod(4))
+
+                player.sendChunk(chunkGrabbed)
+                deltaChunks.add(chunkGrabbed.position)
+
             }
         }
         if(z != 0) {
-            for(northSouth in -player.renderDistance until player.renderDistance) {
-                for(northDepth in 0 toward z) {
-                    val step = sign(z.toDouble()).toInt()
+            for(northSouth in -player.renderDistance until player.renderDistance + 1) {
+                val step = sign(z.toDouble()).toInt()
+                val playerChunkPos = getChunkAbsolute(player)
+                val relay = region.world.getOrLoadRelayIdx(WorldInt2((northSouth + playerChunkPos.x).floorDiv(4),(player.position.z.toInt() shr 6)  + (viewDistanceToRelay * step)))
+                val chunkGrabbed = relay.getChunk2D((relayOffsetX + northSouth).mod(4), (relayOffsetZ))
 
-                    val relay = region.world.getOrLoadRelayIdx(WorldInt2(((player.position.x.toInt() shr 4) + northSouth) shr 5, (player.position.z.toInt() shr 6)  + (viewDistanceToRelay * step)))
-
-                    val chunkGrabbed = relay.getChunk2D((relayOffsetX + northSouth).mod(4), (relayOffsetZ - step).mod(4))
-                    player.sendChunk(chunkGrabbed)
-                }
+                player.sendChunk(chunkGrabbed)
+                deltaChunks.add(chunkGrabbed.position)
             }
         }
+        var stringB = StringBuilder()
+        for(x in 10 downTo -10) {
+            if((x + 1)% 4 == 0)
+                stringB.appendLine()
+            for(z in -10..10) {
+                if(z % 4 == 0)
+                    stringB.append(" ")
+                if(x == 0 && z == 0) {
+                    stringB.append("C")
+                    continue
+                }
+                if(player.sendChunkCoord.contains(WorldInt2(x,z))) {
+                    if(deltaChunks.contains(WorldInt2(x,z))) {
+                        stringB.append("O")
+                    } else {
+                        stringB.append("x")
+                    }
+                } else if(deltaChunks.contains(WorldInt2(x,z))) {
+                    stringB.append("D")
+                } else {
+                    stringB.append(" ")
+                }
+            }
+            stringB.append("\n")
+        }
+
+        println(stringB)
     }
 
     private infix fun Int.toward(to: Int): IntProgression {
