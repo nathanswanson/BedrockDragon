@@ -480,14 +480,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.BLOCK_PICK_REQUEST -> {
                 val blockPickRequestPacket = BlockPickRequestPacket()
                 blockPickRequestPacket.decode(inGamePacket.payload)
-               // sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
-                sendMessage(world.getChunkAt(position))
-                sendMessage(position.y.toInt() / 16)
+                sendMessage(blockPickRequestPacket.position)
                 if(gamemode == Gamemode.CREATIVE) {
-                    inventory.addItem(PaletteGlobal.itemRegistry[world.getBlockAt(blockPickRequestPacket.position).name]!!)
+                    sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
+                   // inventory.addItem(PaletteGlobal.itemRegistry[world.getBlockAt(blockPickRequestPacket.position).name]!!)
                 }
             }
-
+            MinecraftPacketConstants.PLAYER_AUTH_INPUT -> {
+                println("test")}
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()

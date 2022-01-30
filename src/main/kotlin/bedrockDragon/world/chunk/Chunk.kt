@@ -149,7 +149,8 @@ class Chunk(val position: WorldInt2,
     }
 
     fun getBlockAt(position: Float3): Block {
-        return sections[(position.y.toInt() shr 5) shr 2].paletteSubChunk!!.getBlock(position)
+        sections[((position.y.toInt() shr 5) shr 2) + 8].paletteSubChunk!!.debugGetChunk()
+        return sections[((position.y.toInt() shr 5) shr 2) + 8].paletteSubChunk!!.getBlock(position)
     }
 
     fun encodeNbtToStorage(): ByteArray {

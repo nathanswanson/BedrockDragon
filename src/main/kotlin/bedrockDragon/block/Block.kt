@@ -1,7 +1,8 @@
 package bedrockDragon.block
 
+import bedrockDragon.block.blockState.BlockState
 import bedrockDragon.block.builder.BlockDSL
-import bedrockDragon.block.tileEntity.Tile
+import bedrockDragon.inventory.Inventory
 import bedrockDragon.item.Item
 import bedrockDragon.player.Player
 
@@ -24,7 +25,6 @@ class Block(var name: String = "mod:block") {
     var flammable = false
     var drops = emptyArray<Item>()
     var gravity = GravityEffect.FLOAT
-    var tileEntity: Tile? = null
     var runtimeId = -1
     //todo bounding box
     //todo texture tag
@@ -38,6 +38,8 @@ class Block(var name: String = "mod:block") {
     var onTick: (() -> Unit)? = null
     var onBlockAdded: (() -> Unit)? = null
 
+    var blockState: BlockState? = null
+    var inventory: Inventory? = null
     fun build(): Block {
         return this
     }

@@ -41,5 +41,5 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.block.tileEntity
+package bedrockDragon.block.blockState
 

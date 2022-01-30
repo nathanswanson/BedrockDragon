@@ -2,6 +2,8 @@ package bedrockDragon.registry
 
 import bedrockDragon.block.Block
 import bedrockDragon.block.builder.registerBlock
+import bedrockDragon.inventory.BlockInventory
+import bedrockDragon.inventory.Inventory
 
 object VanillaBlocks {
     init {
@@ -27,6 +29,13 @@ object VanillaBlocks {
             block {
                 name = "anvil"
                 gravity = Block.GravityEffect.FALL
+            }
+            block {
+                name = "chest"
+                inventory = BlockInventory(27)
+                onInteract = {
+                    it.openInventory(inventory as BlockInventory)
+                }
             }
         }
     }

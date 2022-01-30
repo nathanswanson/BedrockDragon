@@ -56,7 +56,7 @@ abstract class Inventory(val size: Int) {
     internal val slots: Array<Item?> = arrayOfNulls(size)
 
 
-    var type = -1
+    open var type = -1
     val windowId = 0
 
     fun contains(item: Item) {

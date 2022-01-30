@@ -88,7 +88,20 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     }
 
     fun getBlock(position: Float3): Block {
-        return PaletteGlobal.blockRegistry[paletteString[get((position.y + (position.x * 16) + (position.z * 16 * 16)).toInt() and 4095)]]!!
+        return PaletteGlobal.blockRegistry[paletteString[get((position.y.mod(16.0) + (position.z.mod(16.0) * 16) + (position.x.mod(16.0) * 16 * 16)).toInt() and 4095)]]!!
+
+    }
+
+    fun debugGetChunk() {
+        for(x in 0 until 16) {
+            for(y in 0 until 16) {
+                for(z in 0 until 16) {
+                    if(get(z.mod(16) + (y.mod(16) * 16) + (x.mod(16) * 16 * 16)) == 9) {
+                        println("$x:$y:$z")
+                    }
+                }
+            }
+        }
     }
 
     fun getWordsForSize(): Int {
