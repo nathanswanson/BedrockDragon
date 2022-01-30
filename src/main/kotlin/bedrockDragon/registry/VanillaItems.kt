@@ -14,6 +14,15 @@ object VanillaItems {
     init {
         registerItem("minecraft") {
             item {
+                name = "stick"
+            }
+            item {
+                name = "glowstone"
+            }
+            item {
+                name = "torch"
+            }
+            item {
                 name = "anvil"
             }
             item {

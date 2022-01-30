@@ -211,7 +211,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = player.position
             startGamePacket.rotation = Float2(0f,0f)
-            startGamePacket.seed = 12345
+            startGamePacket.seed = -1
             startGamePacket.biomeType = 0
             startGamePacket.customBiomeName = "plains"
             startGamePacket.dimension = 0 //overworld
@@ -238,7 +238,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.movementRewindSize = 0
             startGamePacket.serverAuthoritativeBlockBreaking = false
             startGamePacket.currentTick = 0
-            startGamePacket.enchantSeed = 12356
+            startGamePacket.enchantSeed = -1
             startGamePacket.blockProperties = emptyArray()
             startGamePacket.inventoryServerAuthoritative = false
             return startGamePacket

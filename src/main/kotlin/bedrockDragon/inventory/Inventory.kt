@@ -44,7 +44,6 @@
 package bedrockDragon.inventory
 
 import bedrockDragon.item.Item
-import bedrockDragon.network.raknet.protocol.game.inventory.InventoryContentPacket
 import bedrockDragon.player.Player
 
 /**

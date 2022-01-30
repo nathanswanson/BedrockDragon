@@ -143,7 +143,7 @@ object PaletteGlobal {
         //todo null safety
     }
 
-    fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
+    private fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
         return arrayListOf(globalBlockPalette[name]?.get(data) ?: globalBlockPalette["minecraft:bedrock"]!![0])
     }
 

@@ -45,6 +45,7 @@ package bedrockDragon.network.raknet.protocol.game.login
 
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.VarInt
+import bedrockDragon.player.Skin
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.*
@@ -53,7 +54,7 @@ import java.nio.charset.StandardCharsets
 class MinecraftLoginPacket(): Packet() {
     var protocol = 0
     lateinit var chainData: Array<String>
-
+    lateinit var skinData: Skin
     fun encode() {
 
     }
@@ -67,16 +68,33 @@ class MinecraftLoginPacket(): Packet() {
 
         //chain data
 
-        //don't know what this is yet
         VarInt.readUnsignedVarInt(packet.inputStream)
         val buf = packet.buffer()
 
         val chainByteIdx = buf.readIntLE()
         chainData =
             Json.decodeFromString<ChainData>(buf.slice(buf.readerIndex(), chainByteIdx).toString(StandardCharsets.UTF_8)).chain
-        //I skip 4 because I don't need the LEInt anyways
-        buf.readerIndex(buf.readerIndex() + chainByteIdx + 4)
-        //TODO SKIN PARSER
+        buf.readerIndex(buf.readerIndex() + chainByteIdx)
+
+        //skin data
+        skinData = Skin().let {
+            var buffer = ByteArray(buf.readIntLE())
+            buf.readBytes(buffer)
+            var skinJwt = String(buffer)
+            decodeSkin(skinJwt)
+            it
+        }
+
+
+    }
+
+    fun decodeSkin(crypt: String) {
+        var base = crypt.split("\\.")
+        if(base.size < 2) {
+            //null
+
+        }
+        String()
     }
 
     @Serializable

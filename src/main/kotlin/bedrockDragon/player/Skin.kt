@@ -49,4 +49,8 @@ package bedrockDragon.player
  * @since ALPHA
  */
 class Skin {
+    var fullSkinId: String = ""
+    var skinId: String = ""
+
+
 }

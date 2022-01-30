@@ -97,7 +97,7 @@ object ServerProperties: Properties() {
             setProperty("spawn-npcs", "true")
             setProperty("allow-flight", "false")
             setProperty("level-name", "world")
-            setProperty("view-distance", "10")
+            setProperty("view-distance", "4")
             setProperty("resource-pack", "")
             setProperty("spawn-animals" , "true")
             setProperty("white-list" , "false")

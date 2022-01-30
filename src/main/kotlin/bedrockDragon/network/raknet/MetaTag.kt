@@ -34,6 +34,7 @@ class MetaTag {
         class TAGByte(override val data: Byte) : TypedDefineTag() { override val type: Int = 0 }
         class TAGSHORT(override val data: Short): TypedDefineTag() { override val type: Int = 1 }
         class TAGINT(override val data: Int): TypedDefineTag() {override val type: Int = 2}
+        class TAGFLOAT(override val data: Float): TypedDefineTag() {override val type: Int = 3}
         class TAGLONG(override val data: Long): TypedDefineTag() {override val type: Int = 7}
 
     }

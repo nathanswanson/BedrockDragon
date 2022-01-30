@@ -186,8 +186,9 @@ class Chunk(val position: WorldInt2,
         inhabitedTime = decodedNBT["InhabitedTime"]?.nbtLong?.value ?: 0L
         isLightOn = decodedNBT["isLightOn"]?.nbtByte?.booleanValue ?: false
         decodedNBT["sections"]!!.nbtList.filter{
-            it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
+            //it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
             //it.nbtCompound["Y"]?.nbtByte?.value!! in 0..15
+            true
         }.map {
             sectionCount++
             SubChunk.decodeFromNbt(it.nbtCompound)

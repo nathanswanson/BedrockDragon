@@ -48,6 +48,7 @@ object NativeCommands {
                 invoke = {
                     player, anies ->
                     PaletteGlobal.itemRegistry[anies[1] as String]?.let {
+                        it.count = (anies[2] as String).toInt()
                         player.addItemToPlayerInventory(it)
                     }
                 }
@@ -61,6 +62,14 @@ object NativeCommands {
                     player, anies ->
                     player.damage((anies[1] as String).toFloat())
                     player.sendAttributes()
+                }
+            }
+            command("/kill") {
+                args.add(CommandStringTag().asOptional())
+
+                invoke = {
+                    player, anies ->
+                        player.kill()
                 }
             }
         }

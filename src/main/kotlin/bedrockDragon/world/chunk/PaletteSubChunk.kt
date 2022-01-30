@@ -130,13 +130,17 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     fun encode(outputStream: FastByteArrayOutputStream) {
         outputStream.write(getPaletteHeader(true)) //palette version
-
+        if(palette.isEmpty()) {
+            //empty chunk
+            palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:air"))
+        }
         blockBits.blockData.forEach {
             outputStream.writeLInt(it) //leInt
         }
 
         VarInt.writeVarInt(palette.size, outputStream)//palette size
         palette.forEach { VarInt.writeVarInt(it, outputStream) }//palatte as varInts
+
 
         //empty palette footer
         outputStream.write(5)
@@ -182,7 +186,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                         blockPalette.palette.add(entry)
                     } else {
                         unknownPaletteId = true
-                        // println(it.nbtCompound["Name"]!!.nbtString.value)
+                        println(it.nbtCompound["Name"]!!.nbtString.value)
                         blockPalette.palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:bedrock"))
                     }
 

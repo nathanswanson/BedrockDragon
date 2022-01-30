@@ -221,34 +221,34 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 deltaChunks.add(chunkGrabbed.position)
             }
         }
-        var stringB = StringBuilder()
-        for(x in 10 downTo -10) {
-            if((x + 1)% 4 == 0)
-                stringB.appendLine()
-            for(z in -10..10) {
-                if(z % 4 == 0)
-                    stringB.append(" ")
-                if(x == 0 && z == 0) {
-                    stringB.append("C")
-                    continue
-                }
-                if(player.sendChunkCoord.contains(WorldInt2(x,z))) {
-                    if(deltaChunks.contains(WorldInt2(x,z))) {
-                        stringB.append("O")
-                    } else {
-                        stringB.append("x")
-                    }
-                } else if(deltaChunks.contains(WorldInt2(x,z))) {
-                    stringB.append("D")
-                } else {
-                    stringB.append(" ")
-                }
-            }
-            stringB.append("\n")
-        }
-
-        println(stringB)
-    }
+//        var stringB = StringBuilder()
+//        for(x in 10 downTo -10) {
+//            if((x + 1)% 4 == 0)
+//                stringB.appendLine()
+//            for(z in -10..10) {
+//                if(z % 4 == 0)
+//                    stringB.append(" ")
+//                if(x == 0 && z == 0) {
+//                    stringB.append("C")
+//                    continue
+//                }
+//                if(player.sendChunkCoord.contains(WorldInt2(x,z))) {
+//                    if(deltaChunks.contains(WorldInt2(x,z))) {
+//                        stringB.append("O")
+//                    } else {
+//                        stringB.append("x")
+//                    }
+//                } else if(deltaChunks.contains(WorldInt2(x,z))) {
+//                    stringB.append("D")
+//                } else {
+//                    stringB.append(" ")
+//                }
+//            }
+//            stringB.append("\n")
+//        }
+//
+//        println(stringB)
+   }
 
     private infix fun Int.toward(to: Int): IntProgression {
         val step = if (this > to) -1 else 1

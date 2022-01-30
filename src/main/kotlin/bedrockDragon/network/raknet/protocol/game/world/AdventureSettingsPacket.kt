@@ -13,7 +13,6 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
     val PERMISSION_AUTOMATION = 3
     val PERMISSION_ADMIN = 4
     //TODO: check level 3
-    //TODO: check level 3
     /**
      * This constant is used to identify flags that should be set on the second field. In a sensible world, these
      * flags would all be set on the same packet field, but as of MCPE 1.2, the new abilities flags have for some
@@ -42,7 +41,7 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
     }
 
 
-    private var flags = 0 //varInt
+    var flags = 0 //varInt
 
     var commandPermission = PERMISSION_NORMAL //varInt
     var actionPermissions = 0 //varInt

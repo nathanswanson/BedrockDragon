@@ -45,9 +45,13 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
+import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_HEIGHT
+import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_WIDTH
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
 import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
+import bedrockDragon.entity.DataTag.DATA_FLAG_HAS_COLLISION
+import bedrockDragon.entity.DataTag.DATA_HEALTH
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
@@ -133,7 +137,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var skinData: Skin? = null
     private val playerMeta =  MetaTag()
 
-    var renderDistance = 8
+    var renderDistance = 4
     var chunkRelay = world.getOrLoadRelay(position)
     /*
         NBT ENABLED VAR
@@ -229,7 +233,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
             packet.flag(type.id, type.defaultValue)
         }
 
-
+        packet.flags = 0
+        packet.actionPermissions = 30
         packet.commandPermission = 1
         packet.permissionLevel = 2
 
@@ -296,6 +301,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //respawn remove inventory
         //reset attributes to default
         //respawn
+        RespawnPacket().let {
+            it.position = Float3(0f,0f,0f)
+            it.runtimeEntityId = runtimeEntityId
+            nettyQueue.add(it.gamePacket())
+        }
+
         inventory.clear()
     }
 
@@ -305,7 +316,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
     private fun sendMeta() {
         var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
         flag = flag xor (1L shl DATA_FLAG_BREATHING)
+        flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
+
         playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
+
+       // playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
+      //  playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
+        //playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
 
         val entityDataPacket = EntityDataPacket()
         entityDataPacket.runtimeEntityId = runtimeEntityId
@@ -466,12 +483,16 @@ class Player(override var uuid: String): Living(), ISubscriber {
                // sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
                 sendMessage(world.getChunkAt(position))
                 sendMessage(position.y.toInt() / 16)
+                if(gamemode == Gamemode.CREATIVE) {
+                    inventory.addItem(PaletteGlobal.itemRegistry[world.getBlockAt(blockPickRequestPacket.position).name]!!)
+                }
             }
 
             MinecraftPacketConstants.ENTITY_PICK_REQUEST -> { println("ENTITY_PICK_REQUEST") }
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
+                sendMessage(actionPacket.action)
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
@@ -507,10 +528,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.INVENTORY_SLOT -> { println("INVENTORY_SLOT") }
             MinecraftPacketConstants.CRAFTING_EVENT -> { println("CRAFTING_EVENT") }
             MinecraftPacketConstants.ADVENTURE_SETTINGS -> {
-                val adventurePacket = AdventureSettingsPacket()
-                adventurePacket.decode(inGamePacket.payload)
-                logger.info { adventurePacket.toString() }
-                nettyQueue.add(adventurePacket.gamePacket())
+//                val adventurePacket = AdventureSettingsPacket()
+//                adventurePacket.decode(inGamePacket.payload)
+//                logger.info { adventurePacket.toString() }
+//                nettyQueue.add(adventurePacket.gamePacket())
             }
             MinecraftPacketConstants.PLAYER_INPUT -> { println("PLAYER_INPUT") }
             MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { /*reject*/ }

@@ -15,7 +15,7 @@ data class Item(var name: String = "item") {
 
 
     var runtimeId = -1 //todo const
-    var maxStackSize = 1
+    var maxStackSize = 64
     var subItems = mutableListOf<Item>()
     var tag: VanillaItems.ItemTag? = null
     var durability = -1
@@ -26,10 +26,7 @@ data class Item(var name: String = "item") {
     //instance
     var iDurability = durability
 
-    var count = 0
-        set(value) {
-            field = min(value, maxStackSize)
-        }
+    var count = 1
 
     var damage = -1
 
