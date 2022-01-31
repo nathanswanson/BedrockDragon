@@ -20,7 +20,7 @@
  *                                                                                                                       /     ###/
  * the MIT License (MIT)
  *
- * Copyright (c) 2021-2021 Nathan Swanson
+ * Copyright (c) 2021-2022 Nathan Swanson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,83 +41,79 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.world
+package bedrockDragon.registry.resource
 
-import bedrockDragon.block.Block
-import bedrockDragon.entity.Entity
-import bedrockDragon.registry.DSLBase
-import bedrockDragon.util.WorldInt2
-import bedrockDragon.world.chunk.Chunk
-import bedrockDragon.world.chunk.ChunkRelay
-import bedrockDragon.world.region.Region
+import bedrockDragon.command.CommandTag
+import bedrockDragon.command.registerCommand
+import bedrockDragon.player.Player
+import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.pow
-import mu.KotlinLogging
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
-/**
- * [World] holds the region objects and finds [Chunk] or [ChunkRelay] at given coordinates.
- * @author Nathan Swanson
- * @since ALPHA
- */
-class World(val name: String): DSLBase() {
+object NativeCommands {
+    init {
+        registerCommand("bedrockDragon") {
 
-    private val loadedRegions = HashMap<WorldInt2, Region>()
-    val logger = KotlinLogging.logger {}
-    var playerCount = 0
-    /**
-     * [getOrLoadRelay] will take a position in the world and return the [ChunkRelay] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    fun getOrLoadRelay(absolutePosition: Float3): ChunkRelay {
-        val relayParentRegion = getOrLoadRegion(absolutePosition)
-        //getRelayAt is relative
-        //mod position xy by 1024
-        //int divide position by 64
-        return relayParentRegion.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
-    }
+            command("/gamemode") {
 
-    /**
-     * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    private fun getOrLoadRegion(absolutePosition: Float3): Region {
-        val intPosition = WorldInt2(absolutePosition.x.toInt() shr 10, absolutePosition.z.toInt() shr 10)
+                args.add(CommandTag.commandIntTag()) //gamemode value
+                args.add(CommandTag.commandStringTag().asOptional()) //target (@s if none)
 
 
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
+                invoke = {
+                    player, anies ->
+                    player.gamemode = Player.Gamemode.values()[(anies[0] as String).toInt()]
+                }
+            }
+            command("/tp") {
+                args.add(CommandTag.commandIntTag()) //x
+                args.add(CommandTag.commandIntTag()) //y
+                args.add(CommandTag.commandIntTag()) //z
+
+                args.add(CommandTag.commandStringTag().asOptional()) //target (@s if none)
+
+                invoke = {
+                    player, anies ->
+                        player.teleport(Float3(
+                            (anies[0] as String).toFloat(),
+                            (anies[1] as String).toFloat(),
+                            (anies[2] as String).toFloat()
+                        ))
+                }
+            }
+            command("/give") {
+                args.add(CommandTag.commandStringTag()) //target
+                args.add(CommandTag.commandStringTag()) //item name
+                args.add(CommandTag.commandIntTag().asDefault(1).asOptional()) // amount
+                args.add(CommandTag.commandIntTag().asOptional()) //data Int
+                args.add(CommandTag.commandStringTag().asOptional()) //components json
+
+                invoke = {
+                    player, anies ->
+                    PaletteGlobal.itemRegistry[anies[1] as String]?.let {
+                        it.count = (anies[2] as String).toInt()
+                        player.addItemToPlayerInventory(it)
+                    }
+                }
+            }
+            command("/damage") {
+                args.add(CommandTag.commandStringTag())
+                args.add(CommandTag.commandIntTag())
+                //damagecause
+
+                invoke = {
+                    player, anies ->
+                    player.damage((anies[1] as String).toFloat())
+                    player.sendAttributes()
+                }
+            }
+            command("/kill") {
+                args.add(CommandTag.commandStringTag().asOptional())
+
+                invoke = {
+                    player, anies ->
+                        player.kill()
+                }
+            }
         }
-    }
-
-    fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
-        val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
-        return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
-    }
-
-    private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
-    }
-
-    fun getChunkAt(position: Float3): Chunk {
-        return getOrLoadRelay(position).getChunk2D(
-            (position.x.toInt() shr 4).mod(4),
-            (position.z.toInt() shr 4).mod(4)
-        )
-    }
-
-    fun getBlockAt(position: Float3): Block {
-        //convert player position to relay space
-        return getChunkAt(position).getBlockAt(position)
-    }
-
-    fun spawnEntity(position: Float3, entity: Entity): Boolean {
-        return false
     }
 }

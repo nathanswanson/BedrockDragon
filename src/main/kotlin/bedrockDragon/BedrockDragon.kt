@@ -44,16 +44,14 @@
 package bedrockDragon
 
 import bedrockDragon.mod.loader.ModLoader
-import bedrockDragon.registry.CommandRegistry
-import bedrockDragon.registry.NativeCommands
+import bedrockDragon.registry.Registry
+import bedrockDragon.registry.resource.NativeCommands
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.registry.WorldRegistry
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
-import kotlin.math.log
 
 private val logger = KotlinLogging.logger {}
 
@@ -117,7 +115,7 @@ fun main(args: Array<String>) {
     //todo temp
     val bindAddress = InetSocketAddress(19132)
     //world registry
-    WorldRegistry.register(0, World("noOcean"))
+    Registry.WORLD_REGISTRY.register(0, World("noOcean"))
     logger.info { bindAddress }
     val server = DragonServer(bindAddress)
     server.start()

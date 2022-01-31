@@ -20,7 +20,7 @@
  *                                                                                                                       /     ###/
  * the MIT License (MIT)
  *
- * Copyright (c) 2021-2021 Nathan Swanson
+ * Copyright (c) 2021-2022 Nathan Swanson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,13 +45,10 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
-import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_HEIGHT
-import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_WIDTH
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
 import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
 import bedrockDragon.entity.DataTag.DATA_FLAG_HAS_COLLISION
-import bedrockDragon.entity.DataTag.DATA_HEALTH
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
@@ -66,23 +63,19 @@ import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
 import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
-import bedrockDragon.network.raknet.protocol.game.entity.MoveEntityDeltaPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
-import bedrockDragon.network.raknet.protocol.game.inventory.InventorySlotPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
 import bedrockDragon.network.raknet.protocol.game.player.*
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
-import bedrockDragon.registry.CommandRegistry
+import bedrockDragon.registry.Registry
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.registry.WorldRegistry
 import bedrockDragon.util.WorldInt2
-import bedrockDragon.util.bgRed
 import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
@@ -95,8 +88,6 @@ import net.benwoodworth.knbt.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.math.log
-import kotlin.text.StringBuilder
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -129,7 +120,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
     var isOp = false
 
-    var world = WorldRegistry.getWorld(0)!!
+    var world = Registry.WORLD_REGISTRY[0]!!
 
     val inventory = PlayerInventory()
     val windowId = ConcurrentHashMap<Inventory, Int>()
@@ -184,10 +175,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
-
-
-        inventory.addItem(Item.testItem())
-        inventory.addItem(Item.testItem())
 
         val woodenSword = PaletteGlobal.itemRegistry["minecraft:wooden_sword"]!!
         woodenSword.iDurability = 20
@@ -547,7 +534,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
                 val commandArgs = commandPacket.command.split(" ")
-                CommandRegistry.getCommand(commandArgs[0])?.let {
+                Registry.COMMAND_REGISTRY[commandArgs[0]]?.let {
                     //it.invoke?.let { it1 -> it1(this, commandArgs.subList(1,commandArgs.size).toTypedArray()) }
                     CommandEngine.invokeWith(commandArgs.subList(1,commandArgs.size).toTypedArray(), it, this)
                 } ?: sendMessage("Unknown command, use /help for a list of commands. ")

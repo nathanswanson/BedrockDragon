@@ -44,9 +44,9 @@
 package bedrockDragon.world
 
 import bedrockDragon.block.Block
-import bedrockDragon.registry.VanillaBlocks
+import bedrockDragon.registry.resource.VanillaBlocks
 import bedrockDragon.item.Item
-import bedrockDragon.registry.VanillaItems
+import bedrockDragon.registry.resource.VanillaItems
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -134,14 +134,13 @@ object PaletteGlobal {
 
     }
 
+    /**
+     * TODO()
+     */
     fun getRuntimeIdFromName(name: String, data: Int = 0): Int {
         return globalBlockPalette[name]?.get(data)?.runtimeId ?: -1
     }
 
-    fun getAItem(name: String): Item {
-        return itemRegistry[name]!!.copy()
-        //todo null safety
-    }
 
     private fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
         return arrayListOf(globalBlockPalette[name]?.get(data) ?: globalBlockPalette["minecraft:bedrock"]!![0])
@@ -150,4 +149,8 @@ object PaletteGlobal {
     @Serializable
     data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound, val id: Int, val data: Short, val runtimeId: Int)
 
+}
+
+fun main() {
+    VanillaItems
 }

@@ -20,7 +20,7 @@
  *                                                                                                                       /     ###/
  * the MIT License (MIT)
  *
- * Copyright (c) 2021-2021 Nathan Swanson
+ * Copyright (c) 2021-2022 Nathan Swanson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,83 +41,39 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.world
+package bedrockDragon.registry.resource
 
 import bedrockDragon.block.Block
-import bedrockDragon.entity.Entity
-import bedrockDragon.registry.DSLBase
-import bedrockDragon.util.WorldInt2
-import bedrockDragon.world.chunk.Chunk
-import bedrockDragon.world.chunk.ChunkRelay
-import bedrockDragon.world.region.Region
-import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.pow
-import mu.KotlinLogging
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import bedrockDragon.block.registerBlock
+import bedrockDragon.inventory.BlockInventory
 
 /**
- * [World] holds the region objects and finds [Chunk] or [ChunkRelay] at given coordinates.
+ * [VanillaBlocks] is dragon code for vanilla blocks minecraft provides.
  * @author Nathan Swanson
- * @since ALPHA
+ * @since BETA
  */
-class World(val name: String): DSLBase() {
-
-    private val loadedRegions = HashMap<WorldInt2, Region>()
-    val logger = KotlinLogging.logger {}
-    var playerCount = 0
-    /**
-     * [getOrLoadRelay] will take a position in the world and return the [ChunkRelay] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    fun getOrLoadRelay(absolutePosition: Float3): ChunkRelay {
-        val relayParentRegion = getOrLoadRegion(absolutePosition)
-        //getRelayAt is relative
-        //mod position xy by 1024
-        //int divide position by 64
-        return relayParentRegion.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
-    }
-
-    /**
-     * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    private fun getOrLoadRegion(absolutePosition: Float3): Region {
-        val intPosition = WorldInt2(absolutePosition.x.toInt() shr 10, absolutePosition.z.toInt() shr 10)
-
-
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
+object VanillaBlocks {
+    init {
+        registerBlock("minecraft") {
+            block("grass_block") {
+                hardness = 0.6
+                blastResistance = 0.6
+            }
+            block("air")
+            block("bedrock")
+            block("dirt")
+            block("stone") {
+                hardness = 0.6
+            }
+            block("anvil") {
+                gravity = Block.GravityEffect.FALL
+            }
+            block("chest") {
+                inventory = BlockInventory(27)
+                onInteract = {
+                    it.openInventory(inventory as BlockInventory)
+                }
+            }
         }
-    }
-
-    fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
-        val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
-        return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
-    }
-
-    private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
-    }
-
-    fun getChunkAt(position: Float3): Chunk {
-        return getOrLoadRelay(position).getChunk2D(
-            (position.x.toInt() shr 4).mod(4),
-            (position.z.toInt() shr 4).mod(4)
-        )
-    }
-
-    fun getBlockAt(position: Float3): Block {
-        //convert player position to relay space
-        return getChunkAt(position).getBlockAt(position)
-    }
-
-    fun spawnEntity(position: Float3, entity: Entity): Boolean {
-        return false
     }
 }

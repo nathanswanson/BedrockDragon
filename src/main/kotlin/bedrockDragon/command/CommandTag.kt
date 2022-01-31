@@ -14,16 +14,19 @@ abstract class CommandTag<T>() {
         default = value
         return this
     }
-}
-class CommandIntTag : CommandTag<Int>() {
-    override val message: String = "I"
-    override var default: Int = 0
-    override var value: Int? = 0 //unInit
-    override var optional: Boolean = false
-}
-class CommandStringTag : CommandTag<String>() {
-    override val message: String = "I"
-    override var default: String = ""
-    override var value: String? = "" //unInit
-    override var optional: Boolean = false
+    companion object {
+        fun commandIntTag(): CommandTag<Int> = object : CommandTag<Int>() {
+                override val message: String = "I"
+                override var default: Int = 0
+                override var value: Int? = 0 //unInit
+                override var optional: Boolean = false
+        }
+
+        fun commandStringTag(): CommandTag<String> = object : CommandTag<String>() {
+            override val message: String = "I"
+            override var default: String = ""
+            override var value: String? = "" //unInit
+            override var optional: Boolean = false
+        }
+    }
 }

@@ -20,7 +20,7 @@
  *                                                                                                                       /     ###/
  * the MIT License (MIT)
  *
- * Copyright (c) 2021-2021 Nathan Swanson
+ * Copyright (c) 2021-2022 Nathan Swanson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,83 +41,47 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.world
+package bedrockDragon.registry
 
-import bedrockDragon.block.Block
-import bedrockDragon.entity.Entity
-import bedrockDragon.registry.DSLBase
-import bedrockDragon.util.WorldInt2
-import bedrockDragon.world.chunk.Chunk
-import bedrockDragon.world.chunk.ChunkRelay
-import bedrockDragon.world.region.Region
-import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.pow
-import mu.KotlinLogging
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import bedrockDragon.command.Command
+import bedrockDragon.world.World
 
 /**
- * [World] holds the region objects and finds [Chunk] or [ChunkRelay] at given coordinates.
+ * [Registry] parent class for block,item, world... etc registries.
  * @author Nathan Swanson
- * @since ALPHA
+ * @since BETA
  */
-class World(val name: String): DSLBase() {
+class Registry<T,K : DSLBase> {
+    private val registeredValues = HashMap<T, K>()
 
-    private val loadedRegions = HashMap<WorldInt2, Region>()
-    val logger = KotlinLogging.logger {}
-    var playerCount = 0
-    /**
-     * [getOrLoadRelay] will take a position in the world and return the [ChunkRelay] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    fun getOrLoadRelay(absolutePosition: Float3): ChunkRelay {
-        val relayParentRegion = getOrLoadRegion(absolutePosition)
-        //getRelayAt is relative
-        //mod position xy by 1024
-        //int divide position by 64
-        return relayParentRegion.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
-    }
 
     /**
-     * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
+     * [get] returns an instance of the desired object. This is an operator function and should be called like the object is an array
+     *
+     * val registry = Registry<String, Item>()
+     *
+     *
+     * val sword = registry&#91;minecraft:wooden_sword&#93;
      */
-    private fun getOrLoadRegion(absolutePosition: Float3): Region {
-        val intPosition = WorldInt2(absolutePosition.x.toInt() shr 10, absolutePosition.z.toInt() shr 10)
-
-
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
+     @Suppress("UNCHECKED_CAST")
+    operator fun get(value: T): K {
+        return (registeredValues[value] as DSLBase).clone() as K
     }
 
-    fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
-        val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
-        return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
+    /**
+     * [getObject] returns the original object. Typically, this should only be used to overwrite the requested object.
+     * @see [get] for getting an instance of an object i.e. when you want to spawn an item.
+     */
+    fun getObject(value: T): K? {
+        return registeredValues[value]
     }
 
-    private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
+    fun register(id: T, registerObject: K): Boolean {
+        return registeredValues.putIfAbsent(id, registerObject) == null
     }
 
-    fun getChunkAt(position: Float3): Chunk {
-        return getOrLoadRelay(position).getChunk2D(
-            (position.x.toInt() shr 4).mod(4),
-            (position.z.toInt() shr 4).mod(4)
-        )
-    }
-
-    fun getBlockAt(position: Float3): Block {
-        //convert player position to relay space
-        return getChunkAt(position).getBlockAt(position)
-    }
-
-    fun spawnEntity(position: Float3, entity: Entity): Boolean {
-        return false
+    companion object {
+        val COMMAND_REGISTRY = Registry<String, Command>()
+        val WORLD_REGISTRY = Registry<Int, World>()
     }
 }

@@ -1,4 +1,4 @@
-package bedrockDragon.block.builder
+package bedrockDragon.block
 
 @DslMarker
 annotation class BlockDSL()
