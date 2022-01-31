@@ -41,106 +41,38 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.item
+package bedrockDragon.util.bitmap
 
-import bedrockDragon.player.Player
-import bedrockDragon.registry.DSLBase
-import bedrockDragon.registry.resource.VanillaItems
-import bedrockDragon.resource.RuntimeItemState
-import bedrockDragon.world.PaletteGlobal
+import bedrockDragon.world.chunk.PaletteSubChunk
 
 /**
- * [Item] is for a dsl object to create new items, this is not meant to be extended.
- * @author NATHAN SWANSON
- * @since BETA
- */
-@ItemDSL
-sealed class Item(var name: String = "item"): DSLBase(){
-
-    var runtimeId = -1 //todo const
-    var maxStackSize = 64
-    var subItems = mutableListOf<Item>()
-    var tag: VanillaItems.ItemTag? = null
-    var durability = -1
-    var onActivate: ((Player) -> Unit)? = null
-    var damage = -1
-
-    //instance
-    var iDurability = durability
-    var count = 1
-
-    override fun clone(): Item {
-        return ItemImpl(name).let {
-            it.runtimeId = runtimeId
-            it.maxStackSize = maxStackSize
-            it.subItems = subItems
-            it.tag = tag
-            it.durability = durability
-            it.onActivate = onActivate
-            it.damage = damage
-            it
-        }
-    }
-
-    /**
-     * [of] is when you want to create sub-items of a shared object. In example of this is the many different pickaxes that all are similar.
-     */
-    @ItemDSL
-    fun of(item: ItemImpl.() -> Unit) {
-        val newItem = this.clone() as ItemImpl
-        newItem.apply(item)
-        //if the parent name has a * then concat parent and child name otherwise just use child name.
-        if(name.contains("*")) {
-            newItem.name = name.replace("*", newItem.name)
-        }
-        subItems.add(newItem)
-    }
-}
-
-/**
- * [ItemImpl] is class to access sealed [Item]
- */
-class ItemImpl(name: String): Item(name)
-
-/**
- * [registerItem] is the DSL builder for creating and registering blocks to the server.
- */
-@ItemDSL
-fun registerItem(modName: String, registerList: RegisterItem.() -> Unit) {
-    RegisterItem(modName).run(registerList)
-}
-
-
-/**
- * [RegisterItem] DSL class for registering multiple items.
- * @see [RegisterItem] to call this class.
+ * [BitMap] is used to store chunks/biomes in memory before saving or sending to player.
  * @author Nathan Swanson
  * @since BETA
  */
-@ItemDSL
-class RegisterItem(var modName: String) {
+abstract class BitMap(val size: Int, var paletteResolution: PaletteSubChunk.PaletteResolution) {
 
-    @ItemDSL
-    fun item(name: String, lambda: Item.() -> Unit = {}) {
-        val item = ItemImpl(name).apply(lambda)
-        if(item.subItems.isNotEmpty()) {
-            item.subItems.forEach {
-                it.name = "$modName:${it.name}"
-                PaletteGlobal.itemRegistry[it.name] = it
-                ensureRuntimeIdAlloc(it)
-            }
-        } else {
-            item.name = "$modName:${item.name}"
-            PaletteGlobal.itemRegistry[item.name] = item
-            ensureRuntimeIdAlloc(item)
-        }
-    }
+    //underlying data array for BitMap
+    var blockData = IntArray(size)
+        private set
 
-    private fun ensureRuntimeIdAlloc(item: Item) {
-        if(item.runtimeId == -1) {
-            item.runtimeId = RuntimeItemState.getRuntimeIdFromName(item.name)
-        } else {
-            //todo
+    /**
+     * [setAt] puts a variable Integer into the bit data. if the index is out of bounds nothing will happen.
+     */
+    abstract fun setAt(idx: Int, id: Int)
+
+    /**
+     * [get] returns integer from bitmap. In the case of chunk data idx should be between 1..4096.
+     */
+    abstract fun get(idx: Int): Int
+
+    override fun toString(): String {
+        val builder = StringBuilder()
+
+        for(i in 0 until 4096) {
+            builder.append("${get(i)} ")
         }
+
+        return builder.toString()
     }
 }

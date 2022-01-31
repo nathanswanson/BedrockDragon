@@ -54,7 +54,6 @@ import java.util.*
 object CommandEngine {
     /**
      * [invokeWith] takes arguments (not including command name) and invokes the inputed command
-     *
      */
     fun invokeWith(args: Array<Any>, command: Command, player: Player) {
         var predictedFullArgument = LinkedList(args.asList())

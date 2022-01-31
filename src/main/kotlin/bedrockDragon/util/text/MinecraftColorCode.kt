@@ -20,7 +20,7 @@
  *                                                                                                                       /     ###/
  * the MIT License (MIT)
  *
- * Copyright (c) 2021-2021 Nathan Swanson
+ * Copyright (c) 2021-2022 Nathan Swanson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,53 +41,46 @@
  * SOFTWARE.
  */
 
-package bedrockDragon.util
-
-import bedrockDragon.world.chunk.PaletteSubChunk
-
+package bedrockDragon.util.text
 
 /**
- * FastBitMap is specifically designed for use in chunk palette creation. Normally, a byte array is used
- * to send data to client however with the nature of varying lengths of bits its easier to send a bit array
- * instead.
+ * [MinecraftColorCode] contains color codes to change in game text color or font type.
  * @author Nathan Swanson
- * @since ALPHA
+ * @since BETA
  */
-class EvenParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResolution): BitMap(size, paletteResolution) {
+object MinecraftColorCode {
+    const val BLACK = '0'
+    const val DARK_BLUE = '1'
+    const val DARK_GREEN = '2'
+    const val DARK_AQUA = '3'
+    const val DARK_RED = '4'
+    const val DARK_PURPLE = '5'
+    const val GOLD = '6'
+    const val GRAY = '7'
+    const val DARK_GRAY = '8'
+    const val BLUE = '9'
+    const val GREEN = 'a'
+    const val AQUA = 'b'
+    const val RED = 'c'
+    const val LIGHT_PURPLE = 'd'
+    const val YELLOW = 'e'
+    const val WHITE = 'f'
+    const val MINECOIN_GOLD = 'g'
 
-    /**
-     * The setAt() method handles the proper positioning of bits; the idx input should be the block position in
-     * the backing array.
-     *
-     */
-    override fun setAt(idx: Int, id: Int) {
-        //idx out of bounds
-        if(idx * paletteResolution.size shr 5 >= blockData.size)
-            throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
-        //int is larger than palette bit size
-        if(id > paletteResolution.maxSize)
-            throw IllegalArgumentException("The palette cannot handle an id of $id with a current max bit size of ${paletteResolution.maxSize}")
-        val bitIndex: Int = idx * paletteResolution.size
-        val arrayIndex = bitIndex shr 5
-        val offset = bitIndex and 31
-        blockData[arrayIndex] =
-            blockData[arrayIndex] and (paletteResolution.maxSize shl offset).inv() or (id and paletteResolution.maxSize shl offset)
+    const val OBFUSCATED = 'k'
+    const val BOLD = 'i'
+    //Strike JAVA
+    //Underline JAVA
+    const val ITALIC = 'o'
+    const val RESET = 'r'
 
-    }
-
-
-    /**
-     * If this method is being used for the palette assume that the idx range is 1..4096. 4096 represents
-     * the 16x16x16 subchunk blocks IDs.-
-     */
-    override fun get(idx: Int): Int {
-        //idx out of bounds
-        if(idx * paletteResolution.size shr 5 >= blockData.size)
-            throw IndexOutOfBoundsException("The index provided exceeds the length of words in the Bit Map")
-
-        val bitIndex: Int = idx * paletteResolution.size
-        val arrayIndex = bitIndex shr 5
-        val wordOffset = bitIndex and 31
-        return blockData[arrayIndex] ushr wordOffset and paletteResolution.maxSize
+    fun mineStringToAscii(string: String): String {
+        val id = string[0]
+        val content = string.substring(1)
+        return when(id) {
+            BLACK -> content.black()
+            DARK_BLUE -> content.blue()
+            else -> content
+        }
     }
 }

@@ -56,6 +56,9 @@ class PlayerInventory: Inventory(36) {
         type = -1
     }
 
+    /**
+     * [sendPacketContents] sends all item slots to given player.
+     */
     fun sendPacketContents(player: Player) {
         player.nettyQueue.add(InventoryContentPacket().let {
             it.itemStacks = slots
@@ -65,6 +68,9 @@ class PlayerInventory: Inventory(36) {
         })
     }
 
+    /**
+     * [sendPacketContents] sends all item slots to given players.
+     */
     fun sendPacketContents(player: Array<Player>) {
         slots.forEach {
 

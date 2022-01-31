@@ -43,11 +43,11 @@
 
 package bedrockDragon.command
 
-import bedrockDragon.block.Block
+import bedrockDragon.block.RegisterBlock
+import bedrockDragon.block.registerBlock
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
-
 
 /**
  * [Command] is for a dsl object to create new commands, this is not meant to be extended.
@@ -75,11 +75,19 @@ sealed class Command(val name: String): DSLBase() {
 
 class CommandImpl(name: String): Command(name)
 
+/**
+ * [registerCommand] is the DSL builder for creating and registering commands to the server.
+ */
 @CommandDSL
 fun registerCommand(modName: String, registerList: RegisterCommand.() -> Unit) {
     RegisterCommand(modName).run(registerList)
 }
-
+/**
+ * [RegisterCommand] DSL class for registering multiple Commands.
+ * @see [registerCommand] to call this class.
+ * @author Nathan Swanson
+ * @since BETA
+ */
 @CommandDSL
 class RegisterCommand(var modName: String) {
     fun command(name: String, lambda: Command.() -> Unit = {}) {

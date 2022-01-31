@@ -119,10 +119,16 @@ abstract class Inventory(val size: Int) {
         slots.fill(null)
     }
 
+    /**
+     * [addViewer] is used when a new player opens this inventory
+     */
     fun addViewer(player: Player) {
         viewers.add(player)
     }
 
+    /**
+     * [isOpenedBy] checks if one of the viewers is the given player.
+     */
     fun isOpenedBy(player: Player): Boolean {
         return viewers.contains(player)
     }

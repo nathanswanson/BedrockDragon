@@ -59,7 +59,7 @@ class EncapsulatedPacketTest {
     @TestFactory
     fun writeEncapsulated(): List<DynamicTest> {
         val test = ArrayList<DynamicTest>()
-        val message = generatePsuedoPacket()
+        val message = generatePseudoPacket()
 
 
         for (reliability in Reliability.values()) {
@@ -88,14 +88,14 @@ class EncapsulatedPacketTest {
 
     @Test
     fun customPacket() {
-        val packet = generatePsuedoPacket()
+        val packet = generatePseudoPacket()
         val customPacket = CustomFourPacket()
 
 
 
     }
 
-    fun generatePsuedoPacket(): RakNetPacket {
+    private fun generatePseudoPacket(): RakNetPacket {
         val message = ConnectionRequest()
         val clientGuid = UUID.randomUUID().leastSignificantBits
         val timestamp = System.currentTimeMillis()

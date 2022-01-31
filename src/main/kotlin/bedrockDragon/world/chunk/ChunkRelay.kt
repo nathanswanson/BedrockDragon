@@ -115,6 +115,9 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         }
     }
 
+    /**
+     * [sendAllChunksForPlayer] is used for spawning or teleporting, this takes the player position and sends every chunk in their render distance.
+     */
     private fun sendAllChunksForPlayer(player: Player) {
 
 
@@ -161,9 +164,11 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 }
         }
     }
+
     private fun getChunkAbsolute(player: Player): WorldInt2 {
         return WorldInt2(player.position.x.toInt() shr 4, player.position.z.toInt() shr 4)
     }
+
     private fun checkChunkNeeds(player: Player) {
 
         val worldPosition = getWorldCoordinates()
@@ -250,11 +255,17 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 //        println(stringB)
    }
 
+    /**
+     * [toward] is used in for loops to automatically assign downTo or untill depending on values.
+     */
     private infix fun Int.toward(to: Int): IntProgression {
         val step = if (this > to) -1 else 1
         return IntProgression.fromClosedRange(this, to - step, step)
     }
 
+    /**
+     * [getWorldCoordinates] gets the absolute coordinates for this relay.
+     */
     private fun getWorldCoordinates(): WorldInt2 {
         return WorldInt2(
             ((region.x shl 4) + x) + if(region.x < 0) 8 else 0,
@@ -287,6 +298,9 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         relay.addPlayerFromAdjacentRelay(player)
     }
 
+    /**
+     * [getChunk2D] converts world position into the flat backing array.
+     */
     fun getChunk2D(x: Int, z: Int) : Chunk {
         return chunks[(x shl 2) + z]
     }

@@ -67,6 +67,7 @@ class World(val name: String): DSLBase() {
     private val loadedRegions = HashMap<WorldInt2, Region>()
     val logger = KotlinLogging.logger {}
     var playerCount = 0
+
     /**
      * [getOrLoadRelay] will take a position in the world and return the [ChunkRelay] that it is contained in.
      * if it has not been created yet it will make a new one and return that.
@@ -93,11 +94,19 @@ class World(val name: String): DSLBase() {
         }
     }
 
+    /**
+     * [getOrLoadRelayIdx] will take a position in the world and return its relay.
+     * relay(0,0) will be the relay for coord(0,0) to coord(64,64) for example.
+     */
     fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
         val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
         return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
     }
 
+    /**
+     * [getOrLoadRegionIdx] will take a position in the world and return its region.
+     * region(0,0) will be the region for coord(0,0) to coord(1024,1024) for example.
+     */
     private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
         return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
             loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
@@ -105,6 +114,9 @@ class World(val name: String): DSLBase() {
         }
     }
 
+    /**
+     * [getChunkAt] takes absolute coordinates and returns the chunk. player coordinates can be inputted and the chunk they are on will be returned.
+     */
     fun getChunkAt(position: Float3): Chunk {
         return getOrLoadRelay(position).getChunk2D(
             (position.x.toInt() shr 4).mod(4),
@@ -112,11 +124,17 @@ class World(val name: String): DSLBase() {
         )
     }
 
+    /**
+     * [getBlockAt] will find the block with the given coordinates. If the block is an unloaded chunk it will return air.
+     */
     fun getBlockAt(position: Float3): Block {
         //convert player position to relay space
         return getChunkAt(position).getBlockAt(position)
     }
 
+    /**
+     * [spawnEntity] is not functional yet. Will spawn an entity at the given coordinates.
+     */
     fun spawnEntity(position: Float3, entity: Entity): Boolean {
         return false
     }

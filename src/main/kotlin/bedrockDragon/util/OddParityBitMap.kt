@@ -1,5 +1,6 @@
 package bedrockDragon.util
 
+import bedrockDragon.util.bitmap.BitMap
 import bedrockDragon.world.chunk.PaletteSubChunk
 
 class OddParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResolution) : BitMap(size, paletteResolution) {

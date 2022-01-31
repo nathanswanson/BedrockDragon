@@ -45,7 +45,7 @@ package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
-import bedrockDragon.util.EvenParityBitMap
+import bedrockDragon.util.bitmap.EvenParityBitMap
 import bedrockDragon.util.OddParityBitMap
 import bedrockDragon.util.extension.writeLInt
 import bedrockDragon.world.PaletteGlobal

@@ -49,10 +49,16 @@ package bedrockDragon.util.aabb
  * @since ALPHA
  */
 class AABB(val x: Float, val y: Float, val z: Float, val height: Float, val depth: Float, val width: Float) {
+    /**
+     * [intersects] takes this object and another AABB object and determines if they are colliding.
+     */
     fun intersects(other: AABB) {
 
     }
 
+    /**
+     * [fastCheck] is ran before we deep check intersection so we know to not continue if it returns true.
+     */
     private fun fastCheck(other: AABB) {
 
     }

@@ -50,7 +50,9 @@ import bedrockDragon.player.Player
 import bedrockDragon.util.aabb.AABB
 import bedrockDragon.world.PaletteGlobal
 
-
+/**
+ * [BlockImpl] is class to access sealed [Block]
+ */
 class BlockImpl(name: String): Block(name)
 
 /**
@@ -61,7 +63,7 @@ class BlockImpl(name: String): Block(name)
 @BlockDSL
 sealed class Block(var name: String) {
 
-    //this will be provided by the builder constructor
+    //comment parameters todo
 
     var stackSize = 64
     var breakTool: Item? = null
@@ -79,10 +81,33 @@ sealed class Block(var name: String) {
     //todo runtimeId assign
     //events
 
+    /**
+     * [onInteract] method is called whenever a player right clicks this block.
+     *
+     * Parameters:
+     * - Player
+     */
     var onInteract: ((Player) -> Unit)? = null
-    var onNearbyBlockChanged: (() -> Unit)? = null
+    /**
+     * [onNearbyBlockChanged] method is called whenever a block on any side updates.
+     *
+     * Parameters:
+     * - Block
+     */
+    var onNearbyBlockChanged: ((Block) -> Unit)? = null
+    /**
+     * [onRandomTick] method is called on random tick.
+     */
     var onRandomTick: (() -> Unit)? = null
+
+    /**
+     * [onTick] method is called every world tick.
+     */
     var onTick: (() -> Unit)? = null
+
+    /**
+     * [onBlockAdded] method is called whenever a player places a block.
+     */
     var onBlockAdded: (() -> Unit)? = null
 
     var blockState: BlockState? = null
@@ -100,17 +125,23 @@ sealed class Block(var name: String) {
     override fun toString(): String {
         return """Block: $name"""
     }
-
-
-
 }
 
+/**
+ * [registerBlock] is the DSL builder for creating and registering blocks to the server.
+ */
 @BlockDSL
 fun registerBlock(modName: String, registerList: RegisterBlock.() -> Unit) {
     RegisterBlock(modName).run(registerList)
 }
 
 
+/**
+ * [RegisterBlock] DSL class for registering multiple blocks.
+ * @see [registerBlock] to call this class.
+ * @author Nathan Swanson
+ * @since BETA
+ */
 @BlockDSL
 class RegisterBlock(var modName: String) {
 

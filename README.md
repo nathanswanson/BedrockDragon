@@ -5,7 +5,7 @@ This is a passion project by me to create the most efficient decentralized serve
 
 ## Framework
 
-The server is structured around kotlin coroutine and sharable flows. A netty thread controls the IO of the server and passes packet information to the
+The server structures around kotlin coroutine and sharable flows. A netty thread controls the IO of the server and passes packet information to the
 coroutine network.
 
 
@@ -14,29 +14,29 @@ coroutine network.
 Currently, I am developing this as my main project.
 
 - Players can join
-- World is loaded from save with some bugs
-- basic inventory system
-- custom block and item DSL
+- World loads from save with some bugs
+- Basic inventory system
+- Custom block and item DSL
 - Players can move around world
-- chat
-- chunk loading with some bugs
-- basic block interaction
+- Chat
+- Chunk loading with some bugs
+- Basic block interaction
 ## Current Todo
 
-- fix chunk loading bugs
-- fix odd parity palettes in chunk loading from looking odd.
-- skins
-
-
+- Fix chunk loading bug where some sub chunks randomly appear as one block.
+- Skins.
+- Unify doc style.
+- Add poet for cloneable annotations.
+- Block breaking.
+- Catch up testing coverage.
 
 
 ## Contributing
 
-Contributing is currently closed unless invited until a solid framework is finished.
-
+If you know an answer to a current git issue, please don't hesitate to respond. I welcome any feedback on my project good or bad.
 ### Guide
 
 You must have:
 - A copy of Windows 10 Minecraft
-- Intelij IDEA. I'm sure another editor would work but this is built to support IDEA
+- IntelliJ IDEA. I'm sure another editor would work but this is built to support IDEA
 

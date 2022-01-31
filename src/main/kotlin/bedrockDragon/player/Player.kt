@@ -103,13 +103,13 @@ class Player(override var uuid: String): Living(), ISubscriber {
         read() //read nbt and load into fields
     }
 
-    //has player sent confirmation packet.
+    //Has player sent confirmation packet.
     var isConfirmed = false
-    //Outgoing Packets
+    //Outgoing Packets.
     val nettyQueue = ConcurrentLinkedQueue<MinecraftPacket>()
-
+    //entityIdSelf is for players special id. Set to just runtimeId.
     private val entityIdSelf = runtimeEntityId
-
+    //Gamemode for player.
     var gamemode = Gamemode.CREATIVE
         set(value) {
             //send gamemodepacket
@@ -118,25 +118,28 @@ class Player(override var uuid: String): Living(), ISubscriber {
             nettyQueue.add(gamemodePacket.gamePacket())
             field = value
         }
-    var isOp = false
-
-    var world = Registry.WORLD_REGISTRY[0]!!
-
+    //Operator status.
+    var op = false
+    //World player is on.
+    var world = Registry.WORLD_REGISTRY[0]
+    //Player armor, hot-bar, and 27 slot inventory.
     val inventory = PlayerInventory()
+    //Id that is assigned to an Inventory run addWindow to register new inventory.
     val windowId = ConcurrentHashMap<Inventory, Int>()
-
+    //Player skin data.
     var skinData: Skin? = null
+    //Metadata for player. Gravity, food, health.
     private val playerMeta =  MetaTag()
-
+    //chunks render distance
     var renderDistance = 4
+    //chunkRelay the player is currently on.
     var chunkRelay = world.getOrLoadRelay(position)
-    /*
-        NBT ENABLED VAR
-     */
-
     //temp
     var sendChunkCoord = ArrayList<WorldInt2>()
 
+    /* NBT ENABLED VAR*/
+
+    //Hunger bar for player.
     var foodLevel: Byte = 20
         set(value) {
             field = value
@@ -144,7 +147,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
             //update client food level
             refreshAndSendAttribute()
         }
+    //Value left before food drops.
     var foodExhaustionLevel: Byte = 0
+    //Food Saturation left before using foodLevel.
     var foodSaturationLevel: Byte = 0
 
     /**
@@ -168,6 +173,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
         loadDefaultInventories()
     }
 
+    /**
+     * [addItemToPlayerInventory] add given item and send the packet contents. this should use slot change packet.
+     */
     fun addItemToPlayerInventory(item: Item) {
         inventory.addItem(item)
         inventory.sendPacketContents(this)
@@ -205,13 +213,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
         attributePacket.attributes[5].value = 0.1f
         nettyQueue.add(attributePacket.gamePacket())
     }
+
+    /**
+     * [sendCommands] will allow a player to search for commands client side.
+     */
     private fun sendCommands() {
         AvailableCommandsPacket().let {
 
         }
     }
     /**
-     * [sendAdventure]
+     * [sendAdventure] Sends the players current permissions on the server.
      */
     private fun sendAdventure() {
         val packet = AdventureSettingsPacket()
@@ -230,10 +242,16 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(packet.gamePacket())
     }
 
+    /**
+     * [getDrops] getDrops main function is to get items to drop when entity dies.
+     */
     override fun getDrops(): List<Item> {
         return inventory.getContents().filterNotNull()
     }
 
+    /**
+     * [addWindow] adds a new inventory window into the players registry.
+     */
     private fun addWindow(inventory: Inventory, optionalId: Int = -1, isPermanent: Boolean = false, isAlwaysOpen: Boolean = false): Int {
         if(windowId.contains(inventory)) {
             return windowId[inventory]!!
@@ -258,6 +276,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
         return newWinId
     }
 
+    /**
+     * review needed
+     */
     override suspend fun tick() {
         while (true) { //20 tps aprox.
             runWithDynamicDelay {
@@ -268,11 +289,16 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
 
     }
-
+    /**
+     * review needed
+     */
     private fun runWithDynamicDelay(tasks: () -> Unit) {
         tasks.invoke()
     }
 
+    /**
+     * [armor] returns the ArmorInventory object of the player.
+     */
     override fun armor(): ArmorInventory {
         return ArmorInventory()
     }
@@ -330,23 +356,20 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     }
 
+    //todo review
     private fun refreshAndSendAttribute() {
 
     }
 
-    enum class Gamemode {
-        SURVIVAL,
-        CREATIVE,
-        ADVENTURE,
-        SPECTATOR
-    }
-
+    /**
+     * [sendMessage] sends text as raw data to the client.
+     */
     fun sendMessage(text: Any, type: Int = 0) {
         sendMessage(text.toString(), type)
     }
 
     /**
-     * [sendMessage] sends text as raw data to the client.
+     * [sendMessage] sends string as raw data to the client.
      */
     fun sendMessage(text: String, type: Int = 0) {
         val messagePacket = TextPacket()
@@ -397,8 +420,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
-        if(reactivePacket.sender != this) {
-        }
+//        if(reactivePacket.sender != this) {
+//        }
     }
 
     /**
@@ -534,7 +557,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
                 val commandArgs = commandPacket.command.split(" ")
-                Registry.COMMAND_REGISTRY[commandArgs[0]]?.let {
+                Registry.COMMAND_REGISTRY[commandArgs[0]].let {
                     //it.invoke?.let { it1 -> it1(this, commandArgs.subList(1,commandArgs.size).toTypedArray()) }
                     CommandEngine.invokeWith(commandArgs.subList(1,commandArgs.size).toTypedArray(), it, this)
                 } ?: sendMessage("Unknown command, use /help for a list of commands. ")
@@ -603,5 +626,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
      */
     override fun filter(reactivePacket: ReactivePacket<*>): Boolean {
         return reactivePacket.sender != this
+    }
+
+    enum class Gamemode {
+        SURVIVAL,
+        CREATIVE,
+        ADVENTURE,
+        SPECTATOR
     }
 }
