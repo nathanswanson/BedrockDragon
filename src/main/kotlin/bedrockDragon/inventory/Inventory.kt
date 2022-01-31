@@ -126,5 +126,4 @@ abstract class Inventory(val size: Int) {
     fun isOpenedBy(player: Player): Boolean {
         return viewers.contains(player)
     }
-    abstract fun openInventory()
 }

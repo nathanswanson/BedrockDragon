@@ -53,6 +53,11 @@ import bedrockDragon.world.PaletteGlobal
 
 class BlockImpl(name: String): Block(name)
 
+/**
+ * [Block] is for a dsl object to create new blocks, this is not meant to be extended.
+ * @author NATHAN SWANSON
+ * @since BETA
+ */
 @BlockDSL
 sealed class Block(var name: String) {
 

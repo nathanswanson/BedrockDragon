@@ -56,10 +56,6 @@ class PlayerInventory: Inventory(36) {
         type = -1
     }
 
-    override fun openInventory() {
-        TODO("Not yet implemented")
-    }
-
     fun sendPacketContents(player: Player) {
         player.nettyQueue.add(InventoryContentPacket().let {
             it.itemStacks = slots
