@@ -63,6 +63,7 @@ import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
 import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
+import bedrockDragon.network.raknet.protocol.game.entity.MoveEntityAbsolute
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
@@ -391,11 +392,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * [teleport] moves a player with a loading screen if needed.
      */
     fun teleport(position: Float3) {
-        //this.position = position
-        println(position)
-//        MoveEntityDeltaPacket().let {
-//            it.
-//        }
+        MoveEntityAbsolute().let {
+            it.positon = position
+            it.teleport = true
+            it.runtimeEntityId = runtimeEntityId
+            nettyQueue.add(it.gamePacket())
+        }
+        this.position = position
+        chunkRelay.removePlayer(this)
+        chunkRelay = world.getOrLoadRelay(position)
+        chunkRelay.addPlayer(this)
+        println(this.position)
     }
 
     //todo review
