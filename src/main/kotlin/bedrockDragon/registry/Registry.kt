@@ -44,6 +44,7 @@
 package bedrockDragon.registry
 
 import bedrockDragon.command.Command
+import bedrockDragon.item.Item
 import bedrockDragon.world.World
 
 /**
@@ -51,8 +52,8 @@ import bedrockDragon.world.World
  * @author Nathan Swanson
  * @since BETA
  */
-class Registry<T,K : DSLBase> {
-    private val registeredValues = HashMap<T, K>()
+open class Registry<T,K : DSLBase> {
+    protected val registeredValues = HashMap<T, K>()
 
 
     /**
@@ -64,7 +65,7 @@ class Registry<T,K : DSLBase> {
      * val sword = registry&#91;minecraft:wooden_sword&#93;
      */
      @Suppress("UNCHECKED_CAST")
-    operator fun get(value: T): K {
+    open operator fun get(value: T): K {
         return (registeredValues[value] as DSLBase).clone() as K
     }
 
@@ -80,8 +81,17 @@ class Registry<T,K : DSLBase> {
         return registeredValues.putIfAbsent(id, registerObject) == null
     }
 
+    operator fun set(name: T, value: K) {
+        registeredValues[name] = value
+    }
+
     companion object {
         val COMMAND_REGISTRY = Registry<String, Command>()
-        val WORLD_REGISTRY = Registry<Int, World>()
+        val WORLD_REGISTRY = object: Registry<Int, World>() {
+            override fun get(value: Int): World {
+                return getObject(value) ?: (registeredValues[0] as World) //todo null check
+            }
+        }
+        val ITEM_REGISTRY = Registry<String, Item>()
     }
 }

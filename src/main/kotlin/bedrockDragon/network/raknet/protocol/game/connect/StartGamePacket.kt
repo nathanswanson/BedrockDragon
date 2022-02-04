@@ -227,7 +227,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.texturePackRequired = false
             startGamePacket.gameRules = GameRules
             startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = "1.17.40"
+            startGamePacket.gameVersion = "1.18.1"
             startGamePacket.limitedWorldWidth = 16
             startGamePacket.limitedWorldHeight = 16
             startGamePacket.isNetherType = false

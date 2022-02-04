@@ -74,6 +74,7 @@ object VanillaBlocks {
                     it.openInventory(inventory as BlockInventory)
                 }
             }
+            block("deepslate")
         }
     }
 }

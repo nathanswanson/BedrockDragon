@@ -45,6 +45,7 @@ package bedrockDragon.item
 
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
+import bedrockDragon.registry.Registry
 import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.RuntimeItemState
 import bedrockDragon.world.PaletteGlobal
@@ -126,12 +127,12 @@ class RegisterItem(var modName: String) {
         if(item.subItems.isNotEmpty()) {
             item.subItems.forEach {
                 it.name = "$modName:${it.name}"
-                PaletteGlobal.itemRegistry[it.name] = it
+                Registry.ITEM_REGISTRY[it.name] = it
                 ensureRuntimeIdAlloc(it)
             }
         } else {
             item.name = "$modName:${item.name}"
-            PaletteGlobal.itemRegistry[item.name] = item
+            Registry.ITEM_REGISTRY[item.name] = item
             ensureRuntimeIdAlloc(item)
         }
     }

@@ -18,7 +18,7 @@ abstract class Living: Entity() {
     var deathLootTableSeed: Long? = null
     var deathTime: Short = 0
     var fallFlying: Byte = 0
-    var health: Float = 0f
+    open var health: Float = 1f
     var hurtByTimestamp: Int = 0
     var hurtTime: Short = 0
     var handDropChances: Array<Float>? = null //2

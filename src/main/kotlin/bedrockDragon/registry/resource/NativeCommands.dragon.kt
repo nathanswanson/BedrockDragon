@@ -46,6 +46,7 @@ package bedrockDragon.registry.resource
 import bedrockDragon.command.CommandTag
 import bedrockDragon.command.registerCommand
 import bedrockDragon.player.Player
+import bedrockDragon.registry.Registry
 import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 
@@ -89,7 +90,7 @@ object NativeCommands {
 
                 invoke = {
                     player, anies ->
-                    PaletteGlobal.itemRegistry[anies[1] as String]?.let {
+                    Registry.ITEM_REGISTRY[anies[1] as String]?.let {
                         it.count = (anies[2] as String).toInt()
                         player.addItemToPlayerInventory(it)
                     }
@@ -103,7 +104,6 @@ object NativeCommands {
                 invoke = {
                     player, anies ->
                     player.damage((anies[1] as String).toFloat())
-                    player.sendAttributes()
                 }
             }
             command("/kill") {

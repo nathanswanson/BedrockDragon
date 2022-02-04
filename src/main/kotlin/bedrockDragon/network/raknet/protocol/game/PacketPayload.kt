@@ -89,7 +89,6 @@ open class PacketPayload(val id: Int): Packet() {
 
             VarInt.writeUnsignedVarInt(typeId, outputStream)
 
-            //todo add inline functions for all types so we don't do this
 
             when(typeId) {
                 1 -> writeBoolean(value.key as Boolean)
@@ -124,19 +123,22 @@ open class PacketPayload(val id: Int): Packet() {
     }
 
     fun writeAttribute(attribute: AttributeBR.Attribute) {
-        writeFloatLE(attribute.minValue.toDouble())
-        writeFloatLE(attribute.maxValue.toDouble())
-        writeFloatLE(attribute.getValueOrDefault().toDouble())
-        writeFloatLE(attribute.defaultValue.toDouble())
+        writeFloatLE(attribute.minValue)
+        writeFloatLE(attribute.maxValue)
+        writeFloatLE(attribute.getValueOrDefault())
+        writeFloatLE(attribute.defaultValue)
         writeString(attribute.name)
     }
 
+    /**
+     * [toString] is only for debug do not use this to get data from packet. This function uses reflection and has high overhead.
+     */
     override fun toString(): String {
         val builder = StringBuilder()
 
         builder.appendLine(this::class.simpleName)
         this::class.memberProperties.filter { property -> property.visibility == KVisibility.PUBLIC
-        }.forEach { try {builder.append("${it.name}: ${it.call(this)}\n")} catch (e: Exception) {} }
+        }.forEach { try {builder.append("${it.name}: ${it.call(this)}\n")} catch (_: Exception) {} }
         return builder.toString()
     }
 }

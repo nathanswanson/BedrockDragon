@@ -44,6 +44,7 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
+import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.player.Player
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
@@ -123,10 +124,11 @@ class Chunk(val position: WorldInt2,
 
 
         //biome array
-        stream.write(ByteArray(256) {1})
+        stream.write(ByteArray(25) {((127 shl 1) or 1).toByte()})
         //border blocks
         stream.write(0)
-        //block entities
+        //extra data
+        VarInt.writeUnsignedVarInt(0, stream)
 
         return stream
     }

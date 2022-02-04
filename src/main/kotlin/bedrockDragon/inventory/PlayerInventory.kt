@@ -72,8 +72,8 @@ class PlayerInventory: Inventory(36) {
      * [sendPacketContents] sends all item slots to given players.
      */
     fun sendPacketContents(player: Array<Player>) {
-        slots.forEach {
-
+        player.forEach {
+            sendPacketContents(it)
         }
     }
 }

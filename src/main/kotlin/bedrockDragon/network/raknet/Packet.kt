@@ -1106,6 +1106,10 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
         return this
     }
 
+    fun writeFloatLE(f: Float): Packet {
+        buffer.writeFloatLE(f)
+        return this
+    }
     /**
      * Writes a `double` to the packet.
      *

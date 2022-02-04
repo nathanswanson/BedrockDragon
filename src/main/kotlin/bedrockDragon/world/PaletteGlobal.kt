@@ -125,6 +125,9 @@ object PaletteGlobal {
         globalBlockPalette["minecraft:dandelion"] = globalBlockPalette["minecraft:yellow_flower"]!!
         globalBlockPalette["minecraft:poppy"] = globalBlockPalette["minecraft:red_flower"]!!
 
+
+        //temp to set is deepslate is now in palette
+        globalBlockPalette["minecraft:deepslate"] = globalBlockPalette["minecraft:deny"]!!
         val jsonData = Json.decodeFromStream<JsonObject>(ClassLoader.getSystemResourceAsStream("blockAlias.json")!!)
         jsonData.forEach {
             it.value.jsonArray.forEachIndexed { idx, blockEntry ->

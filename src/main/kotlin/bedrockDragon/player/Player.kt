@@ -70,6 +70,7 @@ import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
 import bedrockDragon.network.raknet.protocol.game.player.*
+import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
 import bedrockDragon.reactive.ISubscriber
@@ -139,14 +140,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
     var sendChunkCoord = ArrayList<WorldInt2>()
 
     /* NBT ENABLED VAR*/
-
+    override var health: Float = 20f
+        set(value) {
+            updateAttribute(value, AttributeBR[4])
+            field = value
+        }
     //Hunger bar for player.
     var foodLevel: Byte = 20
         set(value) {
-            field = value
-
             //update client food level
-            refreshAndSendAttribute()
+            updateAttribute(value.toFloat(), AttributeBR[7])
+            field = value
         }
     //Value left before food drops.
     var foodExhaustionLevel: Byte = 0
@@ -162,10 +166,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //register to Chat Rail
         ChatRail.DEFAULT.subscribe(this)
         chunkRelay.addPlayer(this)
-       // scope.launch { tick() }
-        val attribute = PlayerAttributePacket()
-        attribute.runtimeEntityId = runtimeEntityId
-        nettyQueue.add(attribute.gamePacket())
 
         sendAdventure()
         sendAttributes()
@@ -185,11 +185,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
     private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
-        val woodenSword = PaletteGlobal.itemRegistry["minecraft:wooden_sword"]!!
+        val woodenSword = Registry.ITEM_REGISTRY["minecraft:wooden_sword"]
         woodenSword.iDurability = 20
         woodenSword.count = 1
 
-        val diamondPickAxe = PaletteGlobal.itemRegistry["minecraft:diamond_pickaxe"]!!
+        val diamondPickAxe = Registry.ITEM_REGISTRY["minecraft:diamond_pickaxe"]
         diamondPickAxe.iDurability = 20
         diamondPickAxe.count = 1
 
@@ -208,10 +208,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
      */
-     fun sendAttributes() {
+    private fun sendAttributes() {
         val attributePacket = PlayerAttributePacket()
-        attributePacket.attributes[4].value = health
-        attributePacket.attributes[5].value = 0.1f
+        for (attribute in AttributeBR.attributes) {
+            attributePacket.attributes.add(attribute)
+        }
         nettyQueue.add(attributePacket.gamePacket())
     }
 
@@ -315,13 +316,15 @@ class Player(override var uuid: String): Living(), ISubscriber {
         //respawn remove inventory
         //reset attributes to default
         //respawn
+        health = 0f
+
         RespawnPacket().let {
-            it.position = Float3(0f,0f,0f)
+            it.position = Float3(0f,150f,0f)
             it.runtimeEntityId = runtimeEntityId
             nettyQueue.add(it.gamePacket())
         }
-
         inventory.clear()
+        inventory.sendPacketContents(this)
     }
 
     /**
@@ -357,9 +360,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     }
 
-    //todo review
-    private fun refreshAndSendAttribute() {
-
+    private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
+        val attributeInstance = attribute.copy()
+        attributeInstance.value = value
+        PlayerAttributePacket().let {
+            it.runtimeEntityId = runtimeEntityId
+            it.attributes.add(attributeInstance)
+            nettyQueue.add(it.gamePacket())
+        }
     }
 
     /**
@@ -405,11 +413,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         println(this.position)
     }
 
-    //todo review
-    fun updateAttributes() {
-
-    }
-
     /**
      * [disconnect] will both safely deregister the client and also tell the client that the connection
      * has been terminated.
@@ -424,6 +427,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
         })
         chunkRelay.removePlayer(this)
     }
+
+
 
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
@@ -513,16 +518,16 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
-                        val levelEventPacket = LevelEventPacket()
-                        val block = world.getBlockAt(actionPacket.coord)
-                        levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
-                        levelEventPacket.position = actionPacket.coord
-                        levelEventPacket.data = (block.hardness * 5).toInt() //todo break time
-                        println(levelEventPacket)
-                        nettyQueue.add(levelEventPacket.gamePacket())
+//                        val levelEventPacket = LevelEventPacket()
+//                        val block = world.getBlockAt(actionPacket.coord)
+//                        levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
+//                        levelEventPacket.position = actionPacket.coord
+//                        levelEventPacket.data = (block.hardness * 5).toInt() //todo break time
+//                        println(levelEventPacket)
+//                        nettyQueue.add(levelEventPacket.gamePacket())
                     }
                     PlayerActionPacket.ACTION_JUMP -> {
-
+                        foodLevel--
                     }
                 }
 
@@ -622,7 +627,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * we either have to match or be less than what they ask if we go over it would crash the client.
      */
     private fun handleChunkRadius(max: Int) {
-        //todo this needs to apply chunk radius to player object
         renderDistance = max.coerceAtMost(ServerProperties["view-distance"] as Int)
         logger.trace { "sent '$name' update chunk radius $renderDistance " }
         nettyQueue.add(ChunkRadiusUpdatePacket(renderDistance).gamePacket())

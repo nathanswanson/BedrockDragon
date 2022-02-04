@@ -7,10 +7,10 @@ import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 class PlayerAttributePacket: PacketPayload(MinecraftPacketConstants.UPDATE_ATTRIBUTES) {
 
     var runtimeEntityId = 0L
-    var attributes = AttributeBR(emptyArray()).attributes
+    var attributes = ArrayList<AttributeBR.Attribute>()
 
     override fun encode() {
-        writeVarLong(runtimeEntityId)
+        writeUnsignedVarLong(runtimeEntityId)
         writeUnsignedVarInt(attributes.size)
         attributes.forEach {
             writeAttribute(it)
