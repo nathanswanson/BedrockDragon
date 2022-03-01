@@ -70,6 +70,7 @@ sealed class Item(var name: String = "item"): DSLBase(){
     var iDurability = durability
     var count = 1
 
+    var dynamicFields = HashMap<String, Any>()
     override fun clone(): Item {
         return ItemImpl(name).let {
             it.runtimeId = runtimeId

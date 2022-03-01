@@ -46,9 +46,7 @@ package bedrockDragon.network.raknet.peer
 import bedrockDragon.DragonServer
 import bedrockDragon.network.PlayerStatus
 import bedrockDragon.network.auth.MojangAuth
-import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.handler.PacketConstants
-import bedrockDragon.network.raknet.handler.login.ClientToServerHandler
 import bedrockDragon.network.raknet.handler.minecraft.*
 import bedrockDragon.network.raknet.protocol.RaknetConnectionStatus
 import bedrockDragon.network.raknet.protocol.ConnectionType
@@ -59,7 +57,6 @@ import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
 import bedrockDragon.network.raknet.protocol.game.connect.PlayStatusPacket
 import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
-import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
 import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket

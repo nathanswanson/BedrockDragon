@@ -47,6 +47,7 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.type.gamerule.GameRules
 import bedrockDragon.player.Player
+import bedrockDragon.registry.Registry
 import bedrockDragon.resource.RuntimeItemState
 import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
@@ -66,13 +67,13 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     lateinit var rotation: Float2 //vector2
     var seed: Int = -1 //sVarInt
     var biomeType: Short = 0
-    var customBiomeName: String = ""
+    var customBiomeName: String = "plains"
     var dimension: Int = 0 //sVarInt
     var generator: Int = 1 //sVarInt
-    var worldGamemode: Int = 0 //sVarInt
-    var difficulty: Int = 0 //sVarInt
+    var worldGamemode: Int = playerGamemode //sVarInt
+    var difficulty: Int = 1 //sVarInt
     lateinit var worldSpawn: Float3
-    val hasAchievementsDisabled = false
+    val hasAchievementsDisabled = true
     var dayCycleStopTime: Int = -1 //sVarInt
     val EDUOffer: Int = 0 //sVarInt
     val educationFeatures = false
@@ -81,7 +82,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var lightningLevel: Float = 0f
     val hasConfirmedPlatLockContent = false
     val isMultiplayer = true
-    val broadcastToLAN = true //todo
+    val broadcastToLAN = true
     var xboxLiveBroadcast: Int = 4
     var platformBroadcaseMode: Int = 4
     val enableCommands = true
@@ -97,13 +98,13 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     val isFromWorldTemplate = false
     val lockedWorldOptionTemplate = false
     val v1Villager = false
-    var gameVersion: String = ""
+    var gameVersion: String = "1.18.10"
     var limitedWorldWidth: Int = 16
     var limitedWorldHeight: Int = 16
     var isNetherType = false
     var forceExperimental = false
     var levelId: String = ""
-    var worldName: String = "Dragon"
+    var worldName: String = "A Bedrock Dragon Server"
     val premiumWorldId: String = ""
     val isTrial = false
     var movementType: Int = 0 //varInt
@@ -111,7 +112,6 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var serverAuthoritativeBlockBreaking = false
     var currentTick: Long = 0 //Long LE
     var enchantSeed: Int = 0 //sVarInt
-    lateinit var blockProperties: Array<String>
     val multiplayerCorId = ""//: String = UUID.randomUUID().toString()
     var inventoryServerAuthoritative = false
     val serverEngine = ""
@@ -123,7 +123,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     override fun encode() {
         try {
             writeVarLong(entityIdSelf)
-            writeUnsignedVarLong(runtimeEntityId.toLong())
+            writeUnsignedVarLong(runtimeEntityId)
             writeVarInt(playerGamemode)
             writeVector3(spawn)
             writeVector2(rotation)
@@ -211,36 +211,9 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             startGamePacket.playerGamemode = player.gamemode.ordinal
             startGamePacket.spawn = player.position
             startGamePacket.rotation = Float2(0f,0f)
-            startGamePacket.seed = -1
-            startGamePacket.biomeType = 0
-            startGamePacket.customBiomeName = "plains"
             startGamePacket.dimension = 0 //overworld
-            startGamePacket.generator = 1
-            startGamePacket.worldGamemode = 0
-            startGamePacket.difficulty = 1
-            startGamePacket.worldSpawn = Float3(0f,80f,0f)
-            startGamePacket.dayCycleStopTime = -1
-            startGamePacket.rainLevel = 0f
-            startGamePacket.lightningLevel = 0f
-            startGamePacket.xboxLiveBroadcast = 4
-            startGamePacket.platformBroadcaseMode = 4
-            startGamePacket.texturePackRequired = false
-            startGamePacket.gameRules = GameRules
-            startGamePacket.permissionLevel = 1
-            startGamePacket.gameVersion = "1.18.1"
-            startGamePacket.limitedWorldWidth = 16
-            startGamePacket.limitedWorldHeight = 16
-            startGamePacket.isNetherType = false
-            startGamePacket.forceExperimental = false
-            startGamePacket.levelId = "dalpha"
-            startGamePacket.worldName = "DRAGON"
-            startGamePacket.movementType = 0
-            startGamePacket.movementRewindSize = 0
-            startGamePacket.serverAuthoritativeBlockBreaking = false
-            startGamePacket.currentTick = 0
-            startGamePacket.enchantSeed = -1
-            startGamePacket.blockProperties = emptyArray()
-            startGamePacket.inventoryServerAuthoritative = false
+            startGamePacket.worldSpawn = startGamePacket.spawn
+
             return startGamePacket
         }
     }

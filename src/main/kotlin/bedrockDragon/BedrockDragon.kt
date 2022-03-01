@@ -46,6 +46,7 @@ package bedrockDragon
 import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.registry.Registry
 import bedrockDragon.registry.resource.NativeCommands
+import bedrockDragon.registry.resource.VanillaEntities
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.world.World
@@ -111,6 +112,7 @@ fun main(args: Array<String>) {
 
     //register commands
     NativeCommands
+    VanillaEntities
 
     //todo temp
     val bindAddress = InetSocketAddress(19132)

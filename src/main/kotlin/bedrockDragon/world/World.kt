@@ -45,7 +45,10 @@ package bedrockDragon.world
 
 import bedrockDragon.block.Block
 import bedrockDragon.entity.Entity
+import bedrockDragon.network.raknet.protocol.game.entity.AddEntityPacket
+import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
+import bedrockDragon.registry.Registry
 import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
@@ -135,7 +138,17 @@ class World(val name: String): DSLBase() {
     /**
      * [spawnEntity] is not functional yet. Will spawn an entity at the given coordinates.
      */
-    fun spawnEntity(position: Float3, entity: Entity): Boolean {
-        return false
+    fun spawnEntity(position: Float3, entity: String, tempPlayer: Player): Boolean {
+        val entityObject = Registry.ENTITY_REGISTRY[entity]
+        tempPlayer.nettyQueue.add(
+            AddEntityPacket().let {
+                it.entitySelfId = entityObject.entityUniqueIdentifier
+                it.runtimeEntityId = 2
+                it.position = position
+                it.entityType = entity
+                it.gamePacket()
+            }
+        )
+        return true
     }
 }

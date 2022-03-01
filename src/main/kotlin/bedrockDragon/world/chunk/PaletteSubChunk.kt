@@ -199,7 +199,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                         blockPalette.palette.add(entry)
                     } else {
                         unknownPaletteId = true
-                        println(it.nbtCompound["Name"]!!.nbtString.value)
+                        //println(it.nbtCompound["Name"]!!.nbtString.value)
                         blockPalette.palette.add(PaletteGlobal.getRuntimeIdFromName("minecraft:bedrock"))
                     }
 

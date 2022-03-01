@@ -45,10 +45,20 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
+import bedrockDragon.entity.DataTag.DATA_AIR
+import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_HEIGHT
+import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_WIDTH
+import bedrockDragon.entity.DataTag.DATA_COLOR
 import bedrockDragon.entity.DataTag.DATA_FLAGS
+import bedrockDragon.entity.DataTag.DATA_FLAG_ALWAYS_SHOW_NAMETAG
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
 import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
 import bedrockDragon.entity.DataTag.DATA_FLAG_HAS_COLLISION
+import bedrockDragon.entity.DataTag.DATA_HEALTH
+import bedrockDragon.entity.DataTag.DATA_LEAD_HOLDER_EID
+import bedrockDragon.entity.DataTag.DATA_MAX_AIR
+import bedrockDragon.entity.DataTag.DATA_NAMETAG
+import bedrockDragon.entity.DataTag.DATA_SCALE
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
@@ -60,6 +70,7 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.command.AvailableCommandsPacket
 import bedrockDragon.network.raknet.protocol.game.command.CommandRequestPacket
+import bedrockDragon.network.raknet.protocol.game.connect.CreativeContentPacket
 import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
@@ -112,7 +123,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
     //entityIdSelf is for players special id. Set to just runtimeId.
     private val entityIdSelf = runtimeEntityId
     //Gamemode for player.
-    var gamemode = Gamemode.CREATIVE
+    var gamemode = Gamemode.SURVIVAL
         set(value) {
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
@@ -172,6 +183,19 @@ class Player(override var uuid: String): Living(), ISubscriber {
         sendMeta()
 
         loadDefaultInventories()
+
+        //updateAttribute(0.1f, AttributeBR[5])
+        //debug
+        PlayerAttributePacket().let {
+            it.runtimeEntityId = runtimeEntityId
+            it.attributes.addAll(arrayOf(AttributeBR[4], AttributeBR[7], AttributeBR[5], AttributeBR[9], AttributeBR[10]))
+
+            nettyQueue.add(it.gamePacket())
+        }
+        //end debug
+
+        nettyQueue.add(CreativeContentPacket().gamePacket())
+
     }
 
     /**
@@ -185,17 +209,17 @@ class Player(override var uuid: String): Living(), ISubscriber {
     private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
-        val woodenSword = Registry.ITEM_REGISTRY["minecraft:wooden_sword"]
-        woodenSword.iDurability = 20
-        woodenSword.count = 1
+        //val woodenSword = Registry.ITEM_REGISTRY["minecraft:wooden_sword"]
+        //woodenSword.iDurability = 20
+        //woodenSword.count = 1
 
-        val diamondPickAxe = Registry.ITEM_REGISTRY["minecraft:diamond_pickaxe"]
-        diamondPickAxe.iDurability = 20
-        diamondPickAxe.count = 1
+        //val diamondPickAxe = Registry.ITEM_REGISTRY["minecraft:diamond_pickaxe"]
+        //diamondPickAxe.iDurability = 20
+        //diamondPickAxe.count = 1
 
-        inventory.addItem(diamondPickAxe)
+        //inventory.addItem(diamondPickAxe)
 
-        inventory.addItem(woodenSword)
+        //inventory.addItem(woodenSword)
         inventory.sendPacketContents(this)
     }
 
@@ -233,13 +257,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         for(type in AdventureSettings.Type.values()) {
             packet.flag(type.id, type.defaultValue)
         }
-
-        packet.flags = 0
-        packet.actionPermissions = 30
         packet.commandPermission = 1
         packet.permissionLevel = 2
-
-        packet.userId = entityIdSelf
+        packet.customStoredPermissions = 0
+        packet.userId = runtimeEntityId
 
         nettyQueue.add(packet.gamePacket())
     }
@@ -331,15 +352,23 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * Meta controls gravity, size, air, total air ...
      */
     private fun sendMeta() {
-        var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
-        flag = flag xor (1L shl DATA_FLAG_BREATHING)
-        flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
+        //var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
+        //flag = flag xor (1L shl DATA_FLAG_BREATHING)
+        //flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
 
-        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
 
-       // playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-      //  playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
-        //playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
+        //for testing
+        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(422246825345024L))
+        playerMeta.put(DATA_FLAG_ALWAYS_SHOW_NAMETAG, MetaTag.TypedDefineTag.TAGBYTE(1))
+//        playerMeta.put(DATA_COLOR, MetaTag.TypedDefineTag.TAGBYTE(0))
+//        playerMeta.put(DATA_AIR, MetaTag.TypedDefineTag.TAGSHORT(400))
+//        playerMeta.put(DATA_MAX_AIR, MetaTag.TypedDefineTag.TAGSHORT(400))
+//        playerMeta.put(DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(""))
+//        playerMeta.put(DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
+//        playerMeta.put(DATA_SCALE, MetaTag.TypedDefineTag.TAGFLOAT(1f))
+//        playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
+//        playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
+//        playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
 
         val entityDataPacket = EntityDataPacket()
         entityDataPacket.runtimeEntityId = runtimeEntityId
@@ -464,6 +493,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.TEXT -> {
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
+                sendAdventure()
                 ChatRail.DEFAULT.invoke(payload.message)
 
             }
@@ -514,10 +544,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.PLAYER_ACTION -> {
                 val actionPacket = PlayerActionPacket()
                 actionPacket.decode(inGamePacket.payload)
-                sendMessage(actionPacket.action)
                 //action type switch
                 when(actionPacket.action) {
                     PlayerActionPacket.ACTION_START_BREAK -> {
+                        println(actionPacket.action)
 //                        val levelEventPacket = LevelEventPacket()
 //                        val block = world.getBlockAt(actionPacket.coord)
 //                        levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
@@ -538,7 +568,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.ANIMATE -> {
 
             }
-            MinecraftPacketConstants.RESPAWN -> { println("RESPAWN") }
+            MinecraftPacketConstants.RESPAWN -> {
+                RespawnPacket().let {
+                    it.decode(inGamePacket.payload)
+                    it.position = Float3(0f, 100f, 0f)
+                    it.state = 1
+                    nettyQueue.add(it.gamePacket())
+                }
+            }
             MinecraftPacketConstants.CONTAINER_CLOSE -> {
                 val containerRequest = ContainerClosePacket()
                 containerRequest.decode(inGamePacket.payload)
@@ -554,6 +591,7 @@ class Player(override var uuid: String): Living(), ISubscriber {
 //                adventurePacket.decode(inGamePacket.payload)
 //                logger.info { adventurePacket.toString() }
 //                nettyQueue.add(adventurePacket.gamePacket())
+                println("adventure")
             }
             MinecraftPacketConstants.PLAYER_INPUT -> { println("PLAYER_INPUT") }
             MinecraftPacketConstants.SET_PLAYER_GAME_TYPE -> { /*reject*/ }
@@ -596,7 +634,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { println("CLIENT_CACHE_STATUS") }
             MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
             MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }
-
+            else -> {
+                println("Unkown Packet ${inGamePacket.packetId}")
+            }
         }
     }
 

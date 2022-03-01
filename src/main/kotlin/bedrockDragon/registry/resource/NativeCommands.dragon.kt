@@ -114,6 +114,17 @@ object NativeCommands {
                         player.kill()
                 }
             }
+            command("/summon") {
+                args.add(CommandTag.commandStringTag()) //mob name
+                args.add(CommandTag.commandIntTag()) //x
+                args.add(CommandTag.commandIntTag()) //y
+                args.add(CommandTag.commandIntTag()) //z
+
+                invoke = {
+                    player, anies ->
+                        player.world.spawnEntity(Float3((anies[0] as String).toFloat(), (anies[1] as String).toFloat(), (anies[2] as String).toFloat()), anies[3] as String, player)
+                }
+            }
         }
     }
 }

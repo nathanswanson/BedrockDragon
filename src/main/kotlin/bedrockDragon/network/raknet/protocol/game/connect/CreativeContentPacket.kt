@@ -2,7 +2,10 @@ package bedrockDragon.network.raknet.protocol.game.connect
 
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.registry.Registry
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
 import kotlin.collections.HashMap
 
 class CreativeContentPacket: PacketPayload(MinecraftPacketConstants.CREATIVE_CONTENT) {
@@ -11,16 +14,12 @@ class CreativeContentPacket: PacketPayload(MinecraftPacketConstants.CREATIVE_CON
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encode() {
+        writeUnsignedVarInt(Registry.ITEM_REGISTRY.size())
 
-        writeUnsignedVarInt(0)
-//        val stream = ClassLoader.getSystemResourceAsStream("creative_items.json")!!
-//        val json = Json.decodeFromStream<Array<CreativeItemEntry>>(stream)
-//
-//        writeUnsignedVarInt(json.size)
-//        json.forEach {
-//            writeUnsignedVarInt(it.blockRuntimeId)
-//        }
+        for(i in Registry.ITEM_REGISTRY.allEntries()) {
+            writeUnsignedVarInt(i.value.runtimeId)
+            writeItem(i.value, true)
+        }
+
     }
-
-    data class CreativeItemEntry(val id: String, val blockRuntimeId: Int)
 }

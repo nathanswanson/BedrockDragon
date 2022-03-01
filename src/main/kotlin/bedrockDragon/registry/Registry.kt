@@ -44,6 +44,7 @@
 package bedrockDragon.registry
 
 import bedrockDragon.command.Command
+import bedrockDragon.entity.Entity
 import bedrockDragon.item.Item
 import bedrockDragon.world.World
 
@@ -85,6 +86,14 @@ open class Registry<T,K : DSLBase> {
         registeredValues[name] = value
     }
 
+    fun size(): Int {
+        return registeredValues.size
+    }
+
+    fun allEntries(): HashMap<T, K> {
+        return registeredValues
+    }
+
     companion object {
         val COMMAND_REGISTRY = Registry<String, Command>()
         val WORLD_REGISTRY = object: Registry<Int, World>() {
@@ -93,5 +102,6 @@ open class Registry<T,K : DSLBase> {
             }
         }
         val ITEM_REGISTRY = Registry<String, Item>()
+        val ENTITY_REGISTRY = Registry<String, Entity>()
     }
 }

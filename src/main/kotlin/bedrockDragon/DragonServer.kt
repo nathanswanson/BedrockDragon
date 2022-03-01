@@ -43,12 +43,10 @@
 
 package bedrockDragon
 
-import bedrockDragon.DragonServer.ServerHandlerFactory.guid
 import bedrockDragon.DragonServer.ServerHandlerFactory.pongId
 import bedrockDragon.network.Peer
 import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNetPacket
-//import bedrockDragon.network.raknet.ThreadedListener
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.handler.PacketHandler
 import bedrockDragon.network.raknet.handler.connect.ConnectedPingHandler
@@ -68,12 +66,10 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.FixedRecvByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioDatagramChannel
-import io.netty.util.ResourceLeakDetector
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
@@ -116,7 +112,6 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
      * @since ALPHA
      */
     override fun start(): Boolean {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID)
         val uuid = UUID.randomUUID()
         pongId = uuid.leastSignificantBits
 

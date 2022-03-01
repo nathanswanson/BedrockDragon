@@ -22,8 +22,10 @@ class EntityDataPacket: PacketPayload(MinecraftPacketConstants.SET_ENTITY_DATA) 
             writeUnsignedVarInt(it.value.type)
             when(it.value.type) {
                 DATA_TYPE_BYTE -> write(it.value.data as Byte)
-                DATA_TYPE_INT -> writeInt(it.value.data as Int)
-                DATA_TYPE_SHORT -> writeShort(it.value.data as Short)
+                DATA_TYPE_SHORT -> writeShortLE((it.value.data as Short).toInt())
+                DATA_TYPE_INT -> writeVarInt(it.value.data as Int)
+                DATA_TYPE_FLOAT -> writeFloatLE(it.value.data as Float)
+                DATA_TYPE_STRING -> writeString(it.value.data as String)
                 DATA_TYPE_LONG -> writeVarLong(it.value.data as Long)
             }
         }

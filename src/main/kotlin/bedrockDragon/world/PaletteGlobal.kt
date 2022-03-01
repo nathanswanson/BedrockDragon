@@ -47,6 +47,7 @@ import bedrockDragon.block.Block
 import bedrockDragon.registry.resource.VanillaBlocks
 import bedrockDragon.item.Item
 import bedrockDragon.registry.resource.VanillaItems
+import bedrockDragon.resource.RuntimeItemState
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -85,6 +86,7 @@ object PaletteGlobal {
         val nbtData = nbt.decodeFromStream<NbtCompound>(runtime!!)[""]!!.nbtList
         nbtData.forEach {
             val entryCompound = it.nbtCompound
+            println(it.nbtCompound["name"])
             globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, ArrayList())
 
             val paletteEntry = PaletteEntry(entryCompound["name"]!!.nbtString.value,
@@ -124,10 +126,10 @@ object PaletteGlobal {
         globalBlockPalette["minecraft:blue_orchid"] = getEntryFromName("minecraft:red_flower", 1)
         globalBlockPalette["minecraft:dandelion"] = globalBlockPalette["minecraft:yellow_flower"]!!
         globalBlockPalette["minecraft:poppy"] = globalBlockPalette["minecraft:red_flower"]!!
-
+        //globalBlockPalette["minecraft:deepslate"] = arrayListOf(createPsuedoBlockEntry("minecraft:deepslate"))
 
         //temp to set is deepslate is now in palette
-        globalBlockPalette["minecraft:deepslate"] = globalBlockPalette["minecraft:deny"]!!
+        //globalBlockPalette["minecraft:deepslate"] = globalBlockPalette["minecraft:deny"]!!
         val jsonData = Json.decodeFromStream<JsonObject>(ClassLoader.getSystemResourceAsStream("blockAlias.json")!!)
         jsonData.forEach {
             it.value.jsonArray.forEachIndexed { idx, blockEntry ->
@@ -144,13 +146,16 @@ object PaletteGlobal {
         return globalBlockPalette[name]?.get(data)?.runtimeId ?: -1
     }
 
+    private fun createPsuedoBlockEntry(name: String): PaletteEntry {
+        return PaletteEntry(name, -1, null, 0, 0, RuntimeItemState.getRuntimeIdFromName(name))
+    }
 
     private fun getEntryFromName(name: String, data: Int = 0): ArrayList<PaletteEntry> {
         return arrayListOf(globalBlockPalette[name]?.get(data) ?: globalBlockPalette["minecraft:bedrock"]!![0])
     }
 
     @Serializable
-    data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound, val id: Int, val data: Short, val runtimeId: Int)
+    data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound?, val id: Int, val data: Short, val runtimeId: Int)
 
 }
 

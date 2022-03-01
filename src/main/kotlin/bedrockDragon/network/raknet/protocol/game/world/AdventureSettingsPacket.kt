@@ -21,7 +21,7 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
 
 
     companion object {
-        val BITFLAG_SECOND_SET = 1 shl 16
+        val BITFLAG_SECOND_SET = 65536
 
         val WORLD_IMMUTABLE = 0x01
         val NO_PVP = 0x02
@@ -45,7 +45,7 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
 
     var commandPermission = PERMISSION_NORMAL //varInt
     var actionPermissions = 0 //varInt
-    var permissionLevel = 2 //varInt
+    var permissionLevel = 1 //varInt
     var customStoredPermissions = 0 //varInt
     var userId = 1L //LELong
 

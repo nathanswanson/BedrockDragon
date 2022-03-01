@@ -43,6 +43,7 @@
 
 package bedrockDragon.registry.resource
 
+import bedrockDragon.item.Item
 import bedrockDragon.item.registerItem
 
 /**
@@ -56,7 +57,8 @@ object VanillaItems {
         SHOVEL,
         PICKAXE,
         SWORD,
-        HOE
+        HOE,
+        FOOD
     }
 
     init {
@@ -155,6 +157,16 @@ object VanillaItems {
             item("glowstone")
             item("torch")
             item("anvil")
+
+            item("*") { //food
+                tag = ItemTag.FOOD
+                of {
+                    name = "cooked_porkchop"
+                    dynamicFields["foodPt"] = 8.0
+                    dynamicFields["saturationPt"] = 12.8
+                }
+            }
+
             item("*_pickaxe") {
                 maxStackSize = 1
                 tag = ItemTag.PICKAXE

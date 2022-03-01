@@ -43,6 +43,8 @@
 
 package bedrockDragon.entity
 
+import bedrockDragon.registry.DSLBase
+import bedrockDragon.registry.Registry
 import bedrockDragon.util.ISavable
 import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
@@ -59,12 +61,21 @@ import kotlin.io.path.inputStream
  */
 
 @EntityDSL
-fun entity(name: String, entity: Entity.() -> Unit): Entity {
-    return Entity(name).apply(entity).build()
+fun registerEntity(modName: String, registerList: RegisterEntity.() -> Unit) {
+    RegisterEntity(modName).run(registerList)
 }
 
 @EntityDSL
-open class Entity(val name: String = "entity"): ISavable {
+class RegisterEntity(var modName: String) {
+    @EntityDSL
+    fun entity(name: String, lambda: Entity.() -> Unit = {}) {
+        val entity = Entity(name).apply(lambda)
+
+        Registry.ENTITY_REGISTRY[name] = entity
+    }
+}
+@EntityDSL
+open class Entity(val name: String = "entity"): ISavable, DSLBase() {
     override val fileName: Path
         get() = Path("Players/$uuid.nbt")
 
@@ -92,9 +103,17 @@ open class Entity(val name: String = "entity"): ISavable {
     companion object { var nextId = 1L }
     val runtimeEntityId = nextId++
 
+    var entityUniqueIdentifier = 0L
+    //START BUILDER
     fun build(): Entity {
         return this //for future use
     }
+
+    //var health = 0
+    //var damage = 0
+
+
+    //END BUILDER
 
     override fun save(builder: NbtCompoundBuilder) {
         builder.put("Air", air)
