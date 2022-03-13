@@ -104,7 +104,7 @@ abstract class Inventory(val size: Int) {
     fun forceAdd(item: Item, slot: Int): Boolean {
         //slot > inventory size
         if(slot >= size)
-            throw IndexOutOfBoundsException("Can not place ${item} in slot ${slot} because is larger than" +
+            throw IndexOutOfBoundsException("Can not place $item in slot $slot because is larger than" +
                     "the size of the inventory ($size)")
 
         slots[slot] = item

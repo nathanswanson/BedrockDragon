@@ -43,12 +43,14 @@
 
 package bedrockDragon.item
 
+import bedrockDragon.entity.ItemEntity
+import bedrockDragon.network.raknet.protocol.game.entity.AddItemEntityPacket
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
 import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.RuntimeItemState
-import bedrockDragon.world.PaletteGlobal
+import dev.romainguy.kotlin.math.Float3
 
 /**
  * [Item] is for a dsl object to create new items, this is not meant to be extended.
@@ -58,6 +60,8 @@ import bedrockDragon.world.PaletteGlobal
 @ItemDSL
 sealed class Item(var name: String = "item"): DSLBase(){
 
+    var alias: String? = null
+    //class fields
     var runtimeId = -1 //todo const
     var maxStackSize = 64
     var subItems = mutableListOf<Item>()
@@ -66,11 +70,30 @@ sealed class Item(var name: String = "item"): DSLBase(){
     var onActivate: ((Player) -> Unit)? = null
     var damage = -1
 
-    //instance
+    //instance fields
     var iDurability = durability
     var count = 1
 
+    //instance custom fields
     var dynamicFields = HashMap<String, Any>()
+
+    fun dropItem(player: Player, position: Float3, vel: Float3): Boolean {
+        val itemEnt = ItemEntity(this@Item).runtimeEntityId
+        player.nettyQueue.add(
+            AddItemEntityPacket().let {
+                it.entityIdSelf = itemEnt
+                it.runtimeId = itemEnt
+                it.pos = position
+                it.velocity = vel
+                it.item = this
+                //meta
+                it.isFromFishing = false
+                it.gamePacket()
+            }
+        )
+        return true
+    }
+
     override fun clone(): Item {
         return ItemImpl(name).let {
             it.runtimeId = runtimeId
@@ -132,8 +155,13 @@ class RegisterItem(var modName: String) {
                 ensureRuntimeIdAlloc(it)
             }
         } else {
+
             item.name = "$modName:${item.name}"
             Registry.ITEM_REGISTRY[item.name] = item
+
+            if(item.alias != null) {
+                Registry.ITEM_REGISTRY["$modName:${item.alias}"] = item
+            }
             ensureRuntimeIdAlloc(item)
         }
     }

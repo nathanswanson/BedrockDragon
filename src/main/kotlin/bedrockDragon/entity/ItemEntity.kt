@@ -1,8 +1,13 @@
 package bedrockDragon.entity
 
-import net.benwoodworth.knbt.NbtCompound
-import java.util.concurrent.ConcurrentHashMap
+import bedrockDragon.item.Item
+import bedrockDragon.util.aabb.AABB
+import dev.romainguy.kotlin.math.Float3
 
-class ItemEntity() : Entity() {
+class ItemEntity(val item: Item): Entity() {
 
+    init {
+        boundingBox = AABB(0f,0f,0f)
+        name = item.name
+    }
 }

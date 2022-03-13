@@ -54,10 +54,7 @@ import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
 import bedrockDragon.world.region.Region
 import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.pow
 import mu.KotlinLogging
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 /**
@@ -120,7 +117,7 @@ class World(val name: String): DSLBase() {
     /**
      * [getChunkAt] takes absolute coordinates and returns the chunk. player coordinates can be inputted and the chunk they are on will be returned.
      */
-    fun getChunkAt(position: Float3): Chunk {
+    private fun getChunkAt(position: Float3): Chunk {
         return getOrLoadRelay(position).getChunk2D(
             (position.x.toInt() shr 4).mod(4),
             (position.z.toInt() shr 4).mod(4)

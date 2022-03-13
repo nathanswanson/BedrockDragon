@@ -45,10 +45,9 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
-import bedrockDragon.entity.DataTag.DATA_AIR
+import bedrockDragon.entity.DataTag
 import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_HEIGHT
 import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_WIDTH
-import bedrockDragon.entity.DataTag.DATA_COLOR
 import bedrockDragon.entity.DataTag.DATA_FLAGS
 import bedrockDragon.entity.DataTag.DATA_FLAG_ALWAYS_SHOW_NAMETAG
 import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
@@ -56,7 +55,6 @@ import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
 import bedrockDragon.entity.DataTag.DATA_FLAG_HAS_COLLISION
 import bedrockDragon.entity.DataTag.DATA_HEALTH
 import bedrockDragon.entity.DataTag.DATA_LEAD_HOLDER_EID
-import bedrockDragon.entity.DataTag.DATA_MAX_AIR
 import bedrockDragon.entity.DataTag.DATA_NAMETAG
 import bedrockDragon.entity.DataTag.DATA_SCALE
 import bedrockDragon.entity.living.Living
@@ -75,8 +73,10 @@ import bedrockDragon.network.raknet.protocol.game.connect.DisconnectPacket
 import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MoveEntityAbsolute
+import bedrockDragon.network.raknet.protocol.game.event.EntityEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
 import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
+import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_PARTICLE_DESTROY
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
@@ -84,6 +84,7 @@ import bedrockDragon.network.raknet.protocol.game.player.*
 import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
+import bedrockDragon.reactive.BreakBlock
 import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.registry.Registry
@@ -101,6 +102,9 @@ import net.benwoodworth.knbt.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.concurrent.fixedRateTimer
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 /**
  * RaknetClientPeer.MinecraftClientPeer manages player and handles packet/netty
@@ -150,6 +154,12 @@ class Player(override var uuid: String): Living(), ISubscriber {
     //temp
     var sendChunkCoord = ArrayList<WorldInt2>()
 
+    var sprinting = false
+
+    var blockMining = Float3(0f,0f,0f)
+    //coroutine
+    private var epoch = 0
+
     /* NBT ENABLED VAR*/
     override var health: Float = 20f
         set(value) {
@@ -157,16 +167,26 @@ class Player(override var uuid: String): Living(), ISubscriber {
             field = value
         }
     //Hunger bar for player.
-    var foodLevel: Byte = 20
+    private var foodLevel: Float = 20f
         set(value) {
             //update client food level
-            updateAttribute(value.toFloat(), AttributeBR[7])
+            updateAttribute(value, AttributeBR[7])
             field = value
         }
     //Value left before food drops.
-    var foodExhaustionLevel: Byte = 0
+    private var foodExhaustionLevel: Float = 0f
+        set(value) {
+            field = value
+            if(field >= 4) {
+                field = 0f
+                if(foodSaturationLevel > 0)
+                    foodSaturationLevel--
+                else
+                    foodLevel--
+            }
+        }
     //Food Saturation left before using foodLevel.
-    var foodSaturationLevel: Byte = 0
+    var foodSaturationLevel: Float = 20f
 
     /**
      * [playInit] is called as soon as the Player is fully connected and joined the game.
@@ -223,6 +243,15 @@ class Player(override var uuid: String): Living(), ISubscriber {
         inventory.sendPacketContents(this)
     }
 
+    override fun damage(amount: Float) {
+        super.damage(amount)
+        EntityEventPacket().let {
+            it.runtimeEntityId = runtimeEntityId
+            it.eventId = 2
+            nettyQueue.add(it.gamePacket())
+        }
+    }
+
     fun updateChunkPublisherPosition() {
         val publisherUpdate = NetworkChunkPublisherPacket()
         publisherUpdate.position = position
@@ -265,6 +294,21 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(packet.gamePacket())
     }
 
+    override fun update() {
+        super.update()
+        epoch++
+        //sprinting
+        if(sprinting) {
+            foodExhaustionLevel += (sqrt(velocity.x*velocity.x + velocity.z * velocity.z)) * 0.1f
+        }
+
+        //fast regen
+
+        if(health < 20f && foodLevel > 9 && epoch % 20 == 0) {
+            health++
+            foodExhaustionLevel+=6
+        }
+    }
     /**
      * [getDrops] getDrops main function is to get items to drop when entity dies.
      */
@@ -299,25 +343,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
         return newWinId
     }
 
-    /**
-     * review needed
-     */
-    override suspend fun tick() {
-        while (true) { //20 tps aprox.
-            runWithDynamicDelay {
-               // checkIfChunkUpdateRequired()
-            }
-            delay(1000)
-        }
-
-
-    }
-    /**
-     * review needed
-     */
-    private fun runWithDynamicDelay(tasks: () -> Unit) {
-        tasks.invoke()
-    }
 
     /**
      * [armor] returns the ArmorInventory object of the player.
@@ -340,39 +365,36 @@ class Player(override var uuid: String): Living(), ISubscriber {
         health = 0f
 
         RespawnPacket().let {
-            it.position = Float3(0f,150f,0f)
+            it.position = Float3(0f,90f,0f)
             it.runtimeEntityId = runtimeEntityId
             nettyQueue.add(it.gamePacket())
         }
         inventory.clear()
         inventory.sendPacketContents(this)
+
     }
 
     /**
      * Meta controls gravity, size, air, total air ...
      */
     private fun sendMeta() {
-        //var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
-        //flag = flag xor (1L shl DATA_FLAG_BREATHING)
-        //flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
+        var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
+        flag = flag xor (1L shl DATA_FLAG_BREATHING)
+        flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
 
 
         //for testing
-        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(422246825345024L))
+        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
         playerMeta.put(DATA_FLAG_ALWAYS_SHOW_NAMETAG, MetaTag.TypedDefineTag.TAGBYTE(1))
-//        playerMeta.put(DATA_COLOR, MetaTag.TypedDefineTag.TAGBYTE(0))
-//        playerMeta.put(DATA_AIR, MetaTag.TypedDefineTag.TAGSHORT(400))
-//        playerMeta.put(DATA_MAX_AIR, MetaTag.TypedDefineTag.TAGSHORT(400))
-//        playerMeta.put(DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(""))
-//        playerMeta.put(DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
-//        playerMeta.put(DATA_SCALE, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-//        playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-//        playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
-//        playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
-
+        playerMeta.put(DATA_SCALE, MetaTag.TypedDefineTag.TAGFLOAT(1f))
+        playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
+        playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
+        playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
+        playerMeta.put(DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(name))
+        playerMeta.put(DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
         val entityDataPacket = EntityDataPacket()
         entityDataPacket.runtimeEntityId = runtimeEntityId
-        entityDataPacket.tick = 0 //todo
+        entityDataPacket.tick = 0
         entityDataPacket.metaTag = playerMeta
 
         nettyQueue.add(entityDataPacket.gamePacket())
@@ -461,8 +483,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
 
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
-//        if(reactivePacket.sender != this) {
-//        }
+        if(reactivePacket.filter(this)) {
+            nettyQueue.add(reactivePacket.payload.gamePacket())
+        }
     }
 
     /**
@@ -477,6 +500,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
         nettyQueue.add(containerOpenPacket.gamePacket())
     }
 
+    fun emitSound(player: Player, pos: Float3) {
+
+    }
+
     /**
      * Hand incoming command
      * Almost every incoming command is sent to chunk relay as a coroutine however, some packets
@@ -484,7 +511,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * @param inGamePacket
      */
     fun handIncomingCommand(inGamePacket: MinecraftPacket) {
-
         when(inGamePacket.packetId) {
             MinecraftPacketConstants.DISCONNECT -> {
                 disconnect(null)
@@ -533,9 +559,11 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 val blockPickRequestPacket = BlockPickRequestPacket()
                 blockPickRequestPacket.decode(inGamePacket.payload)
                 sendMessage(blockPickRequestPacket.position)
-                if(gamemode == Gamemode.CREATIVE) {
+                if(gamemode == Gamemode.SURVIVAL) {
                     sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
-                   // inventory.addItem(PaletteGlobal.itemRegistry[world.getBlockAt(blockPickRequestPacket.position).name]!!)
+                    //inventory.addItem(world.getBlockAt(blockPickRequestPacket.position).asItem())
+                    world.getBlockAt(blockPickRequestPacket.position).asItem().dropItem(this, blockPickRequestPacket.position + Float3(0f,1f,0f), Float3(0f,0f,0f))
+                    inventory.sendPacketContents(this)
                 }
             }
             MinecraftPacketConstants.PLAYER_AUTH_INPUT -> {
@@ -546,18 +574,27 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 actionPacket.decode(inGamePacket.payload)
                 //action type switch
                 when(actionPacket.action) {
-                    PlayerActionPacket.ACTION_START_BREAK -> {
-                        println(actionPacket.action)
+                    PlayerActionPacket.ACTION_CONTINUE_BREAK -> {
+                        blockMining = actionPacket.coord
+                    }
+                    PlayerActionPacket.ACTION_STOP_BREAK -> {
+                        chunkRelay.invoke(BreakBlock(actionPacket, this))
 //                        val levelEventPacket = LevelEventPacket()
 //                        val block = world.getBlockAt(actionPacket.coord)
-//                        levelEventPacket.eventId = EVENT_BLOCK_START_BREAK
+//                        levelEventPacket.eventId = EVENT_PARTICLE_DESTROY
 //                        levelEventPacket.position = actionPacket.coord
-//                        levelEventPacket.data = (block.hardness * 5).toInt() //todo break time
-//                        println(levelEventPacket)
+//                        levelEventPacket.data = 0 //todo block type
 //                        nettyQueue.add(levelEventPacket.gamePacket())
                     }
                     PlayerActionPacket.ACTION_JUMP -> {
-                        foodLevel--
+                        foodExhaustionLevel += if(sprinting) 0.2f else 0.05f
+                        sendMeta()
+                    }
+                    PlayerActionPacket.ACTION_START_SPRINT -> {
+                        sprinting = true
+                    }
+                    PlayerActionPacket.ACTION_STOP_SPRINT -> {
+                        sprinting = false
                     }
                 }
 
@@ -575,6 +612,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
                     it.state = 1
                     nettyQueue.add(it.gamePacket())
                 }
+
+                health = 20f
             }
             MinecraftPacketConstants.CONTAINER_CLOSE -> {
                 val containerRequest = ContainerClosePacket()
@@ -633,7 +672,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
             MinecraftPacketConstants.LEVEL_SOUND_EVENT_THREE -> { /*reject*/ }
             MinecraftPacketConstants.CLIENT_CACHE_STATUS -> { println("CLIENT_CACHE_STATUS") }
             MinecraftPacketConstants.FILTER_TEXT -> { println("FILTER_TEXT") }
-            MinecraftPacketConstants.MALFORM_PACKET -> { MalformHandler(inGamePacket.payload) }
+            MinecraftPacketConstants.MALFORM_PACKET -> {
+                println("ERROR PACKET")
+                MalformHandler(inGamePacket.payload) }
             else -> {
                 println("Unkown Packet ${inGamePacket.packetId}")
             }

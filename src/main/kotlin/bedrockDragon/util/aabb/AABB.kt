@@ -43,17 +43,31 @@
 
 package bedrockDragon.util.aabb
 
+import dev.romainguy.kotlin.math.Float3
+
 /**
  * [AABB] represents the bounding box (size of block or entity).
  * @author Nathan Swanson
  * @since ALPHA
  */
-class AABB(val x: Float, val y: Float, val z: Float, val height: Float, val depth: Float, val width: Float) {
+class AABB(val width: Float, val height: Float, val depth: Float) {
     /**
      * [intersects] takes this object and another AABB object and determines if they are colliding.
      */
-    fun intersects(other: AABB) {
-
+    fun intersects(pos: Float3, otherPos: Float3, other: AABB) : Boolean {
+        //x - y
+        if(!(pos.x >= otherPos.x + other.width && width + pos.x >= otherPos.x)) {
+            return false
+        }
+        //x - z
+        if(!(pos.y >= otherPos.y + other.height && height + pos.y >= otherPos.y)) {
+            return false
+        }
+        //y - z
+        if(!(pos.z >= otherPos.z + other.depth && depth + pos.z >= otherPos.z)) {
+            return false
+        }
+        return true
     }
 
     /**
@@ -65,7 +79,17 @@ class AABB(val x: Float, val y: Float, val z: Float, val height: Float, val dept
 
     companion object {
         fun CUBE(): AABB {
-            return AABB(1f,1f,1f,1f,1f,1f)
+            return AABB(1f,1f,1f)
         }
     }
+}
+
+
+fun main(args: Array<String>) {
+    var playerPos = Float3(-11.00f,87f,31f)
+    var playerAABB = AABB(1f,2f,1f)
+    var itemPos = Float3(-10f,87f,31f)
+    var itemAABB = AABB(0.1f,0.1f,0.1f)
+
+    println(playerAABB.intersects(playerPos,itemPos, itemAABB))
 }

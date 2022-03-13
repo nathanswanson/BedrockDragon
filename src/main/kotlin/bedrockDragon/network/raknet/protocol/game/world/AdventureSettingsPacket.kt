@@ -21,7 +21,7 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
 
 
     companion object {
-        val BITFLAG_SECOND_SET = 65536
+        const val BITFLAG_SECOND_SET = 1 shl 16
 
         val WORLD_IMMUTABLE = 0x01
         val NO_PVP = 0x02
@@ -31,13 +31,16 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
         val WORLD_BUILDER = 0x100
         val FLYING = 0x200
         val MUTED = 0x400
-        val BUILD_AND_MINE = 0x01 or BITFLAG_SECOND_SET
+
+        val MINE = 0x01 or BITFLAG_SECOND_SET
         val DOORS_AND_SWITCHES = 0x02 or BITFLAG_SECOND_SET
         val OPEN_CONTAINERS = 0x04 or BITFLAG_SECOND_SET
         val ATTACK_PLAYERS = 0x08 or BITFLAG_SECOND_SET
         val ATTACK_MOBS = 0x10 or BITFLAG_SECOND_SET
         val OPERATOR = 0x20 or BITFLAG_SECOND_SET
         val TELEPORT = 0x80 or BITFLAG_SECOND_SET
+        val BUILD = 0x100 or BITFLAG_SECOND_SET
+        val DEFAULT = 0x200 or BITFLAG_SECOND_SET
     }
 
 

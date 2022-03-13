@@ -46,6 +46,7 @@ package bedrockDragon.entity
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
 import bedrockDragon.util.ISavable
+import bedrockDragon.util.aabb.AABB
 import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
 import kotlinx.serialization.modules.EmptySerializersModule
@@ -75,7 +76,7 @@ class RegisterEntity(var modName: String) {
     }
 }
 @EntityDSL
-open class Entity(val name: String = "entity"): ISavable, DSLBase() {
+open class Entity(var name: String = "entity"): ISavable, DSLBase() {
     override val fileName: Path
         get() = Path("Players/$uuid.nbt")
 
@@ -100,10 +101,18 @@ open class Entity(val name: String = "entity"): ISavable, DSLBase() {
     var ticksFrozen: Int? = null
     open var uuid: String = "Lia"
 
+    open var boundingBox: AABB = AABB(1f,1f,1f)
+
     companion object { var nextId = 1L }
     val runtimeEntityId = nextId++
 
     var entityUniqueIdentifier = 0L
+
+
+    fun intersects(otherEntity: Entity): Boolean {
+        return boundingBox.intersects(position, otherEntity.position, otherEntity.boundingBox)
+    }
+
     //START BUILDER
     fun build(): Entity {
         return this //for future use
@@ -112,7 +121,9 @@ open class Entity(val name: String = "entity"): ISavable, DSLBase() {
     //var health = 0
     //var damage = 0
 
+    open fun update() { /*50ms loop MAX*/
 
+    }
     //END BUILDER
 
     override fun save(builder: NbtCompoundBuilder) {

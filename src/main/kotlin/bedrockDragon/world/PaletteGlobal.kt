@@ -65,7 +65,6 @@ import java.util.HashMap
 object PaletteGlobal {
     val globalBlockPalette = HashMap<String, ArrayList<PaletteEntry>>()
     val blockRegistry = HashMap<String, Block>() //contract needed for private access todo
-    val itemRegistry = HashMap<String, Item>()
 
     init {
         val nbt = Nbt {
@@ -77,16 +76,10 @@ object PaletteGlobal {
             serializersModule = EmptySerializersModule
         }
 
-        //Create Minecraft Block Objects.
-        VanillaBlocks
-        //create Minecraft Item Objects
-        VanillaItems
-
         val runtime = ClassLoader.getSystemResourceAsStream("runtime_block_states.dat")
         val nbtData = nbt.decodeFromStream<NbtCompound>(runtime!!)[""]!!.nbtList
         nbtData.forEach {
             val entryCompound = it.nbtCompound
-            println(it.nbtCompound["name"])
             globalBlockPalette.putIfAbsent(it.nbtCompound["name"]!!.nbtString.value, ArrayList())
 
             val paletteEntry = PaletteEntry(entryCompound["name"]!!.nbtString.value,
@@ -157,8 +150,4 @@ object PaletteGlobal {
     @Serializable
     data class PaletteEntry(val name: String, val version: Int, val states: NbtCompound?, val id: Int, val data: Short, val runtimeId: Int)
 
-}
-
-fun main() {
-    VanillaItems
 }

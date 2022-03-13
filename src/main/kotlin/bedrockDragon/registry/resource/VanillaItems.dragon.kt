@@ -70,7 +70,9 @@ object VanillaItems {
             item("calcite")
             item("tuff")
             item("dripstone_block")
-            item("grass")
+            item("grass") {
+                alias = "grass_block"
+            }
             item("dirt")
             item("podzol")
             item("dirt_with_roots")

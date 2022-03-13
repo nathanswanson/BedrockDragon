@@ -44,12 +44,12 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.entity.Entity
+import bedrockDragon.network.raknet.protocol.game.event.LevelSoundEventPacket
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.MovePlayer
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.region.Region
-import dev.romainguy.kotlin.math.Float3
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -57,9 +57,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
 import kotlin.math.sign
 import kotlin.math.truncate
+import kotlin.system.measureTimeMillis
 
 /**
  * [ChunkRelay] is not a minecraft concept, This is a grouping much like a [Region], that
@@ -77,7 +77,27 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     private val subscriptionSharedFlow = MutableSharedFlow<ReactivePacket<*>>()
     private val nonMutableFlow = subscriptionSharedFlow.asSharedFlow()
     private val playerLastPublishPosition = ConcurrentHashMap<Player, WorldInt2>()
-    private val jobs = HashMap<Player, Job>()
+
+    private val entityRegistry = LinkedHashSet<Entity>()
+
+    private var tickLoop: Job? = null
+
+    private val jobs = object : HashMap<Player, Job>() {
+        override fun put(key: Player, value: Job): Job? {
+            if(tickLoop == null) {
+                tickLoop = scope.launch { tick() }
+            }
+            return super.put(key, value)
+        }
+
+        override fun remove(key: Player): Job? {
+            if(this.size <= 1) {
+                tickLoop!!.cancel()
+                tickLoop = null
+            }
+            return super.remove(key)
+        }
+    }
     //chunks are a 4x4 grid laid in an array and are absolute position in world
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
     // y = idx mod 4     0: 0,4,8,12 1: 1,5,9,13...
@@ -92,8 +112,24 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         )
     }
 
-    fun addEntity(entity: Entity) {
+    suspend fun tick() {
+        while(true) {
+            val msDelta = measureTimeMillis {
+                for(i in jobs) {
+                    i.key.update()
+                    entityRegistry.filter { it != i.key && i.key.intersects(it)
+                    }.forEach{
+                        println("intersects with: $it")
+                    }
+                }
+            }
 
+            delay(50-msDelta)
+        }
+    }
+
+    fun addEntity(entity: Entity) {
+        entityRegistry.add(entity)
     }
     /**
      * [addPlayer] will subscribe a new player to this relay so when
@@ -104,6 +140,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         player.updateChunkPublisherPosition()
         sendAllChunksForPlayer(player)
 
+        entityRegistry.add(player)
         jobs[player] = scope.launch {
             nonMutableFlow.filter { true }
                 .collectLatest {
@@ -115,6 +152,15 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         }
     }
 
+    fun breakBlock() {
+        //particle
+
+        //sound
+
+        //drop
+
+    }
+
     /**
      * [sendAllChunksForPlayer] is used for spawning or teleporting, this takes the player position and sends every chunk in their render distance.
      */
@@ -122,31 +168,17 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
 
         val offsetInRelayX = (player.position.x.toInt() shr 4) and 3
-        val offsetInRelayz = (player.position.z.toInt() shr 4) and 3
+        val offsetInRelayZ = (player.position.z.toInt() shr 4) and 3
 
         for(x in -player.renderDistance until player.renderDistance + 1) {
             for(z in -player.renderDistance until player.renderDistance + 1) {
                 val relayProvider = region.world.getOrLoadRelayIdx(WorldInt2(
                     this.x + (x + offsetInRelayX).floorDiv(4),
-                    this.z + (z + offsetInRelayz).floorDiv(4),
+                    this.z + (z + offsetInRelayZ).floorDiv(4),
                 ))
-                player.sendChunk(relayProvider.getChunk2D((x + offsetInRelayX).mod(4),(z + offsetInRelayz).mod(4)))
+                player.sendChunk(relayProvider.getChunk2D((x + offsetInRelayX).mod(4),(z + offsetInRelayZ).mod(4)))
             }
         }
-//        var stringB = StringBuilder()
-//
-//        for(x in -10..10) {
-//            for(z in -10..10) {
-//                if(player.sendChunkCoord.contains(WorldInt2(x,z))) {
-//                    stringB.append("x")
-//                } else {
-//                    stringB.append("-")
-//                }
-//            }
-//            stringB.append("\n")
-//        }
-//        println(stringB)
-//        println(player.sendChunkCoord.size)
     }
 
     private fun addPlayerFromAdjacentRelay(player: Player) {
@@ -278,6 +310,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
      */
     fun invoke(reactivePacket: ReactivePacket<*>) {
         scope.launch {
+            reactivePacket.run(this@ChunkRelay)
             subscriptionSharedFlow.emit(reactivePacket)
         }
     }

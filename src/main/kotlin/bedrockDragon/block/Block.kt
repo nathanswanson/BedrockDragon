@@ -47,6 +47,7 @@ import bedrockDragon.block.blockState.BlockState
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.item.Item
 import bedrockDragon.player.Player
+import bedrockDragon.registry.Registry
 import bedrockDragon.util.aabb.AABB
 import bedrockDragon.world.PaletteGlobal
 
@@ -112,8 +113,15 @@ sealed class Block(var name: String) {
 
     var blockState: BlockState? = null
     var inventory: Inventory? = null
+
+    var signature: String = ""
+
     fun build(): Block {
         return this
+    }
+
+    fun asItem(): Item {
+        return Registry.ITEM_REGISTRY[signature]
     }
 
     enum class GravityEffect {
@@ -126,7 +134,7 @@ sealed class Block(var name: String) {
         return """Block: $name"""
     }
 }
-
+/////////////////////////////////////////// DSL //////////////////////////////////////
 /**
  * [registerBlock] is the DSL builder for creating and registering blocks to the server.
  */
@@ -154,6 +162,7 @@ class RegisterBlock(var modName: String) {
             //PaletteGlobal.globalBlockPalette["$modName:${block.name}"] = block.runtimeId
             //todo create palette entry
         }
-        PaletteGlobal.blockRegistry["$modName:${block.name}"] = block
+        block.signature = "$modName:${block.name}"
+        PaletteGlobal.blockRegistry[block.signature] = block
     }
 }

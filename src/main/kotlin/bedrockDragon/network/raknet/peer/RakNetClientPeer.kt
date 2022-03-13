@@ -58,6 +58,7 @@ import bedrockDragon.network.raknet.protocol.game.connect.PlayStatusPacket
 import bedrockDragon.network.raknet.protocol.game.connect.StartGamePacket
 import bedrockDragon.network.raknet.protocol.game.entity.AvaliableEntityIDPacket
 import bedrockDragon.network.raknet.protocol.game.login.MinecraftLoginPacket
+import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.zlib.PacketCompression
@@ -83,6 +84,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
     fun destroy() {
       //  clientPeer!!.player!!.save()
+        clientPeer!!.player!!.disconnect("")
     }
 
     fun attemptMinecraftHandoff() {
@@ -183,7 +185,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
+           // sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
@@ -216,12 +218,14 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                     inGamePacket.setBuffer(decompressed)
                     inGamePacket.decode()
 
+
                         //if packet is non-reflective send the packet to the observer deck.
                         //packet is converted into dragon protocol which is an Observable
                         //protocol request will then wait its turn to be broadcast by the reactor and
                         // then filtered through the great mesh
                     if(clientPeer != null && inGamePacket.packetId > 8) {
                         if(clientPeer!!.player != null) {
+
                             clientPeer!!.player!!.handIncomingCommand(inGamePacket)
                         }
                     } else {

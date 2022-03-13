@@ -46,9 +46,12 @@ package bedrockDragon
 import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.registry.Registry
 import bedrockDragon.registry.resource.NativeCommands
+import bedrockDragon.registry.resource.VanillaBlocks
 import bedrockDragon.registry.resource.VanillaEntities
+import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
@@ -109,10 +112,12 @@ fun main(args: Array<String>) {
 //        ServerProperties.getProperty("server-ip"),
 //        ServerProperties.getProperty("server-port").toInt()
 //    )
-
+    PaletteGlobal
     //register commands
     NativeCommands
     VanillaEntities
+    VanillaBlocks
+    VanillaItems
 
     //todo temp
     val bindAddress = InetSocketAddress(19132)

@@ -29,16 +29,36 @@ abstract class Living: Entity() {
     var persistenceRequired: Boolean? = null
     var sleepingPos: Float3? = null
 
+    //physics
+    private var lastPosition = position
+    var velocity = Float3(0f,0f,0f)
+    private var fallStartPosition = position
 
     abstract fun getDrops(): List<Item>
-    abstract suspend fun tick()
     abstract fun armor(): ArmorInventory
 
     open fun kill() {
-        print("todo")
+        //todo
     }
 
-    fun damage(amount: Float) {
+    override fun update() {
+        super.update()
+        velocity = position - lastPosition
+        lastPosition = position
+        if(velocity.y < -0.05 && onGround)
+        {
+            fallStartPosition = position
+            onGround = false
+        } else if(velocity.y >= 0 && !onGround) {
+            //hit ground
+            onGround = true
+            fallDistance = fallStartPosition.y - position.y
+            if(fallDistance-3 > 0)
+                damage(fallDistance-3)
+        }
+    }
+
+    open fun damage(amount: Float) {
         health-=amount
 
         if(health < 0) {
