@@ -47,7 +47,6 @@ import bedrockDragon.command.CommandTag
 import bedrockDragon.command.registerCommand
 import bedrockDragon.player.Player
 import bedrockDragon.registry.Registry
-import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 
 object NativeCommands {
@@ -92,7 +91,7 @@ object NativeCommands {
                     player, anies ->
                     Registry.ITEM_REGISTRY[anies[1] as String]?.let {
                         it.count = (anies[2] as String).toInt()
-                        player.addItemToPlayerInventory(it)
+                        player.addItem(it)
                     }
                 }
             }

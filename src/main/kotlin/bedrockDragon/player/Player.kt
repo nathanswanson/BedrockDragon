@@ -45,24 +45,10 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
-import bedrockDragon.entity.DataTag
-import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_HEIGHT
-import bedrockDragon.entity.DataTag.DATA_BOUNDING_BOX_WIDTH
-import bedrockDragon.entity.DataTag.DATA_FLAGS
-import bedrockDragon.entity.DataTag.DATA_FLAG_ALWAYS_SHOW_NAMETAG
-import bedrockDragon.entity.DataTag.DATA_FLAG_BREATHING
-import bedrockDragon.entity.DataTag.DATA_FLAG_GRAVITY
-import bedrockDragon.entity.DataTag.DATA_FLAG_HAS_COLLISION
-import bedrockDragon.entity.DataTag.DATA_HEALTH
-import bedrockDragon.entity.DataTag.DATA_LEAD_HOLDER_EID
-import bedrockDragon.entity.DataTag.DATA_NAMETAG
-import bedrockDragon.entity.DataTag.DATA_SCALE
 import bedrockDragon.entity.living.Living
-import bedrockDragon.inventory.ArmorInventory
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
 import bedrockDragon.item.Item
-import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
@@ -74,9 +60,6 @@ import bedrockDragon.network.raknet.protocol.game.entity.EntityDataPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MobEquipmentPacket
 import bedrockDragon.network.raknet.protocol.game.entity.MoveEntityAbsolute
 import bedrockDragon.network.raknet.protocol.game.event.EntityEventPacket
-import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket
-import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_BLOCK_START_BREAK
-import bedrockDragon.network.raknet.protocol.game.event.LevelEventPacket.Companion.EVENT_PARTICLE_DESTROY
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerClosePacket
 import bedrockDragon.network.raknet.protocol.game.inventory.ContainerOpenPacket
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryTransactionPacket
@@ -89,12 +72,10 @@ import bedrockDragon.reactive.ISubscriber
 import bedrockDragon.reactive.ReactivePacket
 import bedrockDragon.registry.Registry
 import bedrockDragon.resource.ServerProperties
-import bedrockDragon.util.WorldInt2
-import bedrockDragon.world.PaletteGlobal
+import bedrockDragon.util.aabb.AABB
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
-import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
@@ -102,8 +83,6 @@ import net.benwoodworth.knbt.*
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.concurrent.fixedRateTimer
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
@@ -113,11 +92,12 @@ import kotlin.math.sqrt
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player(override var uuid: String): Living(), ISubscriber {
+class Player(override var uuid: String): Living("minecraft:player"), ISubscriber {
     val logger = KotlinLogging.logger {}
 
     init {
         read() //read nbt and load into fields
+        boundingBox = AABB(0.9f,1.9f,0.9f)
     }
 
     //Has player sent confirmation packet.
@@ -137,22 +117,14 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
     //Operator status.
     var op = false
-    //World player is on.
-    var world = Registry.WORLD_REGISTRY[0]
     //Player armor, hot-bar, and 27 slot inventory.
     val inventory = PlayerInventory()
     //Id that is assigned to an Inventory run addWindow to register new inventory.
     val windowId = ConcurrentHashMap<Inventory, Int>()
     //Player skin data.
     var skinData: Skin? = null
-    //Metadata for player. Gravity, food, health.
-    private val playerMeta =  MetaTag()
     //chunks render distance
     var renderDistance = 4
-    //chunkRelay the player is currently on.
-    var chunkRelay = world.getOrLoadRelay(position)
-    //temp
-    var sendChunkCoord = ArrayList<WorldInt2>()
 
     var sprinting = false
 
@@ -219,9 +191,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
     }
 
     /**
-     * [addItemToPlayerInventory] add given item and send the packet contents. this should use slot change packet.
+     * [addItem] add given item and send the packet contents. this should use slot change packet.
      */
-    fun addItemToPlayerInventory(item: Item) {
+    fun addItem(item: Item) {
         inventory.addItem(item)
         inventory.sendPacketContents(this)
     }
@@ -229,17 +201,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
     private fun loadDefaultInventories() {
         addWindow(inventory, 0, isPermanent = true, isAlwaysOpen = true)
 
-        //val woodenSword = Registry.ITEM_REGISTRY["minecraft:wooden_sword"]
-        //woodenSword.iDurability = 20
-        //woodenSword.count = 1
-
-        //val diamondPickAxe = Registry.ITEM_REGISTRY["minecraft:diamond_pickaxe"]
-        //diamondPickAxe.iDurability = 20
-        //diamondPickAxe.count = 1
-
-        //inventory.addItem(diamondPickAxe)
-
-        //inventory.addItem(woodenSword)
         inventory.sendPacketContents(this)
     }
 
@@ -268,6 +229,8 @@ class Player(override var uuid: String): Living(), ISubscriber {
         }
         nettyQueue.add(attributePacket.gamePacket())
     }
+
+
 
     /**
      * [sendCommands] will allow a player to search for commands client side.
@@ -312,9 +275,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [getDrops] getDrops main function is to get items to drop when entity dies.
      */
-    override fun getDrops(): List<Item> {
-        return inventory.getContents().filterNotNull()
-    }
+//    fun getDrops(): List<Item> {
+//        return inventory.getContents().filterNotNull()
+//    }
 
     /**
      * [addWindow] adds a new inventory window into the players registry.
@@ -347,9 +310,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
     /**
      * [armor] returns the ArmorInventory object of the player.
      */
-    override fun armor(): ArmorInventory {
-        return ArmorInventory()
-    }
+//    override fun armor(): ArmorInventory {
+//        return ArmorInventory()
+//    }
 
     /**
      * [kill] does multiple things:
@@ -378,24 +341,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
      * Meta controls gravity, size, air, total air ...
      */
     private fun sendMeta() {
-        var flag = 0L xor (1L shl DATA_FLAG_GRAVITY)
-        flag = flag xor (1L shl DATA_FLAG_BREATHING)
-        flag = flag xor (1L shl DATA_FLAG_HAS_COLLISION)
-
-
-        //for testing
-        playerMeta.put(DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
-        playerMeta.put(DATA_FLAG_ALWAYS_SHOW_NAMETAG, MetaTag.TypedDefineTag.TAGBYTE(1))
-        playerMeta.put(DATA_SCALE, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-        playerMeta.put(DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(2f))
-        playerMeta.put(DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-        playerMeta.put(DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
-        playerMeta.put(DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(name))
-        playerMeta.put(DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
         val entityDataPacket = EntityDataPacket()
         entityDataPacket.runtimeEntityId = runtimeEntityId
         entityDataPacket.tick = 0
-        entityDataPacket.metaTag = playerMeta
+        entityDataPacket.metaTag = attributes
 
         nettyQueue.add(entityDataPacket.gamePacket())
     }
@@ -405,10 +354,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
      */
     fun sendChunk(chunk: Chunk) {
         nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
-        sendChunkCoord.add(chunk.position)
-
-
-
     }
 
     private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
@@ -549,6 +494,9 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 interact.decode(inGamePacket.payload)
                 logger.info { interact }
                 when(interact.actionId.toInt()) {
+                    4 -> {
+
+                    }
                     6 -> {
                         openInventory(inventory)
                     }
@@ -561,7 +509,6 @@ class Player(override var uuid: String): Living(), ISubscriber {
                 sendMessage(blockPickRequestPacket.position)
                 if(gamemode == Gamemode.SURVIVAL) {
                     sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
-                    //inventory.addItem(world.getBlockAt(blockPickRequestPacket.position).asItem())
                     world.getBlockAt(blockPickRequestPacket.position).asItem().dropItem(this, blockPickRequestPacket.position + Float3(0f,1f,0f), Float3(0f,0f,0f))
                     inventory.sendPacketContents(this)
                 }
@@ -596,8 +543,10 @@ class Player(override var uuid: String): Living(), ISubscriber {
                     PlayerActionPacket.ACTION_STOP_SPRINT -> {
                         sprinting = false
                     }
-                }
+                    PlayerActionPacket.ACTION_DROP_ITEM -> {
 
+                    }
+                }
             }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }

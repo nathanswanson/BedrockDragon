@@ -43,6 +43,7 @@
 
 package bedrockDragon.inventory
 
+import bedrockDragon.item.Item
 import bedrockDragon.network.raknet.protocol.game.inventory.InventoryContentPacket
 import bedrockDragon.player.Player
 
@@ -54,6 +55,12 @@ import bedrockDragon.player.Player
 class PlayerInventory: Inventory(36) {
     init {
         type = -1
+    }
+
+    var hotBarSlot: Int = 0
+
+    fun hotBarItem() : Item? {
+        return slots[hotBarSlot]
     }
 
     /**

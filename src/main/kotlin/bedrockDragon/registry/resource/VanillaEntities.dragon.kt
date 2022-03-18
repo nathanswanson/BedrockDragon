@@ -43,7 +43,7 @@
 
 package bedrockDragon.registry.resource
 
-import bedrockDragon.entity.registerEntity
+import bedrockDragon.entity.living.registerEntity
 import bedrockDragon.util.aabb.AABB
 
 

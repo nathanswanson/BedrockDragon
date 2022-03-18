@@ -46,6 +46,8 @@ package bedrockDragon.reactive
 import bedrockDragon.entity.ItemEntity
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.entity.AddItemEntityPacket
+import bedrockDragon.network.raknet.protocol.game.entity.RemoveEntityPacket
+import bedrockDragon.network.raknet.protocol.game.entity.TakeItemEntityPacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.player.Player
@@ -74,24 +76,26 @@ abstract class ReactivePacket<T: PacketPayload>(val payload: T, val sender: ISub
 class MovePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
 class AnimatePlayer()
 class RotatePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
+
+class TakeItem(payload: TakeItemEntityPacket, sender: Player) : ReactivePacket<TakeItemEntityPacket>(payload, sender) {
+    override fun filter(otherPlayer: Player): Boolean {
+        return true
+    }
+}
+
+class RemoveEntity(payload: RemoveEntityPacket, sender: Player) : ReactivePacket<RemoveEntityPacket>(payload, sender) {
+    override fun filter(otherPlayer: Player): Boolean {
+        return true
+    }
+}
+
 class BreakBlock(payload: PlayerActionPacket, sender: Player) : ReactivePacket<PlayerActionPacket>(payload, sender) {
     override fun run(relay: ChunkRelay) {
         //drop item
         val block = ItemEntity((sender as Player).world.getBlockAt(sender.blockMining).asItem())
-        block.position = sender.blockMining
+        block.position = sender.blockMining + Float3(0.5f, 0f, 0.5f) //moves entity to center of block
         relay.addEntity(block)
-        relay.invoke(DropItem(AddItemEntityPacket().let {
-            it.entityIdSelf = block.runtimeEntityId //todo
-            it.runtimeId = block.runtimeEntityId //todo
-            it.item = block.item
-            it.pos = sender.blockMining + Float3(0.5f, 0f, 0.5f)
-            it.velocity = Float3(0f,0f,0f)
-
-            it.isFromFishing = false
-            it }, sender))
     }
-
-
 }
 
 class DropItem(payload: AddItemEntityPacket, sender: Player) : ReactivePacket<AddItemEntityPacket>(payload, sender) {

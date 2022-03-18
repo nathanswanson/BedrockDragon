@@ -133,19 +133,12 @@ class World(val name: String): DSLBase() {
     }
 
     /**
-     * [spawnEntity] is not functional yet. Will spawn an entity at the given coordinates.
+     * [spawnEntity] will spawn an entity at the given coordinates.
      */
     fun spawnEntity(position: Float3, entity: String, tempPlayer: Player): Boolean {
         val entityObject = Registry.ENTITY_REGISTRY[entity]
-        tempPlayer.nettyQueue.add(
-            AddEntityPacket().let {
-                it.entitySelfId = entityObject.entityUniqueIdentifier
-                it.runtimeEntityId = 2
-                it.position = position
-                it.entityType = entity
-                it.gamePacket()
-            }
-        )
+        entityObject.position = position
+        tempPlayer.chunkRelay.addEntity(entityObject)
         return true
     }
 }

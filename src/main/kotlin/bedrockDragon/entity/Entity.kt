@@ -43,6 +43,8 @@
 
 package bedrockDragon.entity
 
+import bedrockDragon.network.raknet.protocol.game.entity.RemoveEntityPacket
+import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
 import bedrockDragon.util.ISavable
@@ -62,21 +64,7 @@ import kotlin.io.path.inputStream
  */
 
 @EntityDSL
-fun registerEntity(modName: String, registerList: RegisterEntity.() -> Unit) {
-    RegisterEntity(modName).run(registerList)
-}
-
-@EntityDSL
-class RegisterEntity(var modName: String) {
-    @EntityDSL
-    fun entity(name: String, lambda: Entity.() -> Unit = {}) {
-        val entity = Entity(name).apply(lambda)
-
-        Registry.ENTITY_REGISTRY[name] = entity
-    }
-}
-@EntityDSL
-open class Entity(var name: String = "entity"): ISavable, DSLBase() {
+open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
     override val fileName: Path
         get() = Path("Players/$uuid.nbt")
 
@@ -102,15 +90,39 @@ open class Entity(var name: String = "entity"): ISavable, DSLBase() {
     open var uuid: String = "Lia"
 
     open var boundingBox: AABB = AABB(1f,1f,1f)
+    //World entity is on.
+    var world = Registry.WORLD_REGISTRY[0]
+    //chunkRelay the entity is currently on.
+    var chunkRelay = world.getOrLoadRelay(position)
 
     companion object { var nextId = 1L }
     val runtimeEntityId = nextId++
 
     var entityUniqueIdentifier = 0L
 
+    open fun showFor(players: List<Player>) {}
+
+    fun removeFor(players: List<Player>) {
+        players.forEach { player ->
+            player.nettyQueue.add(
+                RemoveEntityPacket().let {
+                    it.uniqueEntityId = runtimeEntityId
+                    it.gamePacket()
+                }
+            )
+        }
+    }
 
     fun intersects(otherEntity: Entity): Boolean {
         return boundingBox.intersects(position, otherEntity.position, otherEntity.boundingBox)
+    }
+
+    open fun handleIntersection(otherEntity: Entity) {
+
+    }
+
+    open fun destroy() {
+
     }
 
     //START BUILDER
@@ -155,6 +167,14 @@ open class Entity(var name: String = "entity"): ISavable, DSLBase() {
         //tags
         ticksFrozen?.let { builder.put("TicksFrozen", it) }
         builder.put("UUID", uuid)
+    }
+
+    override fun hashCode(): Int {
+        return runtimeEntityId.hashCode() + "EntityId".hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return hashCode() == other.hashCode()
     }
 
      override fun read() {

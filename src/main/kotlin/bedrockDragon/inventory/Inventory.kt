@@ -68,12 +68,15 @@ abstract class Inventory(val size: Int) {
     }
 
     /**
-     * [addItem] attempts to add the inputed item in the first available slot.
+     * [addItem] attempts to add the inputted item in the first available slot.
      * If no slot is available nothing happens and the method returns false.
      */
     fun addItem(item: Item): Boolean {
         return try {
-            slots[slots.indexOfFirst { it == null }] = item
+            val idx = slots.indexOfFirst {
+                it == null || (it.ofType(item)  && it.count + item.count <= it.maxStackSize)
+            }
+            slots[idx] = if(slots[idx] != null) slots[idx]!! + item else item
             true
         } catch (e: IndexOutOfBoundsException) {
             false
@@ -87,7 +90,7 @@ abstract class Inventory(val size: Int) {
     fun addItem(item: Item, slot: Int): Boolean {
         //slot > inventory size
         if(slot >= size)
-            throw IndexOutOfBoundsException("Can not place ${item} in slot ${slot} because is larger than" +
+            throw IndexOutOfBoundsException("Can not place $item in slot $slot because is larger than" +
                     "the size of the inventory ($size)")
 
         if(slots[slot] == null) {
@@ -111,6 +114,12 @@ abstract class Inventory(val size: Int) {
         return true
     }
 
+
+    fun takeItem(slot: Int): Item? {
+        val item = slots[slot]
+        slots[slot] = null
+        return item
+    }
 
     /**
      * [clear] will completely remove the contents of an inventory

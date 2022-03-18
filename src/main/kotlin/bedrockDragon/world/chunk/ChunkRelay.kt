@@ -44,7 +44,6 @@
 package bedrockDragon.world.chunk
 
 import bedrockDragon.entity.Entity
-import bedrockDragon.network.raknet.protocol.game.event.LevelSoundEventPacket
 import bedrockDragon.player.Player
 import bedrockDragon.reactive.MovePlayer
 import bedrockDragon.reactive.ReactivePacket
@@ -102,6 +101,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     // x = idx / 4  0: 0,1,2,3  1: 4,5,6,7 ...
     // y = idx mod 4     0: 0,4,8,12 1: 1,5,9,13...
 
+
     val chunks = Array(16) { i ->
         Chunk(
             WorldInt2(
@@ -119,17 +119,23 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                     i.key.update()
                     entityRegistry.filter { it != i.key && i.key.intersects(it)
                     }.forEach{
-                        println("intersects with: $it")
+                        it.handleIntersection(i.key)
                     }
                 }
             }
-
             delay(50-msDelta)
         }
     }
 
     fun addEntity(entity: Entity) {
+
+        entity.showFor(entityRegistry.filterIsInstance<Player>())
         entityRegistry.add(entity)
+    }
+
+    fun removeEntity(entity: Entity) {
+        entityRegistry.remove(entity)
+        entity.removeFor(entityRegistry.filterIsInstance<Player>())
     }
     /**
      * [addPlayer] will subscribe a new player to this relay so when
@@ -150,15 +156,6 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                     player.emitReactiveCommand(it)
                 }
         }
-    }
-
-    fun breakBlock() {
-        //particle
-
-        //sound
-
-        //drop
-
     }
 
     /**
@@ -229,7 +226,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
     private fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
         val deltaChunks = ArrayList<WorldInt2>()
-        //todo efficency
+        //todo efficiency
         val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
         val relayOffsetX = truncate((player.position.x / 16.0).mod(4f)).toInt()
         val relayOffsetZ = truncate((player.position.z / 16.0).mod(4f)).toInt()

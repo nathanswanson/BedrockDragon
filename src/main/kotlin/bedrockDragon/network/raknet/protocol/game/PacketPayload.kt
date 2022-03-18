@@ -43,8 +43,7 @@
 
 package bedrockDragon.network.raknet.protocol.game
 
-import bedrockDragon.network.raknet.Packet
-import bedrockDragon.network.raknet.VarInt
+import bedrockDragon.network.raknet.*
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 import bedrockDragon.network.raknet.protocol.game.type.gamerule.GameRules
@@ -128,6 +127,22 @@ open class PacketPayload(val id: Int): Packet() {
         writeFloatLE(attribute.getValueOrDefault())
         writeFloatLE(attribute.defaultValue)
         writeString(attribute.name)
+    }
+
+    fun writeMetaData(metaTag: MetaTag) {
+        writeUnsignedVarInt(metaTag.size())
+        metaTag.data.forEach {
+            writeUnsignedVarInt(it.key)//id
+            writeUnsignedVarInt(it.value.type)
+            when(it.value.type) {
+                DATA_TYPE_BYTE -> write(it.value.data as Byte)
+                DATA_TYPE_SHORT -> writeShortLE((it.value.data as Short).toInt())
+                DATA_TYPE_INT -> writeVarInt(it.value.data as Int)
+                DATA_TYPE_FLOAT -> writeFloatLE(it.value.data as Float)
+                DATA_TYPE_STRING -> writeString(it.value.data as String)
+                DATA_TYPE_LONG -> writeVarLong(it.value.data as Long)
+            }
+        }
     }
 
     /**

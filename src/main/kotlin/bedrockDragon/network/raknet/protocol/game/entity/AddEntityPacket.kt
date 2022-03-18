@@ -1,5 +1,6 @@
 package bedrockDragon.network.raknet.protocol.game.entity
 
+import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import dev.romainguy.kotlin.math.Float3
@@ -12,7 +13,7 @@ class AddEntityPacket: PacketPayload(MinecraftPacketConstants.ADD_ENTITY) {
     var velocity: Float3 = Float3(0f,0f,0f)
     var rotation: Float3 = Float3(0f,0f,0f)
     //attribute
-    //metadata
+    lateinit var metaData: MetaTag
     //links
     override fun encode() {
         writeVarLong(entitySelfId)
@@ -24,7 +25,7 @@ class AddEntityPacket: PacketPayload(MinecraftPacketConstants.ADD_ENTITY) {
         //attribute
         writeUnsignedVarInt(0)
         //meta
-        writeUnsignedVarInt(0)
+        writeMetaData(metaData)
         //links
         writeUnsignedVarInt(0)
     }

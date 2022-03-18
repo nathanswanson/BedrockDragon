@@ -80,7 +80,7 @@ sealed class Item(var name: String = "item"): DSLBase(){
     fun dropItem(player: Player, position: Float3, vel: Float3): Boolean {
         val itemEnt = ItemEntity(this@Item).runtimeEntityId
         player.nettyQueue.add(
-            AddItemEntityPacket().let {
+             AddItemEntityPacket().let {
                 it.entityIdSelf = itemEnt
                 it.runtimeId = itemEnt
                 it.pos = position
@@ -105,6 +105,14 @@ sealed class Item(var name: String = "item"): DSLBase(){
             it.damage = damage
             it
         }
+    }
+
+    operator fun plus(other: Item): Item {
+        return other.let { it.count += count; it }
+    }
+
+    fun ofType(other : Item): Boolean {
+        return name == other.name
     }
 
     /**

@@ -112,6 +112,8 @@ fun main(args: Array<String>) {
 //        ServerProperties.getProperty("server-ip"),
 //        ServerProperties.getProperty("server-port").toInt()
 //    )
+    //world registry
+    Registry.WORLD_REGISTRY.register(0, World("noOcean"))
     PaletteGlobal
     //register commands
     NativeCommands
@@ -121,8 +123,7 @@ fun main(args: Array<String>) {
 
     //todo temp
     val bindAddress = InetSocketAddress(19132)
-    //world registry
-    Registry.WORLD_REGISTRY.register(0, World("noOcean"))
+
     logger.info { bindAddress }
     val server = DragonServer(bindAddress)
     server.start()
