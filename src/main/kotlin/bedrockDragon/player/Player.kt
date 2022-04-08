@@ -194,7 +194,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             nettyQueue.add(it.gamePacket())
         }
         //end debug
-        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".yellow()))
+        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".yellow().asGameText()))
         nettyQueue.add(CreativeContentPacket().gamePacket())
 
     }
@@ -365,16 +365,9 @@ class Player(var username: String, override var uuid: String): Living("minecraft
 
         chunk.initChunkFromStorage()
 
-        //if(chunk.loadStatus.get() == SaveStatus.LOADED)
-        if(chunk.payload != null) {
-            var chunkPacket = LevelChunkPacket(chunk)
-            chunkPacket.gamePacket()
-            chunkPacket.subscribeToPacket(this)
-        } else {}
-            //println("Null payload")
-//        else //subscribe for packet because it has not arrived
-//            chunk.waitForChunk(this)
-
+        var chunkPacket = LevelChunkPacket(chunk)
+        chunkPacket.gamePacket()
+        chunkPacket.subscribeToPacket(this)
     }
 
     private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
@@ -570,6 +563,9 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                 actionPacket.decode(inGamePacket.payload)
                 //action type switch
                 when(actionPacket.action) {
+                    PlayerActionPacket.ACTION_START_BREAK -> {
+                        println("start break")
+                    }
                     PlayerActionPacket.ACTION_CONTINUE_BREAK -> {
                         blockMining = actionPacket.coord
                     }

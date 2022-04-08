@@ -113,7 +113,7 @@ fun main(args: Array<String>) {
 //        ServerProperties.getProperty("server-port").toInt()
 //    )
     //world registry
-    Registry.WORLD_REGISTRY.register(0, World("noOcean"))
+    Registry.WORLD_REGISTRY.register(0, World("amp"))
     PaletteGlobal
     //register commands
     NativeCommands

@@ -71,8 +71,8 @@ open class Living(override var name: String): Entity() {
         attributes.put(DataTag.DATA_FLAGS, MetaTag.TypedDefineTag.TAGLONG(flag))
         attributes.put(DataTag.DATA_FLAG_ALWAYS_SHOW_NAMETAG, MetaTag.TypedDefineTag.TAGBYTE(1))
         attributes.put(DataTag.DATA_SCALE, MetaTag.TypedDefineTag.TAGFLOAT(1f))
-        attributes.put(DataTag.DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(boundingBox.height))
-        attributes.put(DataTag.DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(boundingBox.width))
+        attributes.put(DataTag.DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(/*boundingBox.height*/1.9f))
+        attributes.put(DataTag.DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(/*boundingBox.width*/0.75f))
         attributes.put(DataTag.DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
         attributes.put(DataTag.DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
     }
@@ -104,16 +104,18 @@ open class Living(override var name: String): Entity() {
         super.update()
         velocity = position - lastPosition
         lastPosition = position
-        if(velocity.y < -0.05 && onGround)
-        {
-            fallStartPosition = position
-            onGround = false
-        } else if(velocity.y >= 0 && !onGround) {
-            //hit ground
-            onGround = true
-            fallDistance = fallStartPosition.y - position.y
-            if(fallDistance-3 > 0)
-                damage(fallDistance-3)
+        if(!(this is Player && gamemode == Player.Gamemode.CREATIVE)) {
+            if(velocity.y < -0.05 && onGround)
+            {
+                fallStartPosition = position
+                onGround = false
+            } else if(velocity.y >= 0 && !onGround) {
+                //hit ground
+                onGround = true
+                fallDistance = fallStartPosition.y - position.y
+                if(fallDistance-3 > 0)
+                    damage(fallDistance-3)
+            }
         }
     }
 

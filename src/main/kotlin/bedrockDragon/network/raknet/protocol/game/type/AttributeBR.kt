@@ -22,7 +22,7 @@ object AttributeBR {
             Attribute(HEALTH, "minecraft:health", 0.00f, 20.00f, 20.00f),
             Attribute(MOVEMENT, "minecraft:movement", 0.00f, Float.MAX_VALUE, 0.2f),
             //Attribute(6, "minecraft:follow_range", 0.00f, 2048f, 16f),
-            Attribute(PLAYER_HUNGER, "minecraft:player.hunger", 0.00f, 20.00f, 10.00f),
+            Attribute(PLAYER_HUNGER, "minecraft:player.hunger", 0.00f, 20.00f, 20.00f),
             //Attribute(8, "minecraft:attack_damage", 0.00f, Float.MAX_VALUE, 1f),
             Attribute(PLAYER_LEVEL, "minecraft:player.level", 0.00f, 24791f, 0.00f),
             Attribute(PLAYER_EXPERIENCE, "minecraft:player.experience", 0.00f, 1f, 0f),

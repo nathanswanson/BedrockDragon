@@ -22,13 +22,11 @@ Currently, I am developing this as my main project.
 - Chunk loading with some bugs
 - Basic block interaction
 ## Current Todo
-
+       
+          
+- Fix error where when two players load same chunk it creates a corrupt packet.
 - Fix chunk loading bug where some sub chunks randomly appear as one block.
-- Skins.
-- Unify doc style.
-- Add poet for cloneable annotations.
 - Block breaking.
-- Catch up testing coverage.
 
 
 ## Contributing

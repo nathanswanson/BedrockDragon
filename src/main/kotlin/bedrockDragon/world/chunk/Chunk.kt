@@ -48,6 +48,7 @@ import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.player.Player
+import bedrockDragon.util.ContractByteArray
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.WorldInt2
@@ -89,7 +90,6 @@ class Chunk(val position: WorldInt2,
     private var status = "empty" //this isnt actually being used very well TODO
     private var sectionCount = 0
 
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
 
     private var sections = ArrayList<SubChunk>()
     private var fluidTicks = ArrayList<NbtTag>()
@@ -98,7 +98,6 @@ class Chunk(val position: WorldInt2,
     private lateinit var heightMaps : NbtCompound
     private lateinit var structures : NbtCompound
     private var blockEntities = ArrayList<NbtTag>()
-    var payload: ByteArray? = null
     //chunk subscription
 
     override val fileName = Path("")
@@ -132,28 +131,29 @@ class Chunk(val position: WorldInt2,
     /**
      * [encodePayload] converts a chunk into a byte array ready for a packet.
      */
-    private fun encodePayload() {
-        val stream = FastByteArrayOutputStream(1024)
+    fun encodePayload(): ByteArray {
 
-        //sections
-        try {
-            sections.forEach {
-                stream.write(it.encodePayload())
+            val stream = FastByteArrayOutputStream(1024)
+
+            //sections
+            try {
+                sections.forEach {
+                    stream.write(it.encodePayload())
+                }
+            } catch(e: ConcurrentModificationException) {
+                stream.close()
+                return ByteArray(0)
             }
-        } catch(e: ConcurrentModificationException) {
-            stream.close()
-            return
-        }
 
 
-        //biome array
-        stream.write(ByteArray(25) {((127 shl 1) or 1).toByte()})
-        //border blocks
-        stream.write(0)
-        //extra data
-        VarInt.writeUnsignedVarInt(0, stream)
+            //biome array
+            stream.write(ByteArray(25) {((127 shl 1) or 1).toByte()})
+            //border blocks
+            stream.write(0)
+            //extra data
+            VarInt.writeUnsignedVarInt(0, stream)
 
-        payload = stream.array
+            return stream.array
     }
 
     fun readyNonEmptySectionCount(): Int {

@@ -189,7 +189,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
 
-           // sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
+//            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
