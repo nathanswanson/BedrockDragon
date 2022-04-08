@@ -50,7 +50,7 @@ class ItemEntity(val item: Item): Entity() {
 
                 otherEntity.addItem(this.item)
             }
-            destroy()
+
         }
     }
 }

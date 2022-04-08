@@ -55,6 +55,7 @@ import kotlinx.serialization.modules.EmptySerializersModule
 import net.benwoodworth.knbt.*
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 
 /**
@@ -82,8 +83,8 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
     var onGround: Boolean = true
     var passengers = emptyArray<Entity>()
     var portalCooldown = 0
-    open var position = Float3(0f,0f,0f)
-    var rotation = Float2(0f,0f)
+    open var position = Float3(8f,90f,8f)
+    var rotation = Float3(0f,0f, 0f)
     var silent: Boolean? = null
     var tags: Array<NbtTag> = emptyArray()
     var ticksFrozen: Int? = null
@@ -178,58 +179,60 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
     }
 
      override fun read() {
+        if(fileName.exists()) {
+            val nbt = Nbt {
+                variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
+                compression = NbtCompression.Gzip // None, Gzip, Zlib
+                compressionLevel = null // in 0..9
+                encodeDefaults = true
+                ignoreUnknownKeys = true
+                serializersModule = EmptySerializersModule
+            }
 
-        val nbt = Nbt {
-            variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
-            compression = NbtCompression.Gzip // None, Gzip, Zlib
-            compressionLevel = null // in 0..9
-            encodeDefaults = true
-            ignoreUnknownKeys = true
-            serializersModule = EmptySerializersModule
+            val tag: NbtTag = fileName.inputStream().use { input ->
+                nbt.decodeFromStream(input)
+            }
+            val nbtList = (tag.nbtCompound[""] as NbtCompound)
+            for(nbtTag in nbtList.iterator()) {
+                when(nbtTag.key) {
+                    "Motion" -> {
+                        val dbl3 = nbtTag.value.nbtList.toList()
+
+                        motion = Float3(
+                            dbl3[0].nbtDouble.value.toFloat(),
+                            dbl3[1].nbtDouble.value.toFloat(),
+                            dbl3[2].nbtDouble.value.toFloat())
+                    }
+                    "Pos" -> {
+
+                        val dbl3 = nbtTag.value.nbtList.toList()
+
+                        position = Float3(
+                            dbl3[0].nbtDouble.value.toFloat(),
+                            dbl3[1].nbtDouble.value.toFloat(),
+                            dbl3[2].nbtDouble.value.toFloat())
+
+
+                    }
+                    "Air" -> air = nbtTag.value.nbtShort.value
+                    "NoGravity" -> noGravity = nbtTag.value.nbtByte.booleanValue
+                    "FallDistance" -> fallDistance = nbtTag.value.nbtFloat.value
+                    "Invulnerable" -> invulnerable = nbtTag.value.nbtByte.booleanValue
+                    "Rotation" -> {
+                        val dbl2 = nbtTag.value.nbtList.toList()
+//                        rotation = Float2(
+//                            dbl2[0].nbtDouble.value.toFloat(),
+//                            dbl2[1].nbtDouble.value.toFloat()
+//                        )
+                    }
+                    "Fire" -> fire = nbtTag.value.nbtShort.value
+                    "OnGround" -> onGround = nbtTag.value.nbtByte.booleanValue
+                    "Glowing" -> glowing = nbtTag.value.nbtByte.value
+                    "HasVisualFire" -> hasVisualFire = nbtTag.value.nbtByte.booleanValue
+                    "PortalCooldown" -> portalCooldown = nbtTag.value.nbtInt.value
+                }
+            }
         }
-
-        val tag: NbtTag = fileName.inputStream().use { input ->
-            nbt.decodeFromStream(input)
-        }
-         val nbtList = (tag.nbtCompound[""] as NbtCompound)
-         for(nbtTag in nbtList.iterator()) {
-             when(nbtTag.key) {
-                 "Motion" -> {
-                     val dbl3 = nbtTag.value.nbtList.toList()
-
-                     motion = Float3(
-                         dbl3[0].nbtDouble.value.toFloat(),
-                         dbl3[1].nbtDouble.value.toFloat(),
-                         dbl3[2].nbtDouble.value.toFloat())
-                 }
-                 "Pos" -> {
-
-                     val dbl3 = nbtTag.value.nbtList.toList()
-
-                     position = Float3(
-                         dbl3[0].nbtDouble.value.toFloat(),
-                         dbl3[1].nbtDouble.value.toFloat(),
-                         dbl3[2].nbtDouble.value.toFloat())
-
-
-                 }
-                 "Air" -> air = nbtTag.value.nbtShort.value
-                 "NoGravity" -> noGravity = nbtTag.value.nbtByte.booleanValue
-                 "FallDistance" -> fallDistance = nbtTag.value.nbtFloat.value
-                 "Invulnerable" -> invulnerable = nbtTag.value.nbtByte.booleanValue
-                 "Rotation" -> {
-                     val dbl2 = nbtTag.value.nbtList.toList()
-                     rotation = Float2(
-                         dbl2[0].nbtDouble.value.toFloat(),
-                         dbl2[1].nbtDouble.value.toFloat()
-                     )
-                 }
-                 "Fire" -> fire = nbtTag.value.nbtShort.value
-                 "OnGround" -> onGround = nbtTag.value.nbtByte.booleanValue
-                 "Glowing" -> glowing = nbtTag.value.nbtByte.value
-                 "HasVisualFire" -> hasVisualFire = nbtTag.value.nbtByte.booleanValue
-                 "PortalCooldown" -> portalCooldown = nbtTag.value.nbtInt.value
-             }
-         }
     }
+
 }

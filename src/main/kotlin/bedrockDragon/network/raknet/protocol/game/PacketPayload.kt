@@ -47,20 +47,42 @@ import bedrockDragon.network.raknet.*
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 import bedrockDragon.network.raknet.protocol.game.type.gamerule.GameRules
+import bedrockDragon.player.Player
+import bedrockDragon.reactive.ReactivePacket
 import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.*
 
 open class PacketPayload(val id: Int): Packet() {
     var reliability: Reliability? = null
 
-    open fun encode() {}
+    var preCompiledPayload : AtomicReference<MinecraftPacket?> = AtomicReference(null)
+
+    private val scope = CoroutineScope(Job() + Dispatchers.IO)
+
+
+    private val subscriptionSharedFlow = MutableSharedFlow<MinecraftPacket>()
+    private val nonMutableFlow = subscriptionSharedFlow.asSharedFlow()
+
+    open fun encode() {
+
+    }
     open fun decode(packet: Packet) {}
     override fun writeString(s: String?): Packet {
         if(size() > 0) {
-            writeUnsignedVarInt(s!!.length)
-            write(*s.toByteArray())
+            val bytes = s!!.encodeToByteArray()
+            writeUnsignedVarInt(bytes.size)
+            write(*bytes)
         } else {
             writeUnsignedVarInt(0)
         }
@@ -117,8 +139,27 @@ open class PacketPayload(val id: Int): Packet() {
     }
 
     fun gamePacket() : MinecraftPacket {
-        encode()
-        return MinecraftPacket.encapsulateGamePacket(this, id, reliability)
+        if(preCompiledPayload.get() == null) {
+            encode()
+            preCompiledPayload.set(MinecraftPacket.encapsulateGamePacket(this, id, reliability))
+        } else {
+            println("reusing $preCompiledPayload")
+        }
+        scope.launch { subscriptionSharedFlow.emit(preCompiledPayload.get()!!) }
+
+        return preCompiledPayload.get()!!
+    }
+
+    fun subscribeToPacket(player: Player) {
+        if(preCompiledPayload.get() == null) {
+            scope.launch {
+                nonMutableFlow.collectLatest {
+                    player.nettyQueue.add(it)
+                }
+            }
+        } else {
+            player.nettyQueue.add(preCompiledPayload.get()!!)
+        }
     }
 
     fun writeAttribute(attribute: AttributeBR.Attribute) {

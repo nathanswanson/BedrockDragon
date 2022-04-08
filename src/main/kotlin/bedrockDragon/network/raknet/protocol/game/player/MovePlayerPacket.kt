@@ -14,16 +14,16 @@ class MovePlayerPacket: PacketPayload(MinecraftPacketConstants.MOVE_PLAYER) {
     var ridingRuntimeEntityId = -1L
     var teleportationCause = -1L
     var entityType: Byte = -1
+    var frame = 0L
 
     override fun encode() {
-        writeVarLong(runtimeEntityId)
+        writeUnsignedVarLong(runtimeEntityId)
         writeVector3(position)
         writeVector3(rotation)
-        write(mode)
+        writeByte(mode)
         writeBoolean(onGround)
-        //writeFloat(ridingRuntimeEntityId)
-        //writeVarLong(teleportationCause)
-        //write(entityType)
+        writeVarLong(runtimeEntityId)
+        writeUnsignedVarLong(frame)
     }
 
     override fun decode(packet: Packet) {
@@ -32,9 +32,8 @@ class MovePlayerPacket: PacketPayload(MinecraftPacketConstants.MOVE_PLAYER) {
         rotation = packet.readVector3()
         mode = packet.readByte()
         onGround = packet.readBoolean()
-        //ridingRuntimeEntityId = readUnsignedVarLong()
-       // teleportationCause = readVarLong()
-        //entityType = readUnsignedByte().toByte()
+        ridingRuntimeEntityId = packet.readVarLong()
+        frame = packet.readUnsignedVarLong()
     }
 
 }

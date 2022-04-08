@@ -45,10 +45,13 @@ package bedrockDragon.player
 
 import bedrockDragon.chat.ChatRail
 import bedrockDragon.command.CommandEngine
+import bedrockDragon.entity.DataTag
+import bedrockDragon.entity.ItemEntity
 import bedrockDragon.entity.living.Living
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.inventory.PlayerInventory
 import bedrockDragon.item.Item
+import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.handler.minecraft.MalformHandler
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
@@ -67,20 +70,23 @@ import bedrockDragon.network.raknet.protocol.game.player.*
 import bedrockDragon.network.raknet.protocol.game.type.AttributeBR
 import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.network.raknet.protocol.game.world.*
-import bedrockDragon.reactive.BreakBlock
-import bedrockDragon.reactive.ISubscriber
-import bedrockDragon.reactive.ReactivePacket
+import bedrockDragon.reactive.*
 import bedrockDragon.registry.Registry
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.aabb.AABB
+import bedrockDragon.util.text.yellow
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.sqrt
@@ -92,12 +98,15 @@ import kotlin.math.sqrt
  * @author Nathan Swanson
  * @since ALPHA
  */
-class Player(override var uuid: String): Living("minecraft:player"), ISubscriber {
+class Player(var username: String, override var uuid: String): Living("minecraft:player"), ISubscriber {
     val logger = KotlinLogging.logger {}
 
     init {
         read() //read nbt and load into fields
         boundingBox = AABB(0.9f,1.9f,0.9f)
+
+        attributes.put(DataTag.DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(username))
+
     }
 
     //Has player sent confirmation packet.
@@ -185,7 +194,7 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
             nettyQueue.add(it.gamePacket())
         }
         //end debug
-
+        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".yellow()))
         nettyQueue.add(CreativeContentPacket().gamePacket())
 
     }
@@ -267,7 +276,7 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
 
         //fast regen
 
-        if(health < 20f && foodLevel > 9 && epoch % 20 == 0) {
+        if(health < 20f && foodLevel > 9 &&  epoch % 20 == 0) {
             health++
             foodExhaustionLevel+=6
         }
@@ -353,7 +362,19 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
      * [sendChunk] will send a chunk to the player
      */
     fun sendChunk(chunk: Chunk) {
-        nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
+
+        chunk.initChunkFromStorage()
+
+        //if(chunk.loadStatus.get() == SaveStatus.LOADED)
+        if(chunk.payload != null) {
+            var chunkPacket = LevelChunkPacket(chunk)
+            chunkPacket.gamePacket()
+            chunkPacket.subscribeToPacket(this)
+        } else {}
+            //println("Null payload")
+//        else //subscribe for packet because it has not arrived
+//            chunk.waitForChunk(this)
+
     }
 
     private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
@@ -373,15 +394,18 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
         sendMessage(text.toString(), type)
     }
 
+    fun sendMessage(text: String, type: Int) {
+        sendMessage(TextPacket().let {
+            it.message = text
+            it.type = type.toByte()
+            it.needsTranslate = false
+        })
+    }
     /**
      * [sendMessage] sends string as raw data to the client.
      */
-    fun sendMessage(text: String, type: Int = 0) {
-        val messagePacket = TextPacket()
-        messagePacket.type = 0
-        messagePacket.needsTranslate = false
-        messagePacket.message = text
-        nettyQueue.add(messagePacket.gamePacket())
+    fun sendMessage(text: TextPacket) {
+        nettyQueue.add(text.gamePacket())
     }
 
     /**
@@ -415,10 +439,9 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
      */
     fun disconnect(kickMessage: String?) {
      //   save() todo
+        println("Disconnecting Player: $username")
         nettyQueue.add(DisconnectPacket().let {
-            it.kickMessage = kickMessage ?: ""
-            it.hideDisconnectScreen = kickMessage == null
-            it.encode()
+            it.kickMessage = kickMessage
             it.gamePacket()
         })
         chunkRelay.removePlayer(this)
@@ -429,7 +452,8 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.filter(this)) {
-            nettyQueue.add(reactivePacket.payload.gamePacket())
+            //nettyQueue.add(reactivePacket.payload.gamePacket())
+            reactivePacket.payload.subscribeToPacket(this)
         }
     }
 
@@ -447,6 +471,27 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
 
     fun emitSound(player: Player, pos: Float3) {
 
+    }
+
+    override fun showFor(players: List<Player>) {
+        if(players.isNotEmpty()) {
+            val packet = AddPlayerPacket().let {
+                it.position = position
+                it.runtimeEntityId = runtimeEntityId
+                it.username = username
+                it.entitySelfId = runtimeEntityId
+                it.rotation = rotation
+                it.velocity = velocity
+                it.metaTag = attributes
+                it.uuid = UUID.fromString(uuid)
+                it.heldItem = Registry.ITEM_REGISTRY["minecraft:stone"]
+                it.gamePacket()
+            }
+
+            players.forEach { player ->
+                player.nettyQueue.add(packet)
+            }
+        }
     }
 
     /**
@@ -474,7 +519,8 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
 
-                chunkRelay.invoke(bedrockDragon.reactive.MovePlayer(movePlayerPacket, this))
+                movePlayerPacket.gamePacket()
+                chunkRelay.invoke(MovePlayer(movePlayerPacket, this))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
             MinecraftPacketConstants.TICK_SYNC -> { println("TICK_SYNC") }
@@ -509,8 +555,11 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
                 sendMessage(blockPickRequestPacket.position)
                 if(gamemode == Gamemode.SURVIVAL) {
                     sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
-                    world.getBlockAt(blockPickRequestPacket.position).asItem().dropItem(this, blockPickRequestPacket.position + Float3(0f,1f,0f), Float3(0f,0f,0f))
-                    inventory.sendPacketContents(this)
+                    val itemEntity = ItemEntity(world.getBlockAt(blockPickRequestPacket.position).asItem())
+                    itemEntity.position = blockPickRequestPacket.position + Float3(0.5f,1f,0.5f)
+                    chunkRelay.addEntity(itemEntity)
+                    //world.getBlockAt(blockPickRequestPacket.position).asItem().dropItem(this, blockPickRequestPacket.position + Float3(0f,1f,0f), Float3(0f,0f,0f))
+                    //inventory.sendPacketContents(this)
                 }
             }
             MinecraftPacketConstants.PLAYER_AUTH_INPUT -> {
@@ -546,13 +595,20 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
                     PlayerActionPacket.ACTION_DROP_ITEM -> {
 
                     }
+                    PlayerActionPacket.ACTION_STOP_SNEAK,
+                    PlayerActionPacket.ACTION_START_SNEAK -> {
+                        chunkRelay.invoke(Sneak(inGamePacket.payload as PlayerActionPacket, this))
+                    }
                 }
             }
             MinecraftPacketConstants.ENTITY_FALL -> { println("ENTITY_FALL") }
             MinecraftPacketConstants.SET_ENTITY_DATA -> { println("SET_ENTITY_DATA") }
             MinecraftPacketConstants.SET_ENTITY_MOTION -> { println("SET_ENTITY_MOTION") }
             MinecraftPacketConstants.ANIMATE -> {
-
+                chunkRelay.invoke(AnimatePlayer(AnimatePacket().let {
+                    it.decode(inGamePacket.payload)
+                    it
+                }, this))
             }
             MinecraftPacketConstants.RESPAWN -> {
                 RespawnPacket().let {
@@ -636,6 +692,8 @@ class Player(override var uuid: String): Living("minecraft:player"), ISubscriber
     @OptIn(ExperimentalSerializationApi::class)
     fun save() {
         val playerFile = File("players/$uuid.nbt")
+        if(!playerFile.exists())
+            playerFile.createNewFile()
         //playerFile.createNewFile() //only creates if does not exist
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork

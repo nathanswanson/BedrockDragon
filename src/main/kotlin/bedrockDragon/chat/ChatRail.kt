@@ -43,11 +43,14 @@
 
 package bedrockDragon.chat
 
+import bedrockDragon.network.raknet.protocol.game.ui.TextPacket
 import bedrockDragon.player.Player
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import mu.KotlinLogging
+import kotlin.math.log
 
 /**
  * [ChatRail] holds a common state for players to chat on. Think of it as a chat room for the coroutines to use.
@@ -56,20 +59,32 @@ import kotlinx.coroutines.flow.collectLatest
  */
 class ChatRail {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    val logger = KotlinLogging.logger {}
+
     //you have to be able to subscribe
     //and invoke
     //String, and probably filter for player
-    private val _subscription = MutableSharedFlow<String>()
+    private val _subscription = MutableSharedFlow<TextPacket>()
     val subscription = _subscription.asSharedFlow()
 
-    fun sendMessage(message: String) {
+    fun sendMessage(message: TextPacket) {
         invoke(message)
     }
 
-    fun invoke(emitter: String) {
+    fun invoke(emitter: TextPacket) {
         scope.launch {
-            _subscription.emit(emitter)
+            logger.info { emitter.message }
+           // _subscription.emit(emitter)
         }
+    }
+
+    fun invoke(emitter: String, type: Int = 0) {
+        invoke(TextPacket().let {
+            it.message = emitter
+            it.type = type.toByte()
+            it.gamePacket()
+            it
+        })
     }
 
     fun subscribe(watcher: Player) {

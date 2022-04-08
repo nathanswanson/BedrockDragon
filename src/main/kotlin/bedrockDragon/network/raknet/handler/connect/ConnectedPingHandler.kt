@@ -62,10 +62,14 @@ class ConnectedPingHandler(override val sender: RakNetPeer, val packet: Encapsul
         val ping = ConnectedPing(packet.payload)
         ping.decode()
 
+        sender.lastAlivePing = System.currentTimeMillis()
+
         val pong = ConnectedPong()
         pong.timestamp = ping.timestamp
         pong.timestampPong = (sender as RakNetClientPeer).server.timeStamp()
         pong.encode()
+
+        sender.lastAlivePong = System.currentTimeMillis()
 
         sender.sendMessage(Reliability.UNRELIABLE, 0 , pong)
 

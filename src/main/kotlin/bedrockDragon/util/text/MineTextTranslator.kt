@@ -62,5 +62,19 @@ fun String.fromMinecraft() : String {
  * [toMinecraft] converts text from ascii console color to minecraft color.
  */
 fun String.toMinecraft(): String {
-    return this
+    val builder = StringBuilder()
+    val r = Regex("(?<=\u001B).+?((?=\u001B)|\$(?![\\r\\n]))")
+    val codes = r.findAll(this)
+    for(code in codes) {
+        //grab color code
+
+        builder.append(code.value)
+    }
+    return builder.toString()
+}
+
+fun main() {
+    val text = "\u001B[46m{this}\u001B[0m"
+    println(text)
+    println(text.toMinecraft())
 }

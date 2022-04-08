@@ -78,13 +78,15 @@ import java.net.InetSocketAddress
 class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType, guid: Long, maximumTransferUnit: Int, channel: Channel, val sender: InetSocketAddress)
     : RakNetPeer(sender, guid, maximumTransferUnit, connectionType, channel) {
 
+    val TIMEOUT_PONG: Long = 10000L
+
     var status: RaknetConnectionStatus = RaknetConnectionStatus.DISCONNECTED
     private var clientPeer : MinecraftClientPeer? = null
    // var cacheEnabled = false
 
     fun destroy() {
       //  clientPeer!!.player!!.save()
-        clientPeer!!.player!!.disconnect("")
+        clientPeer?.player?.disconnect(null)
     }
 
     fun attemptMinecraftHandoff() {
@@ -123,7 +125,13 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
 
     override fun updateServer() {
         if (clientPeer != null) {
-            if(clientPeer!!.status == PlayerStatus.InGame) {
+            //check pong
+            if(System.currentTimeMillis() - lastAlivePing > TIMEOUT_PONG) {
+                clientPeer!!.player?.disconnect("Lost connection to server.")
+                clientPeer!!.status = PlayerStatus.PendDisconnect
+                server.remove(this)
+            }
+            else if(clientPeer!!.status == PlayerStatus.InGame) {
                 if(clientPeer?.player?.nettyQueue!!.isNotEmpty()) {
                     for(gamePacket in clientPeer?.player?.nettyQueue!!) {
                         sendMessage(gamePacket.reliability, 0, gamePacket)
@@ -132,10 +140,6 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 }
             }
         }
-    }
-
-    private fun bedrockClient(): MinecraftClientPeer? {
-        return clientPeer
     }
 
     private inner class MinecraftClientPeer(val protocol: Int, val playerData: List<JWSObject>, val skinData: String): MinecraftPeer() {
@@ -177,7 +181,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         }
 
         fun fireJoinSequence() {
-            player = Player(uuid)
+            player = Player(userName, uuid)
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, StartGamePacket.capture(player!!).gamePacket())
 

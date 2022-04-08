@@ -65,7 +65,8 @@ class MalformPacket: PacketPayload(MinecraftPacketConstants.MALFORM_PACKET) {
 
 
     override fun decode(packet: Packet) {
-        type = PacketViolationType.values()[packet.readVarInt()]
+        //type = PacketViolationType.values()[packet.readVarInt()]
+        packet.readVarInt()
         severity = PacketViolationSeverity.values()[packet.readVarInt()]
         packetId = packet.readVarInt()
         context = packet.read(readUnsignedVarInt().toInt()).map { it.toInt() }.toString()

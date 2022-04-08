@@ -45,6 +45,8 @@ package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
+import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
+import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.player.Player
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
@@ -52,10 +54,23 @@ import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.modules.EmptySerializersModule
 import net.benwoodworth.knbt.*
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 import kotlin.io.path.Path
 
 /**
@@ -74,6 +89,8 @@ class Chunk(val position: WorldInt2,
     private var status = "empty" //this isnt actually being used very well TODO
     private var sectionCount = 0
 
+    private val scope = CoroutineScope(Job() + Dispatchers.IO)
+
     private var sections = ArrayList<SubChunk>()
     private var fluidTicks = ArrayList<NbtTag>()
     private var postProcessing = ArrayList<NbtTag>()
@@ -81,10 +98,11 @@ class Chunk(val position: WorldInt2,
     private lateinit var heightMaps : NbtCompound
     private lateinit var structures : NbtCompound
     private var blockEntities = ArrayList<NbtTag>()
+    var payload: ByteArray? = null
+    //chunk subscription
 
     override val fileName = Path("")
-    var loadStatus = SaveStatus.EMPTY
-
+    var loadStatus: AtomicReference<SaveStatus> = AtomicReference(SaveStatus.EMPTY)
     override fun save(nbtBuilder: NbtCompoundBuilder) {
         nbtBuilder.put("DataVersion", 2230)
         nbtBuilder.put("Level", buildNbtCompound{
@@ -114,12 +132,17 @@ class Chunk(val position: WorldInt2,
     /**
      * [encodePayload] converts a chunk into a byte array ready for a packet.
      */
-    fun encodePayload(): FastByteArrayOutputStream {
+    private fun encodePayload() {
         val stream = FastByteArrayOutputStream(1024)
 
         //sections
-        sections.forEach {
-            stream.write(it.encodePayload())
+        try {
+            sections.forEach {
+                stream.write(it.encodePayload())
+            }
+        } catch(e: ConcurrentModificationException) {
+            stream.close()
+            return
         }
 
 
@@ -130,7 +153,7 @@ class Chunk(val position: WorldInt2,
         //extra data
         VarInt.writeUnsignedVarInt(0, stream)
 
-        return stream
+        payload = stream.array
     }
 
     fun readyNonEmptySectionCount(): Int {
@@ -205,11 +228,14 @@ class Chunk(val position: WorldInt2,
     }
 
     fun initChunkFromStorage() {
-        if(loadStatus == SaveStatus.EMPTY) {
+        if(loadStatus.get() == SaveStatus.EMPTY) {
+            loadStatus.set(SaveStatus.LOADING)
             val data = parent!!.region.readChunkBinary(this)
             decodeNbtFromStorage(data)
-            loadStatus = SaveStatus.LOADED
+            encodePayload()
+            loadStatus.set(SaveStatus.LOADED)
         }
+
     }
 
     override fun toString(): String {
@@ -223,21 +249,28 @@ class Chunk(val position: WorldInt2,
         lateinit var biomes : NbtCompound
         lateinit var blockLight : NbtByteArray
 
+        var preCompiledSubChunk: ByteArray? = null
+
         var paletteSubChunk: PaletteSubChunk? = null
         var y: Byte = 0 //signed
         fun encodePayload(): ByteArray {
+           // if (preCompiledSubChunk == null) {
             val stream = FastByteArrayOutputStream(128)
 
-            if(paletteSubChunk != null) {
+            if (paletteSubChunk != null) {
                 stream.write(8)
                 stream.write(2)
                 paletteSubChunk?.encode(stream)
-               // stream.write(PaletteSubChunk.emptyPaletteFooter)
+                // stream.write(PaletteSubChunk.emptyPaletteFooter)
+                //stream.trim()
+                //preCompiledSubChunk = stream.array.copyOfRange(0, stream.length)
             }
+           //}
 
             //storage
             stream.trim()
             return stream.array.copyOfRange(0, stream.length)
+            //return preCompiledSubChunk!!
         }
 
         companion object {

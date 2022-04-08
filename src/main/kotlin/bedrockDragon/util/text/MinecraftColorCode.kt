@@ -43,12 +43,17 @@
 
 package bedrockDragon.util.text
 
+import java.util.Hashtable
+
 /**
  * [MinecraftColorCode] contains color codes to change in game text color or font type.
  * @author Nathan Swanson
  * @since BETA
  */
 object MinecraftColorCode {
+
+
+
     const val BLACK = '0'
     const val DARK_BLUE = '1'
     const val DARK_GREEN = '2'
@@ -74,13 +79,10 @@ object MinecraftColorCode {
     const val ITALIC = 'o'
     const val RESET = 'r'
 
-    fun mineStringToAscii(string: String): String {
-        val id = string[0]
-        val content = string.substring(1)
-        return when(id) {
-            BLACK -> content.black()
-            DARK_BLUE -> content.blue()
-            else -> content
-        }
+
+    val colorHash = hashMapOf<String, Char>()
+
+    init {
+        colorHash[yellow] = YELLOW
     }
 }

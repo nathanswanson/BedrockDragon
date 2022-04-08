@@ -49,6 +49,9 @@ import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.zlib.PacketCompression
+import bedrockDragon.player.Player
+import java.util.LinkedList
+import java.util.concurrent.atomic.AtomicReference
 
 
 /**
@@ -58,10 +61,13 @@ import bedrockDragon.network.zlib.PacketCompression
  * @since ALPHA
  */
 class MinecraftPacket() : Packet() {
+
     lateinit var payload: Packet
     var packetId = -1
     var header = -1
     var reliability: Reliability = Reliability.RELIABLE_ORDERED
+
+
     /**
      *  GamePacket: 0xFE
      *  Compressed:
@@ -72,6 +78,7 @@ class MinecraftPacket() : Packet() {
      *  @since ALPHA
      */
     fun encode() {
+        payload.buffer().readerIndex(0)
         writeUnsignedByte(PacketConstants.GAME_PACKET)
         //encrypt
 
@@ -81,13 +88,16 @@ class MinecraftPacket() : Packet() {
         } else {
             encryptedLoad.writeUnsignedVarInt(payload.size() + 1)
         }
-        encryptedLoad.writeUnsignedVarInt(packetId)
-        encryptedLoad.write(*payload.read(payload.size()))
+        try {
+            encryptedLoad.writeUnsignedVarInt(packetId)
+            encryptedLoad.write(*payload.read(payload.size()))
+            //packet gets sent compressed
+        } catch(e: java.lang.IndexOutOfBoundsException) {
+
+        }
         write(*PacketCompression.compress(encryptedLoad.read(encryptedLoad.size()), 7))
-        //packet gets sent compressed
+
     }
-
-
 
     fun decode() {
         //packet must be decompressed
@@ -99,6 +109,7 @@ class MinecraftPacket() : Packet() {
 
 
     companion object {
+
         /**
          * This is a helper method that shorthands making encapsulated packets.
          * However, this function is rarely called and you most likely want to use
@@ -114,7 +125,7 @@ class MinecraftPacket() : Packet() {
             if (reliability != null) {
                 packet.reliability = reliability
             }
-
+            packet.buffer().readerIndex(0)
             packet.encode()
 
             return packet

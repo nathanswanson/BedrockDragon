@@ -47,11 +47,11 @@ import bedrockDragon.util.SaveStatus
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
-import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
 import java.io.InputStream
 import java.io.RandomAccessFile
+import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.math.ceil
 
@@ -91,7 +91,7 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
     val logger = KotlinLogging.logger {}
     val relayGrid = arrayOfNulls<ChunkRelay>(64) //make private is public atm for testing
     var manifest: RegionManifest = RegionManifest(fileName)
-
+    var entityManifest: Path = Path("${world.name}/entities/r.$x.$z.mca")
     init {
         //make sure region file exists
         if (!Path("${world.name}/region").exists()) {
@@ -124,8 +124,8 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
      * [findChunkPointer] takes [idxLocationTable] and reads the bytes at this address. these bytes represent the
      * start and end of the memory segment fo the given chunk.
      */
-    private fun findChunkPointer(x: Int, z: Int): RegionPointer? {
-        val reader = fileName.inputStream()
+    private fun findChunkPointer(path: Path, x: Int, z: Int): RegionPointer? {
+        val reader = path.inputStream()
         //(x % 32 + z % 32) * 32) * 4
         // (x and 31 + z and 31) shl 7
         reader.skip(idxLocationTable(x, z))
@@ -182,7 +182,7 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
         val writer = RandomAccessFile(fileName.toFile(), "rw")
         iterator().forEach {
 
-            if (it.loadStatus != SaveStatus.EMPTY) {
+            if (it.loadStatus.plain != SaveStatus.EMPTY) {
                 val chunkData = it.encodeNbtToStorage()
                 val locationPosition = idxLocationTable(it.position.x, it.position.y)
                 writer.seek(locationPosition)
@@ -271,26 +271,28 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
      *
      */
     fun readChunkBinary(chunk: Chunk): ByteArray {
-        val regionPointer = findChunkPointer(chunk.position.x, chunk.position.y)
+
+//        val entityPointer = findChunkPointer(entityManifest, chunk.position.x, chunk.position.y)
+//        //chunk world ata
+//        RandomAccessFile(fileName.toFile(), "r").use {
+//            it.seek(entityPointer!!.start.toLong() * 4096 + 5)
+//            val entityArray = ByteArray(entityPointer!!.end * 4096)
+//            it.read(entityArray)
+//
+//            println()
+//
+//        }
+
+        val regionPointer = findChunkPointer(fileName, chunk.position.x, chunk.position.y)
+        //chunk world ata
         RandomAccessFile(fileName.toFile(), "r").use {
             it.seek(regionPointer!!.start.toLong() * 4096 + 5)
             val tempArray = ByteArray(regionPointer!!.end * 4096)
             it.read(tempArray)
 
-
-            val nbt = Nbt {
-                variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
-                compression = NbtCompression.Zlib // None, Gzip, Zlib
-                compressionLevel = null // in 0..9
-                encodeDefaults = true
-                ignoreUnknownKeys = true
-                serializersModule = EmptySerializersModule
-            }
-
-            //val nbtData = nbt.decodeFromByteArray<NbtCompound>(tempArray)[""]!!.nbtCompound
-            //val chunk = Chunk(WorldInt2(nbtData["xPos"].nbtInt.v, nbtData["zPos"]!!.nbtInt.value), TODO())
             return tempArray
         }
+
     }
 
     override fun toString(): String {

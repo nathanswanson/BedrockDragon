@@ -1,18 +1,14 @@
 package bedrockDragon.network.raknet.protocol.game.world
 
-import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.world.chunk.Chunk
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 
 class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
-    init {
-        chunk.initChunkFromStorage()
-        reliability = Reliability.RELIABLE_ORDERED
-    }
 
-    var data: FastByteArrayOutputStream = chunk.encodePayload()
+    var data: ByteArray = chunk.payload ?:
+        throw NullPointerException("LevelChunkPacket should be called only with a complete chunk but chunk.payload: ${chunk.payload}")
 
     var chunkX = chunk.position.x
     var chunkZ = chunk.position.y
@@ -22,6 +18,8 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
 
 
     override fun encode() {
+        if(buffer().readerIndex() != 0)
+            return
         writeVarInt(chunkX)
         writeVarInt(chunkZ)
         writeUnsignedVarInt(subChunkCount) //subchunk size
@@ -32,10 +30,9 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
                 writeLongLE(id)
             }
         }
-        data.use {
-            writeUnsignedVarInt(it.length)
-            write(it)
-        }
+        writeUnsignedVarInt(data.size)
+        write(*data)
+
 
     }
 

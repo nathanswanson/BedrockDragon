@@ -132,6 +132,13 @@ class World(val name: String): DSLBase() {
         return getChunkAt(position).getBlockAt(position)
     }
 
+
+    fun destroyBlock(position: Float3) : Block {
+        val removedBlock = getBlockAt(position)
+
+        return removedBlock
+    }
+
     /**
      * [spawnEntity] will spawn an entity at the given coordinates.
      */

@@ -4,11 +4,11 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 
 class DisconnectPacket: PacketPayload(MinecraftPacketConstants.DISCONNECT) {
-    var hideDisconnectScreen = false
-    var kickMessage = ""
+    var kickMessage: String? = null
 
     override fun encode() {
-        writeBoolean(hideDisconnectScreen)
-        writeString(kickMessage)
+        writeBoolean(kickMessage != null)
+        if(kickMessage != null)
+            writeString(kickMessage)
     }
 }

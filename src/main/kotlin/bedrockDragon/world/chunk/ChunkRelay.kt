@@ -91,7 +91,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
         override fun remove(key: Player): Job? {
             if(this.size <= 1) {
-                tickLoop!!.cancel()
+                tickLoop?.cancel()
                 tickLoop = null
             }
             return super.remove(key)
@@ -129,8 +129,16 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
     fun addEntity(entity: Entity) {
 
+        //show entity to other players
         entity.showFor(entityRegistry.filterIsInstance<Player>())
+        //if player also send all entities
+        if(entity is Player) {
+            entityRegistry.forEach { it.showFor(listOf(entity)) }
+        }
+
+        //add entity to list
         entityRegistry.add(entity)
+
     }
 
     fun removeEntity(entity: Entity) {
@@ -146,7 +154,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         player.updateChunkPublisherPosition()
         sendAllChunksForPlayer(player)
 
-        entityRegistry.add(player)
+        addEntity(player)
         jobs[player] = scope.launch {
             nonMutableFlow.filter { true }
                 .collectLatest {
@@ -193,6 +201,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
                 }
         }
     }
+
 
     private fun getChunkAbsolute(player: Player): WorldInt2 {
         return WorldInt2(player.position.x.toInt() shr 4, player.position.z.toInt() shr 4)
@@ -318,6 +327,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     fun removePlayer(player: Player) {
         jobs[player]?.cancel()
         jobs.remove(player)
+        //println("") //removeEntity(player)
     }
 
     /**

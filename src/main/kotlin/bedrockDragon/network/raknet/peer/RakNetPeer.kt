@@ -78,8 +78,9 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
     private var ackReceiptPackets = ConcurrentHashMap<EncapsulatedPacket, Int>()
     private var receiveSequenceNumber = -1
     private var sendSequenceNumber = 0
-    private var lastAlivePing = 0L
-    private var lastAlivePong = 0L
+
+    var lastAlivePing = 0L
+    var lastAlivePong = 0L
     var raknetStatus = RaknetConnectionStatus.CONNECTED
 
     val sendQueue = ConcurrentLinkedQueue<EncapsulatedPacket>()
@@ -223,13 +224,6 @@ abstract class RakNetPeer(val address: InetSocketAddress, val guid: Long, val ma
     open fun update() {
         updateServer()
         if(raknetStatus == RaknetConnectionStatus.CONNECTED) {
-            val currentTime = System.currentTimeMillis()
-            //Tell client server is still alive
-            if(currentTime - lastAlivePing >= 2500L) {
-                sendMessage(Reliability.UNRELIABLE, 0, RakNetPacket(4))
-                lastAlivePing = currentTime
-            }
-
             if(sendQueue.isNotEmpty()) {
                 val sendQueueI = sendQueue.iterator()
                 val send = ArrayList<EncapsulatedPacket>()

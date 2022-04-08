@@ -74,7 +74,6 @@ open class Living(override var name: String): Entity() {
         attributes.put(DataTag.DATA_BOUNDING_BOX_HEIGHT, MetaTag.TypedDefineTag.TAGFLOAT(boundingBox.height))
         attributes.put(DataTag.DATA_BOUNDING_BOX_WIDTH, MetaTag.TypedDefineTag.TAGFLOAT(boundingBox.width))
         attributes.put(DataTag.DATA_HEALTH, MetaTag.TypedDefineTag.TAGINT(health.toInt()))
-        attributes.put(DataTag.DATA_NAMETAG, MetaTag.TypedDefineTag.TAGSTRING(name))
         attributes.put(DataTag.DATA_LEAD_HOLDER_EID, MetaTag.TypedDefineTag.TAGLONG(-1L))
     }
 

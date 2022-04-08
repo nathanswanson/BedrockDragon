@@ -46,6 +46,7 @@ package bedrockDragon.network.raknet.protocol.game.ui
 import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
+import bedrockDragon.util.text.toMinecraft
 
 /**
  * 0 	Raw
@@ -95,5 +96,14 @@ class TextPacket: PacketPayload(MinecraftPacketConstants.TEXT) {
     }
 
     //temp
-
+    companion object {
+        fun richTextPacket(content: String): TextPacket {
+            return TextPacket().let {
+                it.message = content.toMinecraft()
+                it.type = 0
+                it.needsTranslate = false
+                it
+            }
+        }
+    }
 }

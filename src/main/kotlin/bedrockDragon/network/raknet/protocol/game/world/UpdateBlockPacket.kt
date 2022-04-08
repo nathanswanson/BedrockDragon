@@ -18,12 +18,12 @@ class UpdateBlockPacket: PacketPayload(MinecraftPacketConstants.UPDATE_BLOCK) {
     lateinit var coordinates: Float3 //BlockCoord
     var blockRuntimeId: Int = -1 //VarInt
     var flags: Int = 2 //VarInt
-    var layer: Int = 1 //VarInt
+    var layer: Int = 0 //VarInt
 
     override fun encode() {
         writeBlockCoordinates(coordinates)
-        writeVarInt(blockRuntimeId)
-        writeVarInt(flags)
-        writeVarInt(layer)
+        writeUnsignedVarInt(blockRuntimeId)
+        writeUnsignedVarInt(flags)
+        writeUnsignedVarInt(layer)
     }
 }

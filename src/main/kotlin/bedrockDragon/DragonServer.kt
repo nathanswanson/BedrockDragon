@@ -189,12 +189,14 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             packetHandler.responseToClient()
             if(packetHandler is ConnectionRequestHandlerTwo && packetHandler.finished) {
                 clients[sender] = RakNetClientPeer(this, packetHandler.connectionType, packetHandler.clientGuid, packetHandler.clientmtu, channel, sender)
-                //todo playercount incremented when minecraft login finalized not when raknet is.
-                logger.info { "Added Player" }
             }
         }
 
         packet.buffer().release()
+    }
+
+    fun remove(peer: RakNetClientPeer) {
+        clients.remove(peer.sender)
     }
 
     fun handleHandlerException(causeAddress: InetSocketAddress, cause: Throwable) {
@@ -227,7 +229,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         fun createEncapsulatedPacketHandle(sender: RakNetPeer, packet: EncapsulatedPacket, channel: Channel) : PacketHandler {
 
             return when(packet.payload.buffer().getUnsignedByte(0).toInt()) {
-                PacketConstants.CONNECTED_PING -> ConnectedPingHandler(sender, packet, channel)
+                PacketConstants.CONNECTED_PING -> {  ConnectedPingHandler(sender, packet, channel) }
                 PacketConstants.CONNECTION_REQUEST -> ConnectionRequestHandlerPost(sender, packet, channel)
                 PacketConstants.NEW_INCOMING_CONNECTION -> IncomingConnectionHandler(sender as RakNetClientPeer, packet, channel)
                 PacketConstants.CLIENT_DISCONNECT -> DisconnectHandler(sender as RakNetClientPeer, packet, channel)

@@ -1,6 +1,7 @@
 package bedrockDragon.network.raknet.protocol.game.player
 
 import bedrockDragon.item.Item
+import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import dev.romainguy.kotlin.math.Float2
@@ -15,9 +16,9 @@ class AddPlayerPacket: PacketPayload(MinecraftPacketConstants.ADD_PLAYER) {
     var platformChatId = ""
     lateinit var position: Float3
     lateinit var velocity: Float3
-    lateinit var rotation: Float2
+    lateinit var rotation: Float3
     lateinit var heldItem: Item
-    //metadata TODO
+    lateinit var metaTag: MetaTag
     var flags = -1 //varInt
     var commandPermissions = -1 //varInt
     var customStoredPermissions = -1 //varInt
@@ -27,6 +28,24 @@ class AddPlayerPacket: PacketPayload(MinecraftPacketConstants.ADD_PLAYER) {
     var deviceOS = -1
 
     override fun encode() {
-        super.encode()
+        writeUUID(uuid)
+        writeString(username)
+        writeVarLong(entitySelfId)
+        writeUnsignedVarLong(runtimeEntityId)
+        writeString(platformChatId)
+        writeVector3(position)
+        writeVector3(velocity)
+        writeVector3(rotation)
+        writeItem(heldItem)
+        writeMetaData(metaTag)
+        writeUnsignedVarInt(0) //adventure
+        writeUnsignedVarInt(0)
+        writeUnsignedVarInt(0)
+        writeUnsignedVarInt(0)
+        writeUnsignedVarInt(0)
+        writeLongLE(entitySelfId)
+        writeUnsignedVarInt(0) //links
+        writeString(deviceId)
+        writeIntLE(deviceOS)
     }
 }

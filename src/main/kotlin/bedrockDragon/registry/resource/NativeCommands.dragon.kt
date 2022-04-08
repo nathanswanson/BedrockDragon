@@ -124,6 +124,12 @@ object NativeCommands {
                         player.world.spawnEntity(Float3((anies[0] as String).toFloat(), (anies[1] as String).toFloat(), (anies[2] as String).toFloat()), anies[3] as String, player)
                 }
             }
+            command("/kick") {
+                invoke = {
+                    player, anies ->
+                        player.disconnect("You have been kicked from the Server.")
+                }
+            }
         }
     }
 }

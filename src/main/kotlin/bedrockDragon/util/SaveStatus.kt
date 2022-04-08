@@ -51,6 +51,7 @@ package bedrockDragon.util
 enum class SaveStatus {
     UNLOADED, //exists but not loaded
     LOADED, //loaded
+    LOADING, //currently, generating payload
     DIRTY, //needs to be saved
     EMPTY, //has never been generated
 }

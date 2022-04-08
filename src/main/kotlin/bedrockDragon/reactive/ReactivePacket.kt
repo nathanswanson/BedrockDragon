@@ -48,8 +48,10 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.network.raknet.protocol.game.entity.AddItemEntityPacket
 import bedrockDragon.network.raknet.protocol.game.entity.RemoveEntityPacket
 import bedrockDragon.network.raknet.protocol.game.entity.TakeItemEntityPacket
+import bedrockDragon.network.raknet.protocol.game.player.AnimatePacket
 import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
+import bedrockDragon.network.raknet.protocol.game.world.UpdateBlockPacket
 import bedrockDragon.player.Player
 import bedrockDragon.world.chunk.ChunkRelay
 import dev.romainguy.kotlin.math.Float3
@@ -74,8 +76,7 @@ abstract class ReactivePacket<T: PacketPayload>(val payload: T, val sender: ISub
 }
 
 class MovePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
-class AnimatePlayer()
-class RotatePlayer(payload: MovePlayerPacket, sender: Player) : ReactivePacket<MovePlayerPacket>(payload, sender)
+class AnimatePlayer(payload: AnimatePacket, sender: Player) : ReactivePacket<AnimatePacket>(payload, sender)
 
 class TakeItem(payload: TakeItemEntityPacket, sender: Player) : ReactivePacket<TakeItemEntityPacket>(payload, sender) {
     override fun filter(otherPlayer: Player): Boolean {
@@ -89,12 +90,26 @@ class RemoveEntity(payload: RemoveEntityPacket, sender: Player) : ReactivePacket
     }
 }
 
+class Sneak(payload: PlayerActionPacket, sender: Player): ReactivePacket<PlayerActionPacket>(payload,sender)
+class UpdateBlock(payload: UpdateBlockPacket, sender: Player) : ReactivePacket<UpdateBlockPacket>(payload, sender)
 class BreakBlock(payload: PlayerActionPacket, sender: Player) : ReactivePacket<PlayerActionPacket>(payload, sender) {
     override fun run(relay: ChunkRelay) {
         //drop item
         val block = ItemEntity((sender as Player).world.getBlockAt(sender.blockMining).asItem())
         block.position = sender.blockMining + Float3(0.5f, 0f, 0.5f) //moves entity to center of block
+        //temp
+        relay.invoke(UpdateBlock(UpdateBlockPacket().let {
+            it.blockRuntimeId = 134
+            it.coordinates = sender.blockMining
+            it
+        },sender))
+        //
         relay.addEntity(block)
+    }
+
+
+    override fun filter(otherPlayer: Player): Boolean {
+        return false
     }
 }
 
