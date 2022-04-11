@@ -23,7 +23,6 @@ class OddParityBitMap(size: Int, paletteResolution: PaletteSubChunk.PaletteResol
         //bitIndex =  6 * 5 = 30
         //arrayIndex = 1
         //offset = 30 and 29 = 30
-
         val arrayIndex = idx / paletteResolution.entriesPerWord
         val offset = (idx % paletteResolution.entriesPerWord) * paletteResolution.size
         blockData[arrayIndex] =

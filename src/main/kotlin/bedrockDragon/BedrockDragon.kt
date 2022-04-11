@@ -43,7 +43,6 @@
 
 package bedrockDragon
 
-import bedrockDragon.mod.loader.ModLoader
 import bedrockDragon.registry.Registry
 import bedrockDragon.registry.resource.NativeCommands
 import bedrockDragon.registry.resource.VanillaBlocks
@@ -55,7 +54,8 @@ import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
-import java.io.*
+import java.io.File
+
 
 private val logger = KotlinLogging.logger {}
 
@@ -70,7 +70,7 @@ const val SERVER_VERSION = "ALPHA"
  * @author Nathan Swanson
  * @since Bedrock Dragon ALPHA
  */
-fun main(args: Array<String>) {
+fun main() {
 
 
     logger.info { "Starting Bedrock Dragon." }
@@ -138,7 +138,7 @@ fun main(args: Array<String>) {
  * @since Bedrock Dragon ALPHA
  */
 fun registerMods() {
-    val mods = ModLoader.getModfolderContent()
+    //val mods = ModLoader.getModfolderContent()
     //remove any non jars from list
     //mods.filter { mod -> ModManager.authenticate(mod) }
 }

@@ -44,18 +44,16 @@
 package bedrockDragon.world
 
 import bedrockDragon.block.Block
-import bedrockDragon.entity.Entity
-import bedrockDragon.network.raknet.protocol.game.entity.AddEntityPacket
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
 import bedrockDragon.util.WorldInt2
 import bedrockDragon.world.chunk.Chunk
 import bedrockDragon.world.chunk.ChunkRelay
-import bedrockDragon.world.region.Region
+import bedrockDragon.world.region.AnvilSource
+import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
 import mu.KotlinLogging
-import kotlin.collections.HashMap
 
 /**
  * [World] holds the region objects and finds [Chunk] or [ChunkRelay] at given coordinates.
@@ -64,7 +62,7 @@ import kotlin.collections.HashMap
  */
 class World(val name: String): DSLBase() {
 
-    private val loadedRegions = HashMap<WorldInt2, Region>()
+    val worldSource = AnvilSource(this)
     val logger = KotlinLogging.logger {}
     var playerCount = 0
 
@@ -73,55 +71,38 @@ class World(val name: String): DSLBase() {
      * if it has not been created yet it will make a new one and return that.
      */
     fun getOrLoadRelay(absolutePosition: Float3): ChunkRelay {
-        val relayParentRegion = getOrLoadRegion(absolutePosition)
         //getRelayAt is relative
         //mod position xy by 1024
         //int divide position by 64
-        return relayParentRegion.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
-    }
-
-    /**
-     * [getOrLoadRegion] will take a position in the world and return the [Region] that it is contained in.
-     * if it has not been created yet it will make a new one and return that.
-     */
-    private fun getOrLoadRegion(absolutePosition: Float3): Region {
-        val intPosition = WorldInt2(absolutePosition.x.toInt() shr 10, absolutePosition.z.toInt() shr 10)
-
-
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
+        return worldSource.getRelayAt(((absolutePosition.x.toInt()) shr 6).mod(8), ((absolutePosition.z.toInt()) shr 6).mod(8))
     }
 
     /**
      * [getOrLoadRelayIdx] will take a position in the world and return its relay.
      * relay(0,0) will be the relay for coord(0,0) to coord(64,64) for example.
      */
-    fun getOrLoadRelayIdx(intPosition: WorldInt2): ChunkRelay {
-        val relayParentRegion = getOrLoadRegionIdx(WorldInt2(intPosition.x shr 4, intPosition.y shr 4))
-        return relayParentRegion.getRelayAt(intPosition.x.mod(8),intPosition.y.mod(8))
+    fun getRelayOffset(absolutePosition: Float3, offset: Float2): ChunkRelay {
+        return getOrLoadRelay(absolutePosition)
     }
 
-    /**
-     * [getOrLoadRegionIdx] will take a position in the world and return its region.
-     * region(0,0) will be the region for coord(0,0) to coord(1024,1024) for example.
-     */
-    private fun getOrLoadRegionIdx(intPosition: WorldInt2): Region {
-        return if (loadedRegions[intPosition] != null) loadedRegions[intPosition]!! else {
-            loadedRegions[intPosition] = Region(intPosition.x, intPosition.y, this)
-            loadedRegions[intPosition]!!
-        }
-    }
 
     /**
      * [getChunkAt] takes absolute coordinates and returns the chunk. player coordinates can be inputted and the chunk they are on will be returned.
      */
-    private fun getChunkAt(position: Float3): Chunk {
-        return getOrLoadRelay(position).getChunk2D(
-            (position.x.toInt() shr 4).mod(4),
-            (position.z.toInt() shr 4).mod(4)
-        )
+    fun getChunkAt(position: Float3): Chunk {
+        return worldSource.getChunkAtIdx(position.x.toInt() shr 4, position.z.toInt() shr 4)
+    }
+
+    //this can be iterated not re calculated
+    fun getRangeOfChunks(center: Float3, range: Float2, chunkOffset: Float2 = Float2(0f,0f)): Array<Chunk> {
+        val chunks = ArrayList<Chunk>()
+
+        for(x in -range.x.toInt()  .. range.x.toInt()) {
+            for(z in -range.y.toInt() .. range.y.toInt()) {
+                chunks.add(worldSource.getChunkAtIdx((((center.x).toInt() shr 4) + x) + chunkOffset.x.toInt(), (((center.z).toInt() shr 4) + z) + chunkOffset.y.toInt()))
+            }
+        }
+        return chunks.toTypedArray()
     }
 
     /**

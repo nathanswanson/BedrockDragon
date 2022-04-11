@@ -217,11 +217,13 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
                                 //val block = (data[arrayIdx] ushr (((wordSize * wordPerLong) - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
                                 val block = (data[arrayIdx] ushr arrayOffset) and (blockPalette.paletteResolution.maxSize.toLong())
-
-
+                                if(block.toInt() > palette.size-1)
+                                    throw ArrayIndexOutOfBoundsException("A block value (${block.toInt()}) was set and is larger then the palette size: ${palette.size} " +
+                                            "WordPerLong: $wordPerLong \nRegionLongCount: ${data.size} \n")
                                 blockPalette.blockBits.setAt((x*16*16) + z*16 + y, block.toInt())
                             } catch (e: ArrayIndexOutOfBoundsException) {
-                                println()
+                                blockPalette.blockBits.setAt((x*16*16) + z*16 + y, blockPalette.paletteString.indexOf("minecraft:air"))
+                                //e.printStackTrace()
                             }
 
                         }

@@ -83,13 +83,3 @@ class AABB(val width: Float, val height: Float, val depth: Float) {
         }
     }
 }
-
-
-fun main(args: Array<String>) {
-    var playerPos = Float3(-11.00f,87f,31f)
-    var playerAABB = AABB(1f,2f,1f)
-    var itemPos = Float3(-10f,87f,31f)
-    var itemAABB = AABB(0.1f,0.1f,0.1f)
-
-    println(playerAABB.intersects(playerPos,itemPos, itemAABB))
-}

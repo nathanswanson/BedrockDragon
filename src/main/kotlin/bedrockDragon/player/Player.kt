@@ -388,11 +388,12 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     }
 
     fun sendMessage(text: String, type: Int) {
-        sendMessage(TextPacket().let {
+        TextPacket().let {
             it.message = text
             it.type = type.toByte()
             it.needsTranslate = false
-        })
+            nettyQueue.add(it.gamePacket())
+        }
     }
     /**
      * [sendMessage] sends string as raw data to the client.

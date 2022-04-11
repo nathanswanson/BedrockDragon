@@ -52,6 +52,7 @@ import java.util.*
  * @author Nathan Swanson
  * @since ALPHA
  */
+
 class WorldInt2(var x: Int, var y: Int) {
     public constructor(float2: Float2): this(float2.x.toInt(), float2.y.toInt())
 

@@ -74,7 +74,7 @@ class ChatRail {
     fun invoke(emitter: TextPacket) {
         scope.launch {
             logger.info { emitter.message }
-           // _subscription.emit(emitter)
+            _subscription.emit(emitter)
         }
     }
 
@@ -93,7 +93,6 @@ class ChatRail {
                 watcher.sendMessage(message)
             }
         }
-
     }
 
     companion object {

@@ -230,7 +230,7 @@ class Chunk(val position: WorldInt2,
     fun initChunkFromStorage() {
         if(loadStatus.get() == SaveStatus.EMPTY) {
             loadStatus.set(SaveStatus.LOADING)
-            val data = parent!!.region.readChunkBinary(this)
+            val data = parent!!.world.worldSource.readChunkBinary(this)
             decodeNbtFromStorage(data)
             encodePayload()
             loadStatus.set(SaveStatus.LOADED)

@@ -89,7 +89,7 @@ object NativeCommands {
 
                 invoke = {
                     player, anies ->
-                    Registry.ITEM_REGISTRY[anies[1] as String]?.let {
+                    Registry.ITEM_REGISTRY[anies[1] as String].let {
                         it.count = (anies[2] as String).toInt()
                         player.addItem(it)
                     }
@@ -128,6 +128,14 @@ object NativeCommands {
                 invoke = {
                     player, anies ->
                         player.disconnect("You have been kicked from the Server.")
+                }
+            }
+            command("/whoami") {
+                invoke = {
+                    player, anies ->
+                        player.sendMessage("""Player: $player 
+                            |Position: ${player.position}
+                            |Chunk: ${player.world.getOrLoadRelay(player.position).getChunkFromAbsolute(player.position)}""".trimMargin())
                 }
             }
         }
