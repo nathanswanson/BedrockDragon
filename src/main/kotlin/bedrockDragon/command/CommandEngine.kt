@@ -52,6 +52,9 @@ import java.util.*
  * @since BETA
  */
 object CommandEngine {
+
+    //val CONSOLE = Player("CONSOLE", "ALPHA-CHI-0")
+
     /**
      * [invokeWith] takes arguments (not including command name) and invokes the inputed command
      */

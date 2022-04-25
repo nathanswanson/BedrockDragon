@@ -92,7 +92,7 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
 
     open var boundingBox: AABB = AABB(1f,1f,1f)
     //World entity is on.
-    var world = Registry.WORLD_REGISTRY[0]
+    var world = Registry.WORLD_REGISTRY[0] ?: throw NullPointerException("World does not exist for $position")
     //chunkRelay the entity is currently on.
     var chunkRelay = world.getOrLoadRelay(position)
 

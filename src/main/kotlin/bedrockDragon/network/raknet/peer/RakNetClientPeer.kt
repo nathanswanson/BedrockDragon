@@ -63,12 +63,17 @@ import bedrockDragon.network.raknet.protocol.game.world.SetTimePacket
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.zlib.PacketCompression
 import bedrockDragon.player.Player
+import bedrockDragon.resource.ServerProperties
 import com.nimbusds.jose.JWSObject
+import dev.romainguy.kotlin.math.Float2
 import io.netty.channel.Channel
 import it.unimi.dsi.fastutil.io.FastBufferedInputStream
 import org.jetbrains.annotations.Nullable
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
+import kotlin.io.path.Path
+import kotlin.io.path.forEachLine
+import kotlin.io.path.useLines
 
 /**
  * RaknetClientPeer is the bridge between client -> [raknet -> minecraftPeer -> player] -> reactiveX
@@ -175,6 +180,13 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 status = PlayerStatus.PendDisconnect
             }
 
+            if(ServerProperties.getProperty("whitelist") == "true") {
+                if(!Path("whitelist.txt").useLines { it.contains(userName) })
+                {
+                    status = PlayerStatus.PendDisconnect
+                    sendMessage(Reliability.RELIABLE_ORDERED, 0, PlayStatusPacket(7).gamePacket())
+                }
+            }
             if(status == PlayerStatus.Authenticated) {
                 status = PlayerStatus.LoadingGame
             }
@@ -183,18 +195,26 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
         fun fireJoinSequence() {
             player = Player(userName, uuid)
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, StartGamePacket.capture(player!!).gamePacket())
+            val startGamePacket = StartGamePacket()
+            startGamePacket.entityIdSelf = player!!.runtimeEntityId
+            startGamePacket.runtimeEntityId = player!!.runtimeEntityId
+            startGamePacket.playerGamemode = player!!.gamemode.ordinal
+            startGamePacket.spawn = player!!.position
+            startGamePacket.rotation = Float2(0f,0f)
+            startGamePacket.dimension = 0 //overworld
+            startGamePacket.worldSpawn = startGamePacket.spawn
+
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket())
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0 , BiomeDefinitionPacket().gamePacket())
 
             sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
 
-//            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
 
             sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
 
             clientPeer!!.status = PlayerStatus.InGame
-            logger.info { "${clientPeer!!.userName} has joined the game." }
 
             val setTime = SetTimePacket()
 

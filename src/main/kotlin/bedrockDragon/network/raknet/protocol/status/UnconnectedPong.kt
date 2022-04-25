@@ -29,13 +29,13 @@
  */
 package bedrockDragon.network.raknet.protocol.status
 
-import bedrockDragon.network.raknet.Packet
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.RakNetException
 import bedrockDragon.network.raknet.handler.PacketConstants
 import bedrockDragon.network.raknet.identifier.MinecraftServerMessage
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import bedrockDragon.network.raknet.protocol.Failable
+import bedrockDragon.resource.ServerProperties
 
 /**
  * An `UNCONNECTED_PONG` packet.
@@ -49,7 +49,7 @@ import bedrockDragon.network.raknet.protocol.Failable
  * @author "Whirvis" Trent Summerlin
  * @since JRakNet 1.0.0
  */
-class UnconnectedPong : RakNetPacket, Failable {
+class UnconnectedPong : RakNetPacket(PacketConstants.UNCONNECTED_PONG), Failable {
     /**
      * The timestamp sent in the ping packet.
      */
@@ -68,8 +68,7 @@ class UnconnectedPong : RakNetPacket, Failable {
     /**
      * The server's identifier.
      */
-	@JvmField
-	var identifier: MinecraftServerMessage? = null
+	var identifier = MinecraftServerMessage(ServerProperties.getProperty("motd"))
 
     /**
      * The server's connection type.
@@ -77,16 +76,9 @@ class UnconnectedPong : RakNetPacket, Failable {
     var connectionType: ConnectionType? = null
 
     /**
-     * Whether or not the packet failed to encode/decode.
+     * Whether the packet failed to encode/decode.
      */
     private var failed = false
-
-    /**
-     * Creates an `UNCONNECTED_PONG` packet to be encoded.
-     *
-     * @see .encode
-     */
-    constructor() : super(PacketConstants.UNCONNECTED_PONG) {}
 
     /**
      * Creates an `UNCONNECTED_PONG` packet to be decoded.
@@ -95,39 +87,18 @@ class UnconnectedPong : RakNetPacket, Failable {
      * the original packet whose data will be read from in the
      * [.decode] method.
      */
-    constructor(packet: Packet?) : super(packet!!) {}
 
     override fun encode() {
         try {
             writeLong(timestamp)
             writeLong(pongId)
             writeMagic()
-            //TODO add IDENTIFIER
-            writeString("MCPE;Dedicated Server;465;1.17.30;0;10;guid;Bedrock level;Survival;1;19132;19133;")
+            writeString(identifier.motd.toString())
             this.writeConnectionType(connectionType)
         } catch (e: RakNetException) {
             timestamp = 0
             pongId = 0
             magic = false
-            identifier = null
-            connectionType = null
-            this.clear()
-            failed = true
-        }
-    }
-
-    override fun decode() {
-        try {
-            timestamp = readLong()
-            pongId = readLong()
-            magic = readMagic()
-            //TODO()
-           // identifier = MinecraftServerMessage(readString(), readConnectionType().also { connectionType = it })
-        } catch (e: RakNetException) {
-            timestamp = 0
-            pongId = 0
-            magic = false
-            identifier = null
             connectionType = null
             this.clear()
             failed = true

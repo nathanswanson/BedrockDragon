@@ -98,7 +98,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     val isFromWorldTemplate = false
     val lockedWorldOptionTemplate = false
     val v1Villager = false
-    var gameVersion: String = "1.18.10"
+    var gameVersion: String = "*"
     var limitedWorldWidth: Int = 16
     var limitedWorldHeight: Int = 16
     var isNetherType = false
@@ -200,21 +200,6 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
         } catch (e: Exception) {
             e.printStackTrace()
             println(e.message)
-        }
-    }
-
-    companion object {
-        fun capture(player: Player): StartGamePacket {
-            val startGamePacket = StartGamePacket()
-            startGamePacket.entityIdSelf = player.runtimeEntityId
-            startGamePacket.runtimeEntityId = player.runtimeEntityId
-            startGamePacket.playerGamemode = player.gamemode.ordinal
-            startGamePacket.spawn = player.position
-            startGamePacket.rotation = Float2(0f,0f)
-            startGamePacket.dimension = 0 //overworld
-            startGamePacket.worldSpawn = startGamePacket.spawn
-
-            return startGamePacket
         }
     }
 

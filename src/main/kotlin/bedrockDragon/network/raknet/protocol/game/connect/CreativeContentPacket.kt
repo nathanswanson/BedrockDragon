@@ -6,6 +6,7 @@ import bedrockDragon.registry.Registry
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import java.io.FileReader
 import kotlin.collections.HashMap
 
 class CreativeContentPacket: PacketPayload(MinecraftPacketConstants.CREATIVE_CONTENT) {
@@ -14,12 +15,26 @@ class CreativeContentPacket: PacketPayload(MinecraftPacketConstants.CREATIVE_CON
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encode() {
-        writeUnsignedVarInt(Registry.ITEM_REGISTRY.size())
+//        writeUnsignedVarInt(0)
+//        val stream = ClassLoader.getSystemResourceAsStream("creative_items.json")
+//        val jData = Json.decodeFromStream<JsonObject>(stream)["items"]
+//        for(i in jData as JsonArray) {
+//            val element = (i as JsonObject)
+//            if(element.containsKey("blockRuntimeId") && element.containsKey("id")) {
+//                if(Registry.ITEM_REGISTRY.containsKey(element["id"]!!.jsonPrimitive.content)) {
+//                    writeUnsignedVarInt(element["blockRuntimeId"]!!.jsonPrimitive.int)
+//                    writeItem(Registry.ITEM_REGISTRY[element["id"]!!.jsonPrimitive.content], true)
+//                }
+//            }
+//        }
+        //demo
+        writeUnsignedVarInt(2)
 
-        for(i in Registry.ITEM_REGISTRY.allEntries()) {
-            writeUnsignedVarInt(i.value.runtimeId)
-            writeItem(i.value, true)
-        }
+        writeUnsignedVarInt(6891)
+        writeItem(Registry.ITEM_REGISTRY["minecraft:grass"], true)
+
+        writeUnsignedVarInt(267)
+        writeItem(Registry.ITEM_REGISTRY["minecraft:deepslate"], true)
 
     }
 }

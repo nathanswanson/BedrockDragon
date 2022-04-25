@@ -29,7 +29,7 @@
  */
 package bedrockDragon.network.raknet.server
 
-import bedrockDragon.network.raknet.identifier.Identifier
+import bedrockDragon.network.raknet.identifier.MinecraftServerMessage
 import bedrockDragon.network.raknet.protocol.ConnectionType
 import java.net.InetSocketAddress
 import java.util.Objects
@@ -70,7 +70,7 @@ class ServerPing
      * @param identifier
      * the new identifier.
      */
-    var identifier: Identifier
+    var identifier: MinecraftServerMessage
 ) {
 
     /**

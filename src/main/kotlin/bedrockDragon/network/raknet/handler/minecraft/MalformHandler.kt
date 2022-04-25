@@ -10,17 +10,18 @@ class MalformHandler(packet: Packet): MinecraftHandler() {
     val logger = KotlinLogging.logger {}
 
 
-//    init {
-//      //  val malformPacket = MalformPacket()
-//      //  malformPacket.decode(packet)
-//
-//
-//     //   logger.error { """MALFORM ERROR OF
-//     //       TYPE: ${malformPacket.type}
-//     //       SEVERITY: ${malformPacket.severity}
-//     //       MESSAGE: ${malformPacket.context}
-//     //   """.trimMargin() }
-//    }
+    init {
+        val malformPacket = MalformPacket()
+        malformPacket.decode(packet)
+
+
+        logger.error { """MALFORM ERROR OF
+            TYPE: ${malformPacket.type}
+            SEVERITY: ${malformPacket.severity}
+            PacketID: ${malformPacket.packetId}
+            MESSAGE: ${malformPacket.context}
+        """.trimMargin() }
+    }
     override fun pass() {
 
     }
