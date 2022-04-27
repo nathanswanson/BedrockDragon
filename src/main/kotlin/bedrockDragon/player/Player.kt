@@ -132,7 +132,8 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     //Player skin data.
     var skinData: Skin? = null
     //chunks render distance
-    var renderDistance = 4
+    var renderDistance = Integer.parseInt(ServerProperties.getOrDefault("view-distance", 4) as String)
+    //var renderDistance = 8
 
     var sprinting = false
 
@@ -364,9 +365,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
 
         chunk.initChunkFromStorage()
 
-        var chunkPacket = LevelChunkPacket(chunk)
-        chunkPacket.gamePacket()
-        chunkPacket.subscribeToPacket(this)
+        nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
     }
 
     private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
@@ -445,7 +444,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.filter(this)) {
             //nettyQueue.add(reactivePacket.payload.gamePacket())
-            reactivePacket.payload.subscribeToPacket(this)
+            //reactivePacket.payload.subscribeToPacket(this)
         }
     }
 
@@ -578,27 +577,6 @@ class Player(var username: String, override var uuid: String): Living("minecraft
 //                        nettyQueue.add(levelEventPacket.gamePacket())
                     }
                     PlayerActionPacket.ACTION_JUMP -> {
-                        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket(
-                               "a".BLACK()
-                                    + "b".DARK_BLUE()
-                                    + "c".DARK_GREEN()
-                                    + "d".DARK_AQUA()
-                                    + "e".DARK_RED()
-                                    + "g".DARK_PURPLE()
-                                    + "h".GOLD()
-                                    + "i".GRAY()
-                                    + "k".BLUE()
-                                    + "l".GREEN()
-                                    + "m".AQUA()
-                                    + "n".RED()
-                                    + "o".LIGHT_PURPLE()
-                                    + "p".YELLOW()
-                                    + "q".MINECOIN_GOLD()
-                                    + "r".OBFUSCATED()
-                                    + "s".RESET()
-                                    + "t".BOLD()
-                                    + "u".ITALIC()
-                        ))
                         foodExhaustionLevel += if(sprinting) 0.2f else 0.05f
                         sendMeta()
                     }
@@ -732,7 +710,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
      */
     private fun handleChunkRadius(max: Int) {
         renderDistance = max.coerceAtMost(ServerProperties["view-distance"] as Int)
-        logger.trace { "sent '$name' update chunk radius $renderDistance " }
+        //logger.trace { "sent '$name' update chunk radius $renderDistance " }
         nettyQueue.add(ChunkRadiusUpdatePacket(renderDistance).gamePacket())
     }
 

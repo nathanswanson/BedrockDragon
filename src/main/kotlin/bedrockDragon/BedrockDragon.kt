@@ -91,7 +91,7 @@ fun main(args: Array<String>) {
         logger.info { "Warning dev mode enabled." }
 
     logger.info { "Loading world." }
-    if (File("world").listFiles().isEmpty()) {
+    if (File(ServerProperties.getProperty("level-name")).listFiles()?.isEmpty() == true) {
         logger.warn { "World not found. Generating..." }
     }
 
@@ -109,12 +109,13 @@ fun main(args: Array<String>) {
     logger.info { "STARTING DRAGON SERVER." }
     logger.info { "=====================" }
 
-//    val bindAddress = InetSocketAddress(
-//        ServerProperties.getProperty("server-ip"),
-//        ServerProperties.getProperty("server-port").toInt()
-//    )
+    val bindAddress = if (ServerProperties.getProperty("server-ip").isBlank())
+                InetSocketAddress(ServerProperties.getProperty("server-port").toInt()) else
+                InetSocketAddress(ServerProperties.getProperty("server-ip"), ServerProperties.getProperty("server-port").toInt()
+            )
+
     //world registry
-    Registry.WORLD_REGISTRY.register(0, World("world"))
+    Registry.WORLD_REGISTRY.register(0, World(ServerProperties.getOrDefault("level-name", "world") as String))
     PaletteGlobal
     //register commands
     NativeCommands
@@ -122,12 +123,8 @@ fun main(args: Array<String>) {
     VanillaBlocks
     VanillaItems
 
-    //todo temp
-    val bindAddress = InetSocketAddress(19132)
+    DragonServer(bindAddress).start()
 
-    logger.info { bindAddress }
-    val server = DragonServer(bindAddress)
-    server.start()
 
 }
 

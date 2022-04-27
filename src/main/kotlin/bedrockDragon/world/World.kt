@@ -146,7 +146,7 @@ class World(val name: String): DSLBase() {
         val entityObject = Registry.ENTITY_REGISTRY[entity]
         entityObject?.position = position
         if (entityObject != null) {
-            tempPlayer.chunkRelay.addEntity(entityObject)
+         //   tempPlayer.chunkRelay.addEntity(entityObject)
         }
         return true
     }

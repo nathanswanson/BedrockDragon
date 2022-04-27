@@ -66,13 +66,7 @@ import kotlin.reflect.full.*
 open class PacketPayload(val id: Int): Packet() {
     var reliability: Reliability? = null
 
-    var preCompiledPayload : AtomicReference<MinecraftPacket?> = AtomicReference(null)
 
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
-
-
-    private val subscriptionSharedFlow = MutableSharedFlow<MinecraftPacket>()
-    private val nonMutableFlow = subscriptionSharedFlow.asSharedFlow()
 
     open fun encode() {
 
@@ -139,28 +133,10 @@ open class PacketPayload(val id: Int): Packet() {
     }
 
     fun gamePacket() : MinecraftPacket {
-        if(preCompiledPayload.get() == null) {
-            encode()
-            preCompiledPayload.set(MinecraftPacket.encapsulateGamePacket(this, id, reliability))
-        } else {
-            println("reusing $preCompiledPayload")
-        }
-        scope.launch { subscriptionSharedFlow.emit(preCompiledPayload.get()!!) }
-
-        return preCompiledPayload.get()!!
+        encode()
+        return MinecraftPacket.encapsulateGamePacket(this, id, reliability)
     }
 
-    fun subscribeToPacket(player: Player) {
-        if(preCompiledPayload.get() == null) {
-            scope.launch {
-                nonMutableFlow.collectLatest {
-                    player.nettyQueue.add(it)
-                }
-            }
-        } else {
-            player.nettyQueue.add(preCompiledPayload.get()!!)
-        }
-    }
 
     fun writeAttribute(attribute: AttributeBR.Attribute) {
         writeFloatLE(attribute.minValue)

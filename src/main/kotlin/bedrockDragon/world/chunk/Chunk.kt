@@ -45,30 +45,17 @@ package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
-import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
-import bedrockDragon.network.raknet.protocol.game.world.LevelChunkPacket
 import bedrockDragon.player.Player
-import bedrockDragon.util.ContractByteArray
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.WorldInt2
-import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.modules.EmptySerializersModule
 import net.benwoodworth.knbt.*
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -191,6 +178,7 @@ class Chunk(val position: WorldInt2,
     }
 
     private fun decodeNbtFromStorage(byteArray: ByteArray) {
+        sections.clear()
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
             compression = NbtCompression.Zlib // None, Gzip, Zlib
@@ -210,11 +198,7 @@ class Chunk(val position: WorldInt2,
         lastUpdate = decodedNBT["LastUpdate"]?.nbtLong?.value ?: 0L
         inhabitedTime = decodedNBT["InhabitedTime"]?.nbtLong?.value ?: 0L
         isLightOn = decodedNBT["isLightOn"]?.nbtByte?.booleanValue ?: false
-        decodedNBT["sections"]!!.nbtList.filter{
-            //it.nbtCompound["block_states"]?.nbtCompound?.containsKey("data") == true
-            //it.nbtCompound["Y"]?.nbtByte?.value!! in 0..15
-            true
-        }.map {
+        decodedNBT["sections"]!!.nbtList.map {
             sectionCount++
             SubChunk.decodeFromNbt(it.nbtCompound)
         }.toList().toCollection(sections)
@@ -228,14 +212,10 @@ class Chunk(val position: WorldInt2,
     }
 
     fun initChunkFromStorage() {
-        if(loadStatus.get() == SaveStatus.EMPTY) {
-            loadStatus.set(SaveStatus.LOADING)
+        //if(loadStatus.getAndSet(SaveStatus.LOADED) == SaveStatus.EMPTY) {
             val data = parent!!.region.readChunkBinary(this)
             decodeNbtFromStorage(data)
-            encodePayload()
-            loadStatus.set(SaveStatus.LOADED)
-        }
-
+        //}
     }
 
     override fun toString(): String {
@@ -248,8 +228,6 @@ class Chunk(val position: WorldInt2,
         lateinit var blockStates : NbtCompound
         lateinit var biomes : NbtCompound
         lateinit var blockLight : NbtByteArray
-
-        var preCompiledSubChunk: ByteArray? = null
 
         var paletteSubChunk: PaletteSubChunk? = null
         var y: Byte = 0 //signed

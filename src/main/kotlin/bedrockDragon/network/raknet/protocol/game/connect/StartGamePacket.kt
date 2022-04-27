@@ -65,7 +65,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     var playerGamemode: Int = 0 //sVarInt
     lateinit var spawn: Float3
     lateinit var rotation: Float2 //vector2
-    var seed: Int = -1 //sVarInt
+    var seed: Long = -1L //sVarInt
     var biomeType: Short = 0
     var customBiomeName: String = "plains"
     var dimension: Int = 0 //sVarInt
@@ -127,9 +127,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeVarInt(playerGamemode)
             writeVector3(spawn)
             writeVector2(rotation)
-
-
-            writeVarInt(seed)
+            writeLongLE(seed)
             writeShortLE(biomeType.toInt())
             writeString(customBiomeName)
             writeVarInt(dimension)

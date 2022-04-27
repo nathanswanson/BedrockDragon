@@ -282,10 +282,8 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                                 }
                             }
                             MinecraftPacketConstants.CLIENT_TO_SERVER_HANDSHAKE -> {
-                          //      ClientToServerHandler(inGamePacket.payload)
                                 PlayStatusHandler(0, this@RakNetClientPeer)
-                            }//todo last check before letting them join
-                            //for now this initiates start game packet
+                            }
                             MinecraftPacketConstants.RESOURCE_PACK_RESPONSE -> {
                                 ResourcePackResponseHandler(inGamePacket, this@RakNetClientPeer)
                             }

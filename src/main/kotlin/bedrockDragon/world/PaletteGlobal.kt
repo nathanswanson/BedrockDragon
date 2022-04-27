@@ -111,7 +111,7 @@ object PaletteGlobal {
         globalBlockPalette["minecraft:chiseled_quartz_block"] = getEntryFromName("minecraft:quartz_block", 1)
         globalBlockPalette["minecraft:quartz_pillar"] = getEntryFromName("minecraft:quartz_block", 3)
         globalBlockPalette["minecraft:bricks"] = globalBlockPalette["minecraft:brick_block"]!!
-        globalBlockPalette["minecraft:sea_lantern"] = globalBlockPalette["minecraft:seaLantern"]!!
+//        globalBlockPalette["minecraft:sea_lantern"] = globalBlockPalette["minecraft:seaLantern"]!!
 
         //leaves
 

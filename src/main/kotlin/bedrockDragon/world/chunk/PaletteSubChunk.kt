@@ -160,7 +160,9 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
             outputStream.writeLInt(0)
         }
         VarInt.writeVarInt(1 , outputStream)
-        VarInt.writeVarInt(134, outputStream)
+        VarInt.writeVarInt(PaletteGlobal.getRuntimeIdFromName("minecraft:air"), outputStream)
+        // this is a second palette used for (i think) water logging.
+        // also can be used to combine two blocks on one position
     }
     //todo use also to avoid memory assignment
     companion object {
@@ -216,7 +218,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
                             try {
 
                                 //val block = (data[arrayIdx] ushr (((wordSize * wordPerLong) - wordSize) - arrayOffset)) and ((1 shl wordSize) - 1).toLong()
-                                val block = (data[arrayIdx] ushr arrayOffset) and (blockPalette.paletteResolution.maxSize.toLong())
+                                val block = (data[arrayIdx] ushr arrayOffset) and ((1 shl wordSize) - 1).toLong()/*blockPalette.paletteResolution.maxSize.toLong()*/
 
 
                                 blockPalette.blockBits.setAt((x*16*16) + z*16 + y, block.toInt())
