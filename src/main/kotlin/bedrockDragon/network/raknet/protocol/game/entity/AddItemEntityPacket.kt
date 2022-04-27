@@ -14,7 +14,7 @@ class AddItemEntityPacket: PacketPayload(MinecraftPacketConstants.ADD_ITEM_ENTIT
     //metadata
     var isFromFishing = false
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarLong(entityIdSelf)
         writeUnsignedVarLong(runtimeId)
         writeItem(item)

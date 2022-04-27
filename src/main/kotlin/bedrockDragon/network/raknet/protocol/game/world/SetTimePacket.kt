@@ -10,7 +10,7 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
  */
 class SetTimePacket: PacketPayload(MinecraftPacketConstants.SET_TIME) {
     var time = 0
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(time)
     }
 }

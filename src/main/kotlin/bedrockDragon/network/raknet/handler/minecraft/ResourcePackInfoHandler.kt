@@ -7,6 +7,7 @@ import bedrockDragon.network.raknet.protocol.Reliability
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacket
 import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.resourcepacket.ResourceInfoPacket
+import kotlinx.coroutines.runBlocking
 import java.util.*
 
 class ResourcePackInfoHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer) {
@@ -18,7 +19,7 @@ class ResourcePackInfoHandler(peer: RakNetPeer) : ReflectMinecraftHandler(peer) 
         packet.scriptingEnabled = false
         packet.resourcePackInfos = emptyArray()
         packet.behaviourPackInfos = emptyArray()
-        packet.encode()
+        runBlocking { packet.encode() }
 
 
 

@@ -7,7 +7,7 @@ class MapCreateLockedCopyPacket: PacketPayload(MinecraftPacketConstants.MAP_CREA
     var originalMapId = -1L //vLong
     var newMapId = -1L //vLong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(originalMapId)
         writeUnsignedVarLong(newMapId)
     }

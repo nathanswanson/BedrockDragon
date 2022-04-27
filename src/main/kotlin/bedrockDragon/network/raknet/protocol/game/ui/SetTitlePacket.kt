@@ -10,7 +10,7 @@ class SetTitlePacket: PacketPayload(MinecraftPacketConstants.SET_TITLE) {
     var stayTime = -1 //sVarInt
     var fadeOutTime = -1 //sVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(type)
         writeString(text)
         writeVarInt(fadeInTime)

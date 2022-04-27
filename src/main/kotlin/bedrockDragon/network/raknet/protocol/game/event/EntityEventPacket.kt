@@ -8,7 +8,7 @@ class EntityEventPacket: PacketPayload(MinecraftPacketConstants.ENTITY_EVENT) {
     var eventId : Int = 0 //u8
     var data: Int = 0
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeByte(eventId)
         write(data)

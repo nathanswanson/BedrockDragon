@@ -8,7 +8,7 @@ class GUIDataPickItemPacket: PacketPayload(MinecraftPacketConstants.GUI_DATA_PIC
     var itemEffects = ""
     var hotbarSlot = -1 //wiki.vg says it does not work but I have not tested.
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(itemName)
         writeString(itemEffects)
         writeInt(hotbarSlot)

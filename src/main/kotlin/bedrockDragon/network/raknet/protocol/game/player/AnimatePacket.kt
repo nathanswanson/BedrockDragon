@@ -8,7 +8,7 @@ class AnimatePacket: PacketPayload(MinecraftPacketConstants.ANIMATE) {
     var actionId = -1 //sVarInt
     var runtimeEntityId = -1L //vLong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(actionId)
         writeUnsignedVarLong(runtimeEntityId)
     }

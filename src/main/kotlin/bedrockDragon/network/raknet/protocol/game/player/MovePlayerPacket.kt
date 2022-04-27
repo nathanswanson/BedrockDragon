@@ -16,7 +16,7 @@ class MovePlayerPacket: PacketPayload(MinecraftPacketConstants.MOVE_PLAYER) {
     var entityType: Byte = -1
     var frame = 0L
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeVector3(position)
         writeVector3(rotation)

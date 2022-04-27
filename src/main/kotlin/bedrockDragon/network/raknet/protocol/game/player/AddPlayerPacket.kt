@@ -10,6 +10,7 @@ import java.util.*
 
 class AddPlayerPacket: PacketPayload(MinecraftPacketConstants.ADD_PLAYER) {
     lateinit var uuid: UUID
+    var gamemode = 0
     var username = ""
     var entitySelfId = -1L //sVarLong
     var runtimeEntityId = -1L //varLong
@@ -27,7 +28,7 @@ class AddPlayerPacket: PacketPayload(MinecraftPacketConstants.ADD_PLAYER) {
     var deviceId = ""
     var deviceOS = -1
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUUID(uuid)
         writeString(username)
         writeVarLong(entitySelfId)
@@ -37,6 +38,7 @@ class AddPlayerPacket: PacketPayload(MinecraftPacketConstants.ADD_PLAYER) {
         writeVector3(velocity)
         writeVector3(rotation)
         writeItem(heldItem)
+        writeVarInt(gamemode)
         writeMetaData(metaTag)
         writeUnsignedVarInt(0) //adventure
         writeUnsignedVarInt(0)

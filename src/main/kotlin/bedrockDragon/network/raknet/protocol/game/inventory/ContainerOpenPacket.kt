@@ -10,7 +10,7 @@ class ContainerOpenPacket: PacketPayload(MinecraftPacketConstants.CONTAINER_OPEN
     lateinit var position: Float3 //blockCoord
     var entityId = -1L //uvarLong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeByte(windowId)
         writeByte(type)
         writeBlockCoordinates(position)

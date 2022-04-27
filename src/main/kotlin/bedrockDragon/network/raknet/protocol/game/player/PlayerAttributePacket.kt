@@ -9,7 +9,7 @@ class PlayerAttributePacket: PacketPayload(MinecraftPacketConstants.UPDATE_ATTRI
     var runtimeEntityId = 0L
     var attributes = ArrayList<AttributeBR.Attribute>()
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeUnsignedVarInt(attributes.size)
         attributes.forEach {

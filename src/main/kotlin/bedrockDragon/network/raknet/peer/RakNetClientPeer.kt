@@ -184,7 +184,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                 if(!Path("whitelist.txt").useLines { it.contains(userName) })
                 {
                     status = PlayerStatus.PendDisconnect
-                    sendMessage(Reliability.RELIABLE_ORDERED, 0, PlayStatusPacket(7).gamePacket())
+                    sendMessage(Reliability.RELIABLE_ORDERED, 0, PlayStatusPacket(7).gamePacketBlocking())
                 }
             }
             if(status == PlayerStatus.Authenticated) {
@@ -204,21 +204,21 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
             startGamePacket.dimension = 0 //overworld
             startGamePacket.worldSpawn = startGamePacket.spawn
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, startGamePacket.gamePacketBlocking())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0 , BiomeDefinitionPacket().gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , BiomeDefinitionPacket().gamePacketBlocking())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0, AvaliableEntityIDPacket().gamePacketBlocking())
 
-            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacket())
+            sendMessage(Reliability.RELIABLE_ORDERED, 0 , CreativeContentPacket().gamePacketBlocking())
 
-            sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacket())
+            sendMessage(Reliability.UNRELIABLE, 0, PlayStatusPacket(3).gamePacketBlocking())
 
             clientPeer!!.status = PlayerStatus.InGame
 
             val setTime = SetTimePacket()
 
-            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacket())
+            sendMessage(Reliability.UNRELIABLE, 0, setTime.gamePacketBlocking())
 
             player!!.playInit()
             server.playerCount++
@@ -270,7 +270,7 @@ class RakNetClientPeer(val server: DragonServer, connectionType: ConnectionType,
                                     sendMessage(
                                         Reliability.UNRELIABLE,
                                         0,
-                                        PlayStatusPacket(0).gamePacket()
+                                        PlayStatusPacket(0).gamePacketBlocking()
                                     )
                                     //now lets send the resource packet info
                                     ResourcePackInfoHandler(this@RakNetClientPeer)

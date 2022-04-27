@@ -7,7 +7,7 @@ class CameraPacket: PacketPayload(MinecraftPacketConstants.CAMERA) {
     var cameraUniqueEntityId = -1L //sVarLong
     var playerUniqueEntityId = -1L //sVarLong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarLong(cameraUniqueEntityId)
         writeVarLong(playerUniqueEntityId)
     }

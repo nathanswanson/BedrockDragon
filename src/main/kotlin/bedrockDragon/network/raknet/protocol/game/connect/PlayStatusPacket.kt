@@ -15,7 +15,7 @@ class PlayStatusPacket(var status: Int): PacketPayload(MinecraftPacketConstants.
 6	Failed Edu. Vanilla	Displays "The server is running an incompatible edition of Minecraft. Failed to connect."
 7	Failed server full 	Displays "Wow this server is popular! Check back later to see if space opens up. Server Full"
  */
-override fun encode() {
+override suspend fun encode() {
         writeInt(status)
     }
 

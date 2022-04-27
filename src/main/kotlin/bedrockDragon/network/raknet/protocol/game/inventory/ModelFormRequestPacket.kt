@@ -7,7 +7,7 @@ class ModelFormRequestPacket: PacketPayload(MinecraftPacketConstants.MODEL_FORM_
     var formId = -1 //varInt
     var formData = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(formId)
         writeString(formData)
     }

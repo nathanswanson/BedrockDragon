@@ -6,7 +6,7 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 class RemoveObjectivePacket: PacketPayload(MinecraftPacketConstants.REMOVE_OBJECTIVE) {
     var objectiveId = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(objectiveId)
     }
 }

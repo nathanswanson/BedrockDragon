@@ -75,7 +75,7 @@ class TextPacket: PacketPayload(MinecraftPacketConstants.TEXT) {
     var xuid = ""
     var playFormChatId = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeByte(type)
         writeBoolean(needsTranslate)
         //when(type.toInt()) {

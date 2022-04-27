@@ -11,7 +11,7 @@ class AddPaintingPacket: PacketPayload(MinecraftPacketConstants.ADD_PAINTING) {
     var direction = -1 //sVarInt
     var name = PaintingType.Kebab
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarLong(uniqueEntityId)
         writeUnsignedVarLong(runtimeEntityId)
         writeVector3(position)

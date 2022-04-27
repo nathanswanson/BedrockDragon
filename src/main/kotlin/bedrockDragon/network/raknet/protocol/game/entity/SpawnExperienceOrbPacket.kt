@@ -8,7 +8,7 @@ class SpawnExperienceOrbPacket: PacketPayload(MinecraftPacketConstants.SPAWN_EXP
     lateinit var position: Float3
     var count = 0 //sVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVector3(position)
         writeVarInt(count)
     }

@@ -54,7 +54,7 @@ import bedrockDragon.resource.BiomeDefinitions.writeBiomeDefinition
  */
 class BiomeDefinitionPacket: PacketPayload(MinecraftPacketConstants.BIOME_DEFINITION_LIST) {
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBiomeDefinition()
     }
 }

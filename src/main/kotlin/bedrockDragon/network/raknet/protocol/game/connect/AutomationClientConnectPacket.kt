@@ -7,7 +7,7 @@ import java.net.InetSocketAddress
 class AutomationClientConnectPacket: PacketPayload(MinecraftPacketConstants.AUTOMATION_CLIENT_CONNECT) {
     lateinit var address: InetSocketAddress
 
-    override fun encode() {
+    override suspend fun encode() {
         writeAddress(address)
     }
 }

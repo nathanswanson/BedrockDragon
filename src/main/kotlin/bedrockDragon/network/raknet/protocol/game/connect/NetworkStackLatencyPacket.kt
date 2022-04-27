@@ -8,7 +8,7 @@ class NetworkStackLatencyPacket: PacketPayload(MinecraftPacketConstants.NETWORK_
     var timeStamp = 1uL
     var sendBack = true
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedLong(timeStamp.toLong())
         writeBoolean(sendBack)
     }

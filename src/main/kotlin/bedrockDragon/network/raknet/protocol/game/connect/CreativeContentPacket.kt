@@ -14,7 +14,7 @@ class CreativeContentPacket: PacketPayload(MinecraftPacketConstants.CREATIVE_CON
     lateinit var entries: HashMap<String, Int>
 
     @OptIn(ExperimentalSerializationApi::class)
-    override fun encode() {
+    override suspend fun encode() {
 //        writeUnsignedVarInt(0)
 //        val stream = ClassLoader.getSystemResourceAsStream("creative_items.json")
 //        val jData = Json.decodeFromStream<JsonObject>(stream)["items"]

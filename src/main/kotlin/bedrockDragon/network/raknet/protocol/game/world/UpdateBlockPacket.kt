@@ -20,7 +20,7 @@ class UpdateBlockPacket: PacketPayload(MinecraftPacketConstants.UPDATE_BLOCK) {
     var flags: Int = 2 //VarInt
     var layer: Int = 0 //VarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBlockCoordinates(coordinates)
         writeUnsignedVarInt(blockRuntimeId)
         writeUnsignedVarInt(flags)

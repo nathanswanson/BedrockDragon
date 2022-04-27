@@ -8,7 +8,7 @@ class ScriptCustomEventPacket: PacketPayload(MinecraftPacketConstants.SCRIPT_CUS
     var eventName = ""
     var data = "" //json
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(eventName)
         writeString(data)
     }

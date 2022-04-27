@@ -120,7 +120,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     val experimentCount = 0
     val isLockedWorldTemplate: Boolean = false
     val blockRegistryChecksum = 0L
-    override fun encode() {
+    override suspend fun encode() {
         try {
             writeVarLong(entityIdSelf)
             writeUnsignedVarLong(runtimeEntityId)

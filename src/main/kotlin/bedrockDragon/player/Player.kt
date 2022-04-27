@@ -78,6 +78,7 @@ import bedrockDragon.util.text.*
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.EmptySerializersModule
 import mu.KotlinLogging
@@ -116,11 +117,11 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     var gamemode = Gamemode.SURVIVAL
         set(value) {
             if(value == Gamemode.CREATIVE)
-                nettyQueue.add(CreativeContentPacket().gamePacket())
+                nettyQueue.add(CreativeContentPacket().gamePacketBlocking())
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
             gamemodePacket.gamemode = value.ordinal
-            nettyQueue.add(gamemodePacket.gamePacket())
+            nettyQueue.add(gamemodePacket.gamePacketBlocking())
             field = value
         }
     //Operator status.
@@ -191,7 +192,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             it.runtimeEntityId = runtimeEntityId
             it.attributes.addAll(arrayOf(AttributeBR[4], AttributeBR[7], AttributeBR[5], AttributeBR[9], AttributeBR[10]))
 
-            nettyQueue.add(it.gamePacket())
+            nettyQueue.add(it.gamePacketBlocking())
         }
         //end debug
         ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".YELLOW()))
@@ -218,7 +219,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         EntityEventPacket().let {
             it.runtimeEntityId = runtimeEntityId
             it.eventId = 2
-            nettyQueue.add(it.gamePacket())
+            nettyQueue.add(it.gamePacketBlocking())
         }
     }
 
@@ -226,7 +227,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         val publisherUpdate = NetworkChunkPublisherPacket()
         publisherUpdate.position = position
         publisherUpdate.radius = ServerProperties.getProperty("view-distance").toInt()
-        nettyQueue.add(publisherUpdate.gamePacket())
+        nettyQueue.add(publisherUpdate.gamePacketBlocking())
     }
     /**
      * [sendAttributes] sends every player attribute(health, hunger, ...) to the client.
@@ -236,7 +237,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         for (attribute in AttributeBR.attributes) {
             attributePacket.attributes.add(attribute)
         }
-        nettyQueue.add(attributePacket.gamePacket())
+        nettyQueue.add(attributePacket.gamePacketBlocking())
     }
 
 
@@ -263,7 +264,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         packet.customStoredPermissions = 0
         packet.userId = runtimeEntityId
 
-        nettyQueue.add(packet.gamePacket())
+        nettyQueue.add(packet.gamePacketBlocking())
     }
 
     override fun update() {
@@ -339,7 +340,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         RespawnPacket().let {
             it.position = Float3(0f,90f,0f)
             it.runtimeEntityId = runtimeEntityId
-            nettyQueue.add(it.gamePacket())
+            nettyQueue.add(it.gamePacketBlocking())
         }
         inventory.clear()
         inventory.sendPacketContents(this)
@@ -355,17 +356,14 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         entityDataPacket.tick = 0
         entityDataPacket.metaTag = attributes
 
-        nettyQueue.add(entityDataPacket.gamePacket())
+        nettyQueue.add(entityDataPacket.gamePacketBlocking())
     }
 
     /**
      * [sendChunk] will send a chunk to the player
      */
-    fun sendChunk(chunk: Chunk) {
-
-        chunk.initChunkFromStorage()
-
-        nettyQueue.add(LevelChunkPacket(chunk).gamePacket())
+    suspend fun sendChunk(chunk: Chunk) {
+        nettyQueue.add(LevelChunkPacket(chunk, chunk.encodePayload()).gamePacket())
     }
 
     private fun updateAttribute(value: Float, attribute: AttributeBR.Attribute) {
@@ -374,7 +372,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         PlayerAttributePacket().let {
             it.runtimeEntityId = runtimeEntityId
             it.attributes.add(attributeInstance)
-            nettyQueue.add(it.gamePacket())
+            nettyQueue.add(it.gamePacketBlocking())
         }
     }
 
@@ -396,7 +394,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
      * [sendMessage] sends string as raw data to the client.
      */
     fun sendMessage(text: TextPacket) {
-        nettyQueue.add(text.gamePacket())
+        nettyQueue.add(text.gamePacketBlocking())
     }
 
     /**
@@ -415,10 +413,10 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             it.positon = position
             it.teleport = true
             it.runtimeEntityId = runtimeEntityId
-            nettyQueue.add(it.gamePacket())
+            nettyQueue.add(it.gamePacketBlocking())
         }
         this.position = position
-        chunkRelay.removePlayer(this)
+        runBlocking { chunkRelay.removePlayer(this@Player) }
         chunkRelay = world.getOrLoadRelay(position)
         chunkRelay.addPlayer(this)
         println(this.position)
@@ -433,9 +431,9 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         println("Disconnecting Player: $username")
         nettyQueue.add(DisconnectPacket().let {
             it.kickMessage = kickMessage
-            it.gamePacket()
+            it.gamePacketBlocking()
         })
-        chunkRelay.removePlayer(this)
+        runBlocking { chunkRelay.removePlayer(this@Player) }
     }
 
 
@@ -443,8 +441,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     //todo review
     fun emitReactiveCommand(reactivePacket: ReactivePacket<*>) {
         if(reactivePacket.filter(this)) {
-            //nettyQueue.add(reactivePacket.payload.gamePacket())
-            //reactivePacket.payload.subscribeToPacket(this)
+            nettyQueue.add(reactivePacket.payload.gamePacketBlocking())
         }
     }
 
@@ -457,17 +454,18 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         containerOpenPacket.position = position
         containerOpenPacket.entityId = entityIdSelf
         containerOpenPacket.windowId = inventory.windowId
-        nettyQueue.add(containerOpenPacket.gamePacket())
+        nettyQueue.add(containerOpenPacket.gamePacketBlocking())
     }
 
     fun emitSound(player: Player, pos: Float3) {
 
     }
 
-    override fun showFor(players: List<Player>) {
+    override suspend fun showFor(players: List<Player>) {
         if(players.isNotEmpty()) {
             val packet = AddPlayerPacket().let {
                 it.position = position
+                it.gamemode = gamemode.ordinal
                 it.runtimeEntityId = runtimeEntityId
                 it.username = username
                 it.entitySelfId = runtimeEntityId
@@ -509,8 +507,6 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                 val movePlayerPacket = MovePlayerPacket()
                 movePlayerPacket.decode(inGamePacket.payload)
                 position = movePlayerPacket.position
-
-                movePlayerPacket.gamePacket()
                 chunkRelay.invoke(MovePlayer(movePlayerPacket, this))
             }
             MinecraftPacketConstants.RIDER_JUMP -> { println("RIDER_JUMP") }
@@ -548,7 +544,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                     sendMessage(world.getBlockAt(blockPickRequestPacket.position).name)
                     val itemEntity = ItemEntity(world.getBlockAt(blockPickRequestPacket.position).asItem())
                     itemEntity.position = blockPickRequestPacket.position + Float3(0.5f,1f,0.5f)
-                    chunkRelay.addEntity(itemEntity)
+                    runBlocking { chunkRelay.addEntity(itemEntity) }
                     //world.getBlockAt(blockPickRequestPacket.position).asItem().dropItem(this, blockPickRequestPacket.position + Float3(0f,1f,0f), Float3(0f,0f,0f))
                     //inventory.sendPacketContents(this)
                 }
@@ -609,7 +605,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                     it.decode(inGamePacket.payload)
                     it.position = Float3(0f, 100f, 0f)
                     it.state = 1
-                    nettyQueue.add(it.gamePacket())
+                    nettyQueue.add(it.gamePacketBlocking())
                 }
 
                 health = 20f
@@ -617,7 +613,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             MinecraftPacketConstants.CONTAINER_CLOSE -> {
                 val containerRequest = ContainerClosePacket()
                 containerRequest.decode(inGamePacket.payload)
-                nettyQueue.add(containerRequest.gamePacket())
+                nettyQueue.add(containerRequest.gamePacketBlocking())
 
             }
             MinecraftPacketConstants.PLAYER_HOTBAR -> { println("PLAYER_HOTBAR") }
@@ -711,7 +707,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     private fun handleChunkRadius(max: Int) {
         renderDistance = max.coerceAtMost(ServerProperties["view-distance"] as Int)
         //logger.trace { "sent '$name' update chunk radius $renderDistance " }
-        nettyQueue.add(ChunkRadiusUpdatePacket(renderDistance).gamePacket())
+        nettyQueue.add(ChunkRadiusUpdatePacket(renderDistance).gamePacketBlocking())
     }
 
     /**

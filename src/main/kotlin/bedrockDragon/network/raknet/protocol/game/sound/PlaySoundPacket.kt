@@ -10,7 +10,7 @@ class PlaySoundPacket: PacketPayload(MinecraftPacketConstants.PLAY_SOUND) {
     var volume = -1f
     var pitch = -1f
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(soundName)
         writeVector3(soundPosition)
         writeFloat(volume)

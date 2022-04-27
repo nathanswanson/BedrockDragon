@@ -8,7 +8,7 @@ import dev.romainguy.kotlin.math.Float3
 class ContainerClosePacket: PacketPayload(MinecraftPacketConstants.CONTAINER_CLOSE) {
     var windowId = 0 //Byte
     var serverInitiated = false
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedByte(windowId)
         writeBoolean(serverInitiated)
     }

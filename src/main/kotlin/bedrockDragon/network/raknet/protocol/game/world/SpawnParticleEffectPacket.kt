@@ -10,7 +10,7 @@ class SpawnParticleEffectPacket: PacketPayload(MinecraftPacketConstants.SPAWN_PA
     lateinit var position: Float3
     var identifier = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeByte(dimensionId)
         writeVarLong(uniqueEntityId)
         writeVector3(position)

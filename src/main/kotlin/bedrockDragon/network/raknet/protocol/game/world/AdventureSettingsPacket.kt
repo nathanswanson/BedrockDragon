@@ -52,7 +52,7 @@ class AdventureSettingsPacket: PacketPayload(MinecraftPacketConstants.ADVENTURE_
     var customStoredPermissions = 0 //varInt
     var userId = 1L //LELong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarInt(flags)
         writeUnsignedVarInt(commandPermission)
         writeUnsignedVarInt(actionPermissions)

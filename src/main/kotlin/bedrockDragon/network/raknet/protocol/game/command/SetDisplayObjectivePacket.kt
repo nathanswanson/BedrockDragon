@@ -10,7 +10,7 @@ class SetDisplayObjectivePacket: PacketPayload(MinecraftPacketConstants.SET_DISP
     var criteria = ""
     var sortOrder = -1 //sVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(displaySlot)
         writeString(objectiveId)
         writeString(displayName)

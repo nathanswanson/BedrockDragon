@@ -8,7 +8,7 @@ class TickSyncPacket: PacketPayload(MinecraftPacketConstants.TICK_SYNC) {
     var requestTimestamp = -1L
     var responseTimestamp = -1L
 
-    override fun encode() {
+    override suspend fun encode() {
         writeLong(requestTimestamp)
         writeLong(responseTimestamp)
     }

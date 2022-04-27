@@ -11,7 +11,7 @@ class ClientCacheStatusPacket: PacketPayload(MinecraftPacketConstants.CLIENT_CAC
         supported = packet.readBoolean()
     }
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBoolean(supported)
     }
 }

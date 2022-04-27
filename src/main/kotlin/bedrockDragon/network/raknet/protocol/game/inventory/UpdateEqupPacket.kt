@@ -10,7 +10,7 @@ class UpdateEqupPacket: PacketPayload(MinecraftPacketConstants.UPDATE_EQUIP) {
     var entityId = -1L //sVarLong
     //var namedTag: NBT
 
-    override fun encode() {
+    override suspend fun encode() {
         writeByte(windowId)
         writeByte(windowType)
         writeByte(unknown)

@@ -4,11 +4,11 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 import bedrockDragon.world.chunk.Chunk
 
-class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
+class LevelChunkPacket(chunk: Chunk, payload: ByteArray): PacketPayload(MinecraftPacketConstants.LEVEL_CHUNK) {
 
 
 
-    var data: ByteArray = chunk.encodePayload()// ?:
+    var data: ByteArray = payload// ?:
         //throw NullPointerException("LevelChunkPacket should be called only with a complete chunk but chunk.payload: ${chunk.payload}")
 
     var chunkX = chunk.position.x
@@ -18,7 +18,7 @@ class LevelChunkPacket(chunk: Chunk): PacketPayload(MinecraftPacketConstants.LEV
     var blobIds = emptyArray<Long>()
 
 
-    override fun encode() {
+    override suspend fun encode() {
         if(buffer().readerIndex() > 0)
             return
         writeVarInt(chunkX)

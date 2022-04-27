@@ -15,7 +15,7 @@ class AddEntityPacket: PacketPayload(MinecraftPacketConstants.ADD_ENTITY) {
     //attribute
     lateinit var metaData: MetaTag
     //links
-    override fun encode() {
+    override suspend fun encode() {
         writeVarLong(entitySelfId)
         writeUnsignedVarLong(runtimeEntityId)
         writeString(entityType)

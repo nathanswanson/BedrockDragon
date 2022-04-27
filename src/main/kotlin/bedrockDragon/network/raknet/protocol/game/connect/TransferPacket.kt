@@ -7,7 +7,7 @@ import java.net.InetSocketAddress
 class TransferPacket: PacketPayload(MinecraftPacketConstants.TRANSFER) {
     lateinit var address: InetSocketAddress
 
-    override fun encode() {
+    override suspend fun encode() {
         writeAddress(address)
     }
 }

@@ -10,7 +10,7 @@ class InventorySlotPacket: PacketPayload(MinecraftPacketConstants.INVENTORY_SLOT
     var slot = -1 //vInt
     lateinit var item: Item
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarInt(inventoryId)
         writeUnsignedVarInt(slot)
         writeItem(item)

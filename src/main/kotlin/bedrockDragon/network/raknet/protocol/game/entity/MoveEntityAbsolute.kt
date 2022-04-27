@@ -14,7 +14,7 @@ class MoveEntityAbsolute: PacketPayload(MinecraftPacketConstants.MOVE_ENTITY_ABS
     var onGround: Boolean = false //0x01
     var teleport: Boolean = false //0x02
     var forceMove: Boolean = false //0x04
-    override fun encode() {
+    override suspend fun encode() {
         flags = if(onGround) 0x01 else 0
         flags = flags or if(teleport) 0x02 else 0
         flags = flags or if(forceMove) 0x04 else 0

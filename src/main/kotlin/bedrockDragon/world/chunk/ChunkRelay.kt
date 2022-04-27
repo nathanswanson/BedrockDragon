@@ -127,7 +127,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         }
     }
 
-    fun addEntity(entity: Entity) {
+    suspend fun addEntity(entity: Entity) {
 
         //show entity to other players
         entity.showFor(entityRegistry.filterIsInstance<Player>())
@@ -141,7 +141,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
 
     }
 
-    fun removeEntity(entity: Entity) {
+    suspend fun removeEntity(entity: Entity) {
         entityRegistry.remove(entity)
         entity.removeFor(entityRegistry.filterIsInstance<Player>())
     }
@@ -150,12 +150,12 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
      * anything happens we notify this new player as well.
      */
     fun addPlayer(player: Player) {
-        playerLastPublishPosition[player] = getChunkAbsolute(player)
-        player.updateChunkPublisherPosition()
-        sendAllChunksForPlayer(player)
-
-        addEntity(player)
         jobs[player] = scope.launch {
+            playerLastPublishPosition[player] = getChunkAbsolute(player)
+            player.updateChunkPublisherPosition()
+            sendAllChunksForPlayer(player)
+
+            addEntity(player)
             nonMutableFlow.filter { true }
                 .collectLatest {
                     if(it is MovePlayer) {
@@ -169,7 +169,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     /**
      * [sendAllChunksForPlayer] is used for spawning or teleporting, this takes the player position and sends every chunk in their render distance.
      */
-    private fun sendAllChunksForPlayer(player: Player) {
+    private suspend fun sendAllChunksForPlayer(player: Player) {
 
 
         val offsetInRelayX = (player.position.x.toInt() shr 4) and 3
@@ -207,7 +207,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         return WorldInt2(player.position.x.toInt() shr 4, player.position.z.toInt() shr 4)
     }
 
-    private fun checkChunkNeeds(player: Player) {
+    private suspend fun checkChunkNeeds(player: Player) {
 
         val worldPosition = getWorldCoordinates()
         val xOffset = worldPosition.x shl 6
@@ -233,7 +233,7 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
         }
     }
 
-    private fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
+    private suspend fun sendDeltaChunksForPlayer(player: Player, x: Int, z: Int) {
         val deltaChunks = ArrayList<WorldInt2>()
         //todo efficiency
         val viewDistanceToRelay = (player.renderDistance + 3 and 0x03.inv()) shr 2
@@ -324,16 +324,17 @@ class ChunkRelay(val x: Int,val z: Int,val region: Region) {
     /**
      * [removePlayer] will unsubscribe a player from a relay.
      */
-    fun removePlayer(player: Player) {
+    suspend fun removePlayer(player: Player) {
         jobs[player]?.cancel()
         jobs.remove(player)
-        //println("") //removeEntity(player)
+        //println("")
+        removeEntity(player)
     }
 
     /**
      * [passToNewRelay] allows fast transfer of a player from one relay to another.
      */
-    private fun passToNewRelay(player: Player, relay: ChunkRelay) {
+    private suspend fun passToNewRelay(player: Player, relay: ChunkRelay) {
         removePlayer(player)
         relay.addPlayerFromAdjacentRelay(player)
     }

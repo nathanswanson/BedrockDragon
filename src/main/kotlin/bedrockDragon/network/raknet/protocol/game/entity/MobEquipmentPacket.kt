@@ -12,7 +12,7 @@ class MobEquipmentPacket: PacketPayload(MinecraftPacketConstants.MOB_EQUIPMENT) 
     var selectedSlot: Byte = 0
     var windowId: Byte = 0
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarLong(runtimeEnityId)
         writeItem(item)
         writeUnsignedByte(slot.toInt())

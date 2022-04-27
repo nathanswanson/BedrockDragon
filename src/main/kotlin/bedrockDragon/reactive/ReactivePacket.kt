@@ -53,6 +53,7 @@ import bedrockDragon.network.raknet.protocol.game.player.MovePlayerPacket
 import bedrockDragon.network.raknet.protocol.game.player.PlayerActionPacket
 import bedrockDragon.network.raknet.protocol.game.world.UpdateBlockPacket
 import bedrockDragon.player.Player
+import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.chunk.ChunkRelay
 import dev.romainguy.kotlin.math.Float3
 
@@ -66,7 +67,7 @@ abstract class ReactivePacket<T: PacketPayload>(val payload: T, val sender: ISub
     var tags = emptyArray<Any>()
     var priority = 0
 
-   open fun run(relay: ChunkRelay) {
+   open suspend fun run(relay: ChunkRelay) {
 
    }
 
@@ -93,13 +94,13 @@ class RemoveEntity(payload: RemoveEntityPacket, sender: Player) : ReactivePacket
 class Sneak(payload: PlayerActionPacket, sender: Player): ReactivePacket<PlayerActionPacket>(payload,sender)
 class UpdateBlock(payload: UpdateBlockPacket, sender: Player) : ReactivePacket<UpdateBlockPacket>(payload, sender)
 class BreakBlock(payload: PlayerActionPacket, sender: Player) : ReactivePacket<PlayerActionPacket>(payload, sender) {
-    override fun run(relay: ChunkRelay) {
+    override suspend fun run(relay: ChunkRelay) {
         //drop item
         val block = ItemEntity((sender as Player).world.getBlockAt(sender.blockMining).asItem())
         block.position = sender.blockMining + Float3(0.5f, 0f, 0.5f) //moves entity to center of block
         //temp
         relay.invoke(UpdateBlock(UpdateBlockPacket().let {
-            it.blockRuntimeId = 134
+            it.blockRuntimeId = PaletteGlobal.getRuntimeIdFromName("minecraft:air")
             it.coordinates = sender.blockMining
             it
         },sender))

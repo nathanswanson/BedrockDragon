@@ -7,7 +7,7 @@ class ServerSettingsResponsePacket: PacketPayload(MinecraftPacketConstants.SERVE
     var formId = -1L //varLong
     var formData = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(formId)
         writeString(formData)
     }

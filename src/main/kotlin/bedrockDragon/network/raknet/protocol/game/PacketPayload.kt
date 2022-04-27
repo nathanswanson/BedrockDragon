@@ -51,24 +51,25 @@ import bedrockDragon.player.Player
 import bedrockDragon.reactive.ReactivePacket
 import dev.romainguy.kotlin.math.Float2
 import dev.romainguy.kotlin.math.Float3
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.thread
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.*
 
 open class PacketPayload(val id: Int): Packet() {
     var reliability: Reliability? = null
 
+    //THREAD
+    var encoded = false
+    private var threadLock = Semaphore(1)
 
-
-    open fun encode() {
+    open suspend fun encode() {
 
     }
     open fun decode(packet: Packet) {}
@@ -131,9 +132,18 @@ open class PacketPayload(val id: Int): Packet() {
         writeVarInt(vector.y.toInt())
         writeVarInt(vector.z.toInt())
     }
+    fun gamePacketBlocking(): MinecraftPacket {
+        return runBlocking { gamePacket() }
+    }
 
-    fun gamePacket() : MinecraftPacket {
-        encode()
+    suspend fun gamePacket() : MinecraftPacket {
+        threadLock.acquire()
+        if(!encoded) {
+            encoded = true
+            encode()
+        }
+
+        threadLock.release()
         return MinecraftPacket.encapsulateGamePacket(this, id, reliability)
     }
 

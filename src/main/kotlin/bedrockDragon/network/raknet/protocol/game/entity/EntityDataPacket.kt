@@ -9,7 +9,7 @@ class EntityDataPacket: PacketPayload(MinecraftPacketConstants.SET_ENTITY_DATA) 
     lateinit var metaTag: MetaTag
     var tick = 0L
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeMetaData(metaTag)
         writeUnsignedVarLong(tick)

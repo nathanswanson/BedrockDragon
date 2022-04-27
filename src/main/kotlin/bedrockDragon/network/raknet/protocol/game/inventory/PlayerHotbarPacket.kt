@@ -9,7 +9,7 @@ class PlayerHotbarPacket: PacketPayload(MinecraftPacketConstants.PLAYER_HOTBAR) 
     var containerId = -1 //byte
     var selectHotbarSlot = false
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(selectedHotbarSlot)
         writeUnsignedByte(containerId)
         writeBoolean(selectHotbarSlot)

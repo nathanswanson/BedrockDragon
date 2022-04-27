@@ -101,9 +101,9 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
 
     var entityUniqueIdentifier = 0L
 
-    open fun showFor(players: List<Player>) {}
+    open suspend fun showFor(players: List<Player>) {}
 
-    fun removeFor(players: List<Player>) {
+    suspend fun removeFor(players: List<Player>) {
         players.forEach { player ->
             player.nettyQueue.add(
                 RemoveEntityPacket().let {
@@ -118,7 +118,7 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
         return boundingBox.intersects(position, otherEntity.position, otherEntity.boundingBox)
     }
 
-    open fun handleIntersection(otherEntity: Entity) {
+    open suspend fun handleIntersection(otherEntity: Entity) {
 
     }
 

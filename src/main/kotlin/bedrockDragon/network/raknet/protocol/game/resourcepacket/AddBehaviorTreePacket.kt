@@ -6,7 +6,7 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 class AddBehaviorTreePacket: PacketPayload(MinecraftPacketConstants.ADD_BEHAVIOR_TREE) {
     var tree = ""
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(tree)
     }
 }

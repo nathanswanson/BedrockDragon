@@ -10,7 +10,7 @@ class VideoStreamConnectPacket: PacketPayload(MinecraftPacketConstants.VIDEO_STR
     var resolutionX = 0
     var resolutionY = 0
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(serverURI)
         writeFloat(fps)
         writeByte(action)

@@ -85,7 +85,7 @@ open class Living(override var name: String): Entity() {
 
     }
 
-    override fun showFor(players: List<Player>) {
+    override suspend fun showFor(players: List<Player>) {
         players.forEach { player ->
             player.nettyQueue.add(
                 AddEntityPacket().let {

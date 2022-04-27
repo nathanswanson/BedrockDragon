@@ -7,7 +7,7 @@ class MoveEntityDeltaPacket: PacketPayload(MinecraftPacketConstants.MOVE_ENTITY_
     var runtimeEntityId = -1L //vLong
     var flags = 0 //uShort
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeUnsignedShort(flags)
     }

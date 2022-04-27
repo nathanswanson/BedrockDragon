@@ -97,7 +97,7 @@ class LevelEventPacket: PacketPayload(MinecraftPacketConstants.LEVEL_EVENT) {
     lateinit var position: Float3
     var data = 0 //sVarint
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(eventId)
         writeVector3(position)
         write(data)

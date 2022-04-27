@@ -88,7 +88,7 @@ sealed class Item(var name: String = "item"): DSLBase(){
                 it.item = this
                 //meta
                 it.isFromFishing = false
-                it.gamePacket()
+                it.gamePacketBlocking()
             }
         )
         return true

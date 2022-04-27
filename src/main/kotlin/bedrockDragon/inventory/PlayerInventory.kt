@@ -71,7 +71,7 @@ class PlayerInventory: Inventory(36) {
             it.itemStacks = slots
             it.size = size
             it.inventoryId = player.windowId[this]!!
-            it.gamePacket()
+            it.gamePacketBlocking()
         })
     }
 

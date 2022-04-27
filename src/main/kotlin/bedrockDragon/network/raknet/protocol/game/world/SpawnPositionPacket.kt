@@ -11,7 +11,7 @@ class SpawnPositionPacket: PacketPayload(MinecraftPacketConstants.SET_SPAWN_POSI
     lateinit var spawnPosition: Float3
     var forced = false;
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(spawnType)
         writeBlockCoordinates(blockPosition)
         writeInt(dimensionId)

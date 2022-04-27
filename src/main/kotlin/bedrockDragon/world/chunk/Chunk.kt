@@ -45,20 +45,19 @@ package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
-import bedrockDragon.player.Player
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.WorldInt2
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.modules.EmptySerializersModule
 import net.benwoodworth.knbt.*
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 import kotlin.io.path.Path
 
 /**
@@ -69,12 +68,12 @@ import kotlin.io.path.Path
 class Chunk(val position: WorldInt2,
             val parent: ChunkRelay?): ISavable  {
 
-    var playersUpToDate = HashSet<Player>()
+    private val threadLock = Semaphore(1)
+    private var payload: ByteArray? = null
 
     var lastUpdate = 0L
     private var inhabitedTime = 0L
     private var isLightOn: Boolean = true
-    private var status = "empty" //this isnt actually being used very well TODO
     private var sectionCount = 0
 
 
@@ -97,7 +96,7 @@ class Chunk(val position: WorldInt2,
             put("isLightOn", isLightOn)
             put("InhabitedTime", inhabitedTime)
             put("LastUpdate", lastUpdate)
-            put("Status", status)
+            put("Status", "todo")
             //TileTicks
             //TileEntities
             //Sections
@@ -118,8 +117,10 @@ class Chunk(val position: WorldInt2,
     /**
      * [encodePayload] converts a chunk into a byte array ready for a packet.
      */
-    fun encodePayload(): ByteArray {
-
+    suspend fun encodePayload(): ByteArray {
+        threadLock.acquire()
+        if(payload == null) {
+            initChunkFromStorage()
             val stream = FastByteArrayOutputStream(1024)
 
             //sections
@@ -132,15 +133,21 @@ class Chunk(val position: WorldInt2,
                 return ByteArray(0)
             }
 
-
             //biome array
-            stream.write(ByteArray(25) {((127 shl 1) or 1).toByte()})
+            withContext(Dispatchers.IO) {
+                stream.write(ByteArray(25) { ((127 shl 1) or 1).toByte() })
+            }
             //border blocks
             stream.write(0)
             //extra data
             VarInt.writeUnsignedVarInt(0, stream)
-
+            payload = stream.array
+            threadLock.release()
             return stream.array
+        } else {
+            threadLock.release()
+            return payload!!
+        }
     }
 
     fun readyNonEmptySectionCount(): Int {
@@ -178,7 +185,6 @@ class Chunk(val position: WorldInt2,
     }
 
     private fun decodeNbtFromStorage(byteArray: ByteArray) {
-        sections.clear()
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
             compression = NbtCompression.Zlib // None, Gzip, Zlib
@@ -191,7 +197,7 @@ class Chunk(val position: WorldInt2,
         val decodedNBT = nbt.decodeFromByteArray<NbtCompound>(byteArray)[""]!!.nbtCompound
         //todo add safety check for null
         //why is there x y and z pos for chunks...
-        status = decodedNBT["Status"]?.nbtString?.value ?: "empty"
+        //status = decodedNBT["Status"]?.nbtString?.value ?: "empty"
         position.x = decodedNBT["xPos"]?.nbtInt?.value ?: 0
         //position.y = decodedNBT["yPos"]!!.nbtInt.value.toFloat()
         position.y = decodedNBT["zPos"]?.nbtInt?.value ?: 0
@@ -211,11 +217,9 @@ class Chunk(val position: WorldInt2,
 
     }
 
-    fun initChunkFromStorage() {
-        //if(loadStatus.getAndSet(SaveStatus.LOADED) == SaveStatus.EMPTY) {
-            val data = parent!!.region.readChunkBinary(this)
-            decodeNbtFromStorage(data)
-        //}
+    private fun initChunkFromStorage() {
+        val data = parent!!.region.readChunkBinary(this)
+        decodeNbtFromStorage(data)
     }
 
     override fun toString(): String {
@@ -232,23 +236,15 @@ class Chunk(val position: WorldInt2,
         var paletteSubChunk: PaletteSubChunk? = null
         var y: Byte = 0 //signed
         fun encodePayload(): ByteArray {
-           // if (preCompiledSubChunk == null) {
             val stream = FastByteArrayOutputStream(128)
 
             if (paletteSubChunk != null) {
                 stream.write(8)
                 stream.write(2)
                 paletteSubChunk?.encode(stream)
-                // stream.write(PaletteSubChunk.emptyPaletteFooter)
-                //stream.trim()
-                //preCompiledSubChunk = stream.array.copyOfRange(0, stream.length)
             }
-           //}
-
-            //storage
             stream.trim()
             return stream.array.copyOfRange(0, stream.length)
-            //return preCompiledSubChunk!!
         }
 
         companion object {

@@ -8,7 +8,7 @@ class FilterText: PacketPayload(MinecraftPacketConstants.FILTER_TEXT) {
     var text = ""
     var fromServer = true
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(text)
         writeBoolean(fromServer)
     }

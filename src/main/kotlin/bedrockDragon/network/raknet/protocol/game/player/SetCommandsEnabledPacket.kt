@@ -6,7 +6,7 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 class SetCommandsEnabledPacket: PacketPayload(MinecraftPacketConstants.SET_COMMANDS_ENABLED) {
     var commandsEnabled = false
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBoolean(commandsEnabled)
     }
 }

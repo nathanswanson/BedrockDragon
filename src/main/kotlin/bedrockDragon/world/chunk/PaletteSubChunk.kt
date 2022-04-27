@@ -161,8 +161,8 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
         }
         VarInt.writeVarInt(1 , outputStream)
         VarInt.writeVarInt(PaletteGlobal.getRuntimeIdFromName("minecraft:air"), outputStream)
-        // this is a second palette used for (i think) water logging.
-        // also can be used to combine two blocks on one position
+        // this is a second palette used for (I think) water logging.
+        // also, can be used to combine two blocks on one position
     }
     //todo use also to avoid memory assignment
     companion object {

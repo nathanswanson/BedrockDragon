@@ -14,7 +14,7 @@ class RespawnPacket: PacketPayload(MinecraftPacketConstants.RESPAWN) {
     var state = SEARCHING_FOR_SPAWN //byte
     var runtimeEntityId = -1L //vLong
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVector3(position)
         writeByte(state)
         writeUnsignedVarLong(runtimeEntityId)

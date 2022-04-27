@@ -7,7 +7,7 @@ class ShowCreditsPacket: PacketPayload(MinecraftPacketConstants.SHOW_CREDITS) {
     var runtimeEntityId = -1L
     var status = 0 //sVarInt 0 start 1 end
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(runtimeEntityId)
         writeVarInt(status)
     }

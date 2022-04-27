@@ -4,7 +4,7 @@ import bedrockDragon.network.raknet.protocol.game.MinecraftPacketConstants
 import bedrockDragon.network.raknet.protocol.game.PacketPayload
 
 class AvaliableEntityIDPacket: PacketPayload(MinecraftPacketConstants.AVAILABLE_ENTITY_IDENTIFIERS) {
-    override fun encode() {
+    override suspend fun encode() {
         write(*javaClass.classLoader.getResourceAsStream("entity_identifiers.dat").readAllBytes())
     }
 }

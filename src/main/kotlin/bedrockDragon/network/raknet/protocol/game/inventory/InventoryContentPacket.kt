@@ -10,7 +10,7 @@ class InventoryContentPacket: PacketPayload(MinecraftPacketConstants.INVENTORY_C
     var size = 0
     lateinit var itemStacks: Array<Item?>
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarInt(inventoryId)
         writeUnsignedVarInt(size)
         itemStacks.forEach { writeItem(it) }

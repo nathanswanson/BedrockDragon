@@ -56,7 +56,7 @@ class ResourceStackPacket: PacketPayload(MinecraftPacketConstants.RESOURCE_PACK_
     var gameVersion = "1.17.40"
 
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBoolean(forcedToAccept)
         VarInt.writeUnsignedVarInt(behaviorPackEntry.size, outputStream)
         for(pack in behaviorPackEntry) {

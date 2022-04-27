@@ -9,7 +9,7 @@ class ChunkRadiusUpdatePacket(val radius: Int): PacketPayload(MinecraftPacketCon
         reliability = Reliability.UNRELIABLE
     }
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(radius)
     }
 }

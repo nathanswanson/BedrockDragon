@@ -7,7 +7,7 @@ import bedrockDragon.network.raknet.protocol.game.PacketPayload
 class RiderJumpPacket: PacketPayload(MinecraftPacketConstants.RIDER_JUMP) {
     var jumpStrength = -1 //sVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeVarInt(jumpStrength)
     }
 

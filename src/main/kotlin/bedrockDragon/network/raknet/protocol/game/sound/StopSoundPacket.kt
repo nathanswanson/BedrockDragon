@@ -7,7 +7,7 @@ class StopSoundPacket: PacketPayload(MinecraftPacketConstants.STOP_SOUND) {
     var soundName = ""
     var stoppingAllSound = false
 
-    override fun encode() {
+    override suspend fun encode() {
         writeString(soundName)
         writeBoolean(stoppingAllSound)
     }

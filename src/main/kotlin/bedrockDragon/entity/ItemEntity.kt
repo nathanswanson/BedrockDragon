@@ -20,7 +20,7 @@ class ItemEntity(val item: Item): Entity() {
 
     private var dirty = false
 
-    override fun showFor(players: List<Player>) {
+    override suspend fun showFor(players: List<Player>) {
         if(players.isNotEmpty()) {
             val packet = AddItemEntityPacket().let {
                 it.runtimeId = runtimeEntityId
@@ -37,7 +37,7 @@ class ItemEntity(val item: Item): Entity() {
         }
     }
 
-    override fun handleIntersection(otherEntity: Entity) {
+    override suspend fun handleIntersection(otherEntity: Entity) {
         if(!dirty) {
             dirty = true
             chunkRelay.removeEntity(this)

@@ -65,7 +65,7 @@ class ChatRail {
     //and invoke
     //String, and probably filter for player
     private val _subscription = MutableSharedFlow<TextPacket>()
-    val subscription = _subscription.asSharedFlow()
+    private val subscription = _subscription.asSharedFlow()
 
     fun sendMessage(message: TextPacket) {
         invoke(message)
@@ -81,7 +81,6 @@ class ChatRail {
         invoke(TextPacket().let {
             it.message = emitter
             it.type = type.toByte()
-            it.gamePacket()
             it
         })
     }

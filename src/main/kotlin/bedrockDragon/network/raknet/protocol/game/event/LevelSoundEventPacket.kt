@@ -13,7 +13,7 @@ class LevelSoundEventPacket: PacketPayload(MinecraftPacketConstants.LEVEL_SOUND_
     var isGlobal: Boolean = false
 
 
-    override fun encode() {
+    override suspend fun encode() {
         writeByte(soundId)
         writeVector3(position)
         writeVarInt(blockId)

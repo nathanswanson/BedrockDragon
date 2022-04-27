@@ -54,7 +54,7 @@ class ResourceInfoPacket():  PacketPayload(MinecraftPacketConstants.RESOURCE_PAC
     lateinit var behaviourPackInfos: Array<ResourcePack>
     lateinit var resourcePackInfos: Array<ResourcePack>
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBoolean(forcedToAccept)
         writeBoolean(scriptingEnabled)
         writeBoolean(false) // forceServerPacks

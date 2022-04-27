@@ -8,7 +8,7 @@ class NetworkChunkPublisherPacket: PacketPayload(MinecraftPacketConstants.NETWOR
     lateinit var position: Float3 //blockVector3
     var radius = 4 //uVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeBlockCoordinates(position)
         writeUnsignedVarInt(radius shl 4)
     }

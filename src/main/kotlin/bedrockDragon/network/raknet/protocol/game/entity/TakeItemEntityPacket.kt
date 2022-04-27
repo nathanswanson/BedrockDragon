@@ -7,7 +7,7 @@ class TakeItemEntityPacket: PacketPayload(MinecraftPacketConstants.TAKE_ITEM_ENT
     var runtimeId: Long = 0L //uVarLong
     var target: Long = 0L //uVarInt
 
-    override fun encode() {
+    override suspend fun encode() {
         writeUnsignedVarLong(target)
         writeUnsignedVarLong(runtimeId)
     }
