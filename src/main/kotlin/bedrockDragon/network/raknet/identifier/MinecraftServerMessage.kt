@@ -1,16 +1,12 @@
 package bedrockDragon.network.raknet.identifier
 
+import bedrockDragon.MINECRAFT_VERSION
+import bedrockDragon.PROTOCOL_VERSION
 import bedrockDragon.network.raknet.Packet
+import bedrockDragon.resource.ServerProperties
 
 class MinecraftServerMessage(MOTDMessage: String): Packet() {
-    //TODO finish motd live data
-    private val MOTD: MinecraftMOTD = MinecraftMOTD(
-        protocolVer = 0,
-        playerCount = 0,
-        minecraftVer = "",
-        guid = 0,
-        maxPlayerCount = 0
-    )
+    val motd: MinecraftMOTD = MinecraftMOTD()
 
     //to protect the data in this class everytime the MOTD needs to be updated
     //refresh must be called.
@@ -19,27 +15,18 @@ class MinecraftServerMessage(MOTDMessage: String): Packet() {
 
     }
 
-    fun changeMessage() {
-
-    }
-
-    //this is what the server calls to figure out what the current MOTD is
-    fun MOTDBinary(): ByteArray {
-        return TODO()
-    }
-
-    private data class MinecraftMOTD(
+    data class MinecraftMOTD(
         val edition: String = "MCPE",
-        val motd1: String = "Bedrock Dragon Server",
-        val protocolVer: Int, //Dynamic
-        val minecraftVer: String, //Dynamic
-        val playerCount: Int, //Dynamic
-        val maxPlayerCount: Int,
-        val guid: Int, //Dynamic
-        val motd2: String = "by Nathan Swanson",
-        val gameMode: String = "Survival",
-        val gameModeVal: Int = 0,
-        val portIv4: Int = 19132,
+        val motd1: String = ServerProperties.getProperty("motd"),
+        val protocolVer: String = PROTOCOL_VERSION, //Dynamic
+        val minecraftVer: String = MINECRAFT_VERSION, //Dynamic
+        val playerCount: Int = 0, //Dynamic
+        val maxPlayerCount: Int = Integer.parseInt(ServerProperties.getProperty("max-players")),
+        val guid: Int = 0, //Dynamic
+        val motd2: String = ServerProperties.getProperty("motd2"),
+        val gameMode: String = ServerProperties.getProperty("gamemode"),
+        val gameModeVal: Int = if(gameMode == "Survival") 0 else 1,
+        val portIv4: Int = Integer.parseInt(ServerProperties.getProperty("server-port")),
         val portIv6: Int = 19133
     ) {
         override fun toString(): String {

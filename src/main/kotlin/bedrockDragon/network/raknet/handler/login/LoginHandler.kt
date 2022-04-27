@@ -2,7 +2,6 @@ package bedrockDragon.network.raknet.handler.login
 
 import bedrockDragon.network.raknet.RakNetPacket
 import bedrockDragon.network.raknet.handler.PacketHandler
-import bedrockDragon.network.raknet.identifier.Identifier
 import bedrockDragon.network.raknet.identifier.MinecraftServerMessage
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPing
 import bedrockDragon.network.raknet.protocol.status.UnconnectedPong
@@ -20,14 +19,9 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
         unconnectedPing.decode()
 
         if(!unconnectedPing.failed() && unconnectedPing.magic) {
-            val identifier = Identifier("bedrockdragon")
-            val pingEvent = ServerPing(sender, unconnectedPing.connectionType!!, identifier)
-
-
             val pong = UnconnectedPong()
             pong.timestamp = unconnectedPing.timestamp
             pong.pongId = pongId
-            pong.identifier = MinecraftServerMessage("test")
             pong.encode()
             if(!pong.failed()) {
                 channel.writeAndFlush(DatagramPacket(pong.buffer(), sender))
@@ -38,10 +32,7 @@ class LoginHandler(val sender: InetSocketAddress, val packet: RakNetPacket, chan
         }
     }
 
-    override fun responseToServer() {
-         //NO RESPONSE
-
-    }
+    override fun responseToServer() {/*NO RESPONSE */}
 
 
     override fun toString(): String {

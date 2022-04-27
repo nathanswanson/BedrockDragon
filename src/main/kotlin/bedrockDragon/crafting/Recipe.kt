@@ -10,6 +10,7 @@ sealed class Recipe {
     lateinit var product: Item
     var sideProduct: Item? = null
     var shaped = false
+    var source = 2
 
     fun validate(item: Item) : Boolean {
         return validate(arrayOf(item))

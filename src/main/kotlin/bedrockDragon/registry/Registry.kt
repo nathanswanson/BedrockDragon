@@ -66,8 +66,14 @@ open class Registry<T,K : DSLBase> {
      * val sword = registry&#91;minecraft:wooden_sword&#93;
      */
      @Suppress("UNCHECKED_CAST")
-    open operator fun get(value: T): K {
-        return (registeredValues[value] as DSLBase).clone() as K
+    open operator fun get(value: T): K? {
+        return registeredValues[value]?.let {
+             (registeredValues[value] as DSLBase).clone() as K
+        }
+    }
+
+    fun containsKey(value: T) : Boolean {
+        return registeredValues.containsKey(value)
     }
 
     /**

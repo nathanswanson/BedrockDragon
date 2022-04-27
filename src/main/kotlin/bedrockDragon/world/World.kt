@@ -144,8 +144,10 @@ class World(val name: String): DSLBase() {
      */
     fun spawnEntity(position: Float3, entity: String, tempPlayer: Player): Boolean {
         val entityObject = Registry.ENTITY_REGISTRY[entity]
-        entityObject.position = position
-        tempPlayer.chunkRelay.addEntity(entityObject)
+        entityObject?.position = position
+        if (entityObject != null) {
+            tempPlayer.chunkRelay.addEntity(entityObject)
+        }
         return true
     }
 }

@@ -44,6 +44,7 @@
 package bedrockDragon
 
 import bedrockDragon.DragonServer.ServerHandlerFactory.pongId
+import bedrockDragon.command.CommandEngine
 import bedrockDragon.network.Peer
 import bedrockDragon.network.raknet.handler.login.ConnectionRequestHandlerTwo
 import bedrockDragon.network.raknet.RakNetPacket
@@ -60,6 +61,7 @@ import bedrockDragon.network.raknet.peer.RakNetPeer
 import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
+import bedrockDragon.registry.Registry
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
@@ -71,6 +73,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import mu.KotlinLogging
+import java.io.BufferedReader
 import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
 import java.util.*
@@ -135,14 +138,25 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
 
 
         isRunning = true
-        tick()
+        loop()
         return true
     }
 
-    private fun tick() {
+    private fun loop() {
         while(isRunning) {
             for (peer in clients.values) {
                     peer.update()
+            }
+            if(System.`in`.available() > 2) {
+                readLine()?.let {
+                    val args = it.split(" ")
+                    val command = Registry.COMMAND_REGISTRY[args[0]]
+                    if(command == null) {
+                        logger.info { "Unknown command please try again." }
+                        return
+                    }
+                    //  CommandEngine.invokeWith(args.toTypedArray(), command, /*CommandEngine.CONSOLE*/)
+                }
             }
         }
     }

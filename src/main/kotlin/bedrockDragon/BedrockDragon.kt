@@ -60,7 +60,8 @@ import java.io.*
 private val logger = KotlinLogging.logger {}
 
 const val SERVER_VERSION = "ALPHA"
-
+const val MINECRAFT_VERSION = "1.18.30"
+const val PROTOCOL_VERSION = "501"
 /**
  * Welcome to the very start of the server. main checks if root directory
  * is in order, loads mods, and reads server.properties

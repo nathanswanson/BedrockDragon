@@ -50,6 +50,7 @@ import bedrockDragon.player.Player
 import bedrockDragon.registry.Registry
 import bedrockDragon.util.aabb.AABB
 import bedrockDragon.world.PaletteGlobal
+import jdk.jshell.spi.ExecutionControl.NotImplementedException
 
 /**
  * [BlockImpl] is class to access sealed [Block]
@@ -121,7 +122,7 @@ sealed class Block(var name: String) {
     }
 
     fun asItem(): Item {
-        return Registry.ITEM_REGISTRY[signature]
+        return Registry.ITEM_REGISTRY[signature] ?: throw NotImplementedException("")
     }
 
     enum class GravityEffect {

@@ -75,7 +75,7 @@ import bedrockDragon.registry.Registry
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.aabb.AABB
-import bedrockDragon.util.text.yellow
+import bedrockDragon.util.text.*
 import bedrockDragon.world.World
 import bedrockDragon.world.chunk.Chunk
 import dev.romainguy.kotlin.math.Float3
@@ -118,6 +118,8 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     //Gamemode for player.
     var gamemode = Gamemode.SURVIVAL
         set(value) {
+            if(value == Gamemode.CREATIVE)
+                nettyQueue.add(CreativeContentPacket().gamePacket())
             //send gamemodepacket
             val gamemodePacket = PlayerGameTypePacket()
             gamemodePacket.gamemode = value.ordinal
@@ -194,8 +196,8 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             nettyQueue.add(it.gamePacket())
         }
         //end debug
-        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".yellow().asGameText()))
-        nettyQueue.add(CreativeContentPacket().gamePacket())
+        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".YELLOW()))
+        //nettyQueue.add(CreativeContentPacket().gamePacket())
 
     }
 
@@ -477,7 +479,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                 it.velocity = velocity
                 it.metaTag = attributes
                 it.uuid = UUID.fromString(uuid)
-                it.heldItem = Registry.ITEM_REGISTRY["minecraft:stone"]
+                it.heldItem = Registry.ITEM_REGISTRY["minecraft:stone"]!!
                 it.gamePacket()
             }
 
@@ -579,6 +581,27 @@ class Player(var username: String, override var uuid: String): Living("minecraft
 //                        nettyQueue.add(levelEventPacket.gamePacket())
                     }
                     PlayerActionPacket.ACTION_JUMP -> {
+                        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket(
+                               "a".BLACK()
+                                    + "b".DARK_BLUE()
+                                    + "c".DARK_GREEN()
+                                    + "d".DARK_AQUA()
+                                    + "e".DARK_RED()
+                                    + "g".DARK_PURPLE()
+                                    + "h".GOLD()
+                                    + "i".GRAY()
+                                    + "k".BLUE()
+                                    + "l".GREEN()
+                                    + "m".AQUA()
+                                    + "n".RED()
+                                    + "o".LIGHT_PURPLE()
+                                    + "p".YELLOW()
+                                    + "q".MINECOIN_GOLD()
+                                    + "r".OBFUSCATED()
+                                    + "s".RESET()
+                                    + "t".BOLD()
+                                    + "u".ITALIC()
+                        ))
                         foodExhaustionLevel += if(sprinting) 0.2f else 0.05f
                         sendMeta()
                     }
@@ -647,7 +670,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                 val commandPacket = CommandRequestPacket()
                 commandPacket.decode(inGamePacket.payload)
                 val commandArgs = commandPacket.command.split(" ")
-                Registry.COMMAND_REGISTRY[commandArgs[0]].let {
+                Registry.COMMAND_REGISTRY[commandArgs[0]]?.let {
                     //it.invoke?.let { it1 -> it1(this, commandArgs.subList(1,commandArgs.size).toTypedArray()) }
                     CommandEngine.invokeWith(commandArgs.subList(1,commandArgs.size).toTypedArray(), it, this)
                 } ?: sendMessage("Unknown command, use /help for a list of commands. ")

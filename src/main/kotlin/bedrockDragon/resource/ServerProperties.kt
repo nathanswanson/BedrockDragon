@@ -46,7 +46,9 @@ package bedrockDragon.resource
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.FileReader
+import java.nio.file.Files
 import java.util.*
+import kotlin.io.path.Path
 
 /**
  * global object which holds current server properties.
@@ -55,66 +57,25 @@ import java.util.*
  */
 object ServerProperties: Properties() {
     init {
-        try {
+        if(Files.exists(Path("server.properties"))) {
             load(FileReader("server.properties"))
-        } catch (e: FileNotFoundException) {
+        }
+        else {
+
             /*
                 Generate properties file
              */
-            //todo use bedrock properties not java
-            setProperty("spawn-protection", "16")
-            setProperty("max-tick-time", "60000")
-            setProperty("query.port", "25565")
-            setProperty("generator-settings", "")
-            setProperty("sync-chunk-writes", "true")
-            setProperty("force-gamemode", "false")
-            setProperty("allow-nether", "true")
-            setProperty("enforce-whitelist", "false")
             setProperty("gamemode", "survival")
-            setProperty("broadcast-console-to-ops", "true")
-            setProperty("enable-query", "false")
-            setProperty("player-idle-timeout", "0")
-            setProperty("difficulty", "easy")
-            setProperty("spawn-monsters", "true")
-            setProperty("broadcast-rcon-to-ops", "true")
-            setProperty("op-permission-level", "4")
             setProperty("pvp", "true")
-            setProperty("entity-broadcast-range-percentage", "100")
-            setProperty("snooper-enabled", "true")
-            setProperty("level-type", "default")
-            setProperty("hardcore", "false")
-            setProperty("enable-status", "true")
-            setProperty("enable-command-block", "false")
             setProperty("max-players", "20")
-            setProperty("network-compression-threshold", "256")
-            setProperty("resource-pack-sha1", "")
-            setProperty("max-world-size", "29999984")
-            setProperty("function-permission-level", "2")
-            setProperty("rcon.port", "25575")
             setProperty("server-port", "19132")
-            setProperty("debug", "false")
             setProperty("server-ip", "")
-            setProperty("spawn-npcs", "true")
-            setProperty("allow-flight", "false")
             setProperty("level-name", "world")
             setProperty("view-distance", "4")
-            setProperty("resource-pack", "")
-            setProperty("spawn-animals" , "true")
-            setProperty("white-list" , "false")
-            setProperty("rcon.password", "")
-            setProperty("generate-structures", "true")
-            setProperty("max-build-height" , "256")
-            setProperty("online-mode", "true")
-            setProperty("level-seed", "")
-            setProperty("use-native-transport" ,"true")
-            setProperty("prevent-proxy-connections", "false")
-            setProperty("enable-jmx-monitoring" , "false")
-            setProperty("enable-rcon", "false")
-            setProperty("motd", "A Minecraft Server")
-
+            setProperty("motd", "Bedrock Modded Server")
+            setProperty("motd2", "by Nathan S")
             setProperty("dev-mode", "true")
             store(FileOutputStream("server.properties"), "Dragon Server")
-
         }
     }
 }

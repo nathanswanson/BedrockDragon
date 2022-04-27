@@ -1408,6 +1408,7 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
                 writeVarInt(0) //instance
             }
             writeVarInt(PaletteGlobal.getRuntimeIdFromName(item.name)) //blockid
+            //writeVarInt(0)
             //last payload size todo
             writeUnsignedVarInt(10)
             writeShortLE(0) // no meta
