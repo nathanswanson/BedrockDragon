@@ -14,7 +14,7 @@ coroutine network.
 Currently, I am developing this as my main project.
 
 - Players can join
-- World loads from save with some bugs
+- World loads from save
 - Basic inventory system
 - Custom block and item DSL
 - Players can move around world
