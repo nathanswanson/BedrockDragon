@@ -44,6 +44,7 @@
 package bedrockDragon.command
 
 import bedrockDragon.player.Player
+import bedrockDragon.util.text.RED
 import java.util.*
 
 /**
@@ -53,24 +54,28 @@ import java.util.*
  */
 object CommandEngine {
 
-    //val CONSOLE = Player("CONSOLE", "ALPHA-CHI-0")
 
     /**
      * [invokeWith] takes arguments (not including command name) and invokes the inputed command
      */
-    fun invokeWith(args: Array<Any>, command: Command, player: Player) {
-        var predictedFullArgument = LinkedList(args.asList())
-        val totalNeededSize = command.args.size
-
-        var readPtr = totalNeededSize - 1
-        while (predictedFullArgument.size < totalNeededSize) {
-            if(command.args[readPtr].optional) {
-                //get the last optional that hasn't been used
-                predictedFullArgument.add(readPtr,null)
-            }
-            readPtr--
+    fun invokeWith(args: Array<Any>, command: Command, player: Player): Boolean{
+        val inputArguments = LinkedList(args.asList())
+        if(inputArguments.size < command.args.size)
+        {
+            player.sendMessage("Command ${command.name} requires ${command.args.size} arguments, ${inputArguments.size} was given".RED())
+            return false
         }
 
-        command.invoke?.let { it(player, predictedFullArgument.toArray()) }
+        for(i in 0 until command.args.size)
+        {
+            if(!command.args[i].validate(inputArguments[i]))
+            {
+                player.sendMessage("Arg[${i+1}] in ${command.name} requires type <${command.args[i].name}>, but <${inputArguments[i]}> was given".RED())
+                return false
+            }
+        }
+
+        command.invoke?.let { it(player, inputArguments.toArray()) }
+        return true
     }
 }

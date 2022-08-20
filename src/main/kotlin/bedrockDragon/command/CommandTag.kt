@@ -50,7 +50,7 @@ package bedrockDragon.command
  */
 abstract class CommandTag<T>() {
     open var value: T? = null
-    abstract val message: String
+    abstract val name: String
     abstract var optional: Boolean
     abstract var default: T
 
@@ -71,19 +71,29 @@ abstract class CommandTag<T>() {
         default = value
         return this
     }
+
+    abstract fun validate(other: Any): Boolean
+
     companion object {
         fun commandIntTag(): CommandTag<Int> = object : CommandTag<Int>() {
-                override val message: String = "I"
+                override val name: String = "Integer"
                 override var default: Int = 0
                 override var value: Int? = 0 //unInit
                 override var optional: Boolean = false
+
+            override fun validate(other: Any): Boolean {
+                return other.toString().matches(Regex("^[0-9]+$"))
+            }
         }
 
         fun commandStringTag(): CommandTag<String> = object : CommandTag<String>() {
-            override val message: String = "I"
+            override val name: String = "String"
             override var default: String = ""
             override var value: String? = "" //unInit
             override var optional: Boolean = false
+            override fun validate(other: Any): Boolean {
+                return !other.toString().matches(Regex("^[0-9]+$"))
+            }
         }
     }
 }

@@ -377,10 +377,15 @@ class Player(var username: String, override var uuid: String): Living("minecraft
     }
 
     /**
-     * [sendMessage] sends text as raw data to the client.
+     * [sendMessage] sends string as raw data to the client.
      */
-    fun sendMessage(text: Any, type: Int = 0) {
-        sendMessage(text.toString(), type)
+    fun sendMessage(text: TextPacket) {
+        nettyQueue.add(text.gamePacketBlocking())
+    }
+
+    fun sendMessage(text: MineText)
+    {
+        sendMessage(text.minecraft())
     }
 
     fun sendMessage(text: String, type: Int) {
@@ -388,15 +393,16 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             it.message = text
             it.type = type.toByte()
             it.needsTranslate = false
+            it
         })
     }
-    /**
-     * [sendMessage] sends string as raw data to the client.
-     */
-    fun sendMessage(text: TextPacket) {
-        nettyQueue.add(text.gamePacketBlocking())
-    }
 
+    /**
+     * [sendMessage] sends text as raw data to the client.
+     */
+    fun sendMessage(text: Any, type: Int = 0) {
+        sendMessage(text.toString(), type)
+    }
     /**
      * [transfer] will switch a clients worlds used for things like nether portals.
      * @since TBA

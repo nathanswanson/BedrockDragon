@@ -123,7 +123,7 @@ open class PacketPayload(val id: Int): Packet() {
 
     fun writeBlockCoordinates(vector: Float3) {
         writeVarInt(vector.x.toInt())
-        writeUnsignedVarInt(vector.y.toInt())
+        writeVarInt(vector.y.toInt())
         writeVarInt(vector.z.toInt())
     }
 
