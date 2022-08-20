@@ -186,7 +186,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
 
         loadDefaultInventories()
 
-        //updateAttribute(0.1f, AttributeBR[5])
+        updateAttribute(0.1f, AttributeBR[5])
         //debug
         PlayerAttributePacket().let {
             it.runtimeEntityId = runtimeEntityId

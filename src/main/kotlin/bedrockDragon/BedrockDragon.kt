@@ -51,6 +51,8 @@ import bedrockDragon.registry.resource.VanillaEntities
 import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
+import bedrockDragon.util.text.GOLD
+import bedrockDragon.util.text.RED
 import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
@@ -74,7 +76,7 @@ const val PROTOCOL_VERSION = "501"
 fun main(args: Array<String>) {
 
 
-    logger.info { "Starting Bedrock Dragon." }
+    logger.info { "Starting Bedrock Dragon.".GOLD() }
     logger.info { "Validating server root." }
 
     val directories = arrayOf("mods","world","logs","players","config")
@@ -84,22 +86,22 @@ fun main(args: Array<String>) {
         }
     }
 
-    logger.info { "Loading server properties." }
+    logger.info { "Loading server properties.".GOLD() }
 
 
     if(ServerProperties.getProperty("dev-mode").toBoolean())
-        logger.info { "Warning dev mode enabled." }
+        logger.info { "Warning dev mode enabled.".RED() }
 
-    logger.info { "Loading world." }
+    logger.info { "Loading world.".GOLD() }
     if (File(ServerProperties.getProperty("level-name")).listFiles()?.isEmpty() == true) {
         logger.warn { "World not found. Generating..." }
     }
 
 
-    logger.info { "Registering mods." }
+    logger.info { "Registering mods.".GOLD() }
     registerMods()
 
-    logger.info { "Registering blocks." }
+    logger.info { "Registering blocks.".GOLD() }
 
     ResourcePackManager
 
@@ -124,8 +126,6 @@ fun main(args: Array<String>) {
     VanillaItems
 
     DragonServer(bindAddress).start()
-
-
 }
 
 

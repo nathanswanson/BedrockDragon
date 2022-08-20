@@ -90,7 +90,6 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
     val fileName = Path("${world.name}/region/r.$x.$z.mca")
     val logger = KotlinLogging.logger {}
     val relayGrid = arrayOfNulls<ChunkRelay>(64) //make private is public atm for testing
-    var manifest: RegionManifest = RegionManifest(fileName)
     var entityManifest: Path = Path("${world.name}/entities/r.$x.$z.mca")
     init {
         //make sure region file exists
@@ -101,10 +100,9 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
         if (!fileName.exists()) {
             fileName.createFile()
             fileName.writeBytes(ByteArray(8192) {0})
-        } else {
-
         }
     }
+    var manifest: RegionManifest = RegionManifest(fileName)
 
     /**
      * [getRelayAt] uses relative position from region to find a relay. If one does not exist is creates it.

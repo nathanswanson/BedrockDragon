@@ -11,5 +11,6 @@ class NetworkChunkPublisherPacket: PacketPayload(MinecraftPacketConstants.NETWOR
     override suspend fun encode() {
         writeBlockCoordinates(position)
         writeUnsignedVarInt(radius shl 4)
+        writeInt(0) //saved chunks
     }
 }

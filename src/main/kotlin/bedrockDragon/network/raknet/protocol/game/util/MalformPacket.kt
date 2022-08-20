@@ -72,10 +72,10 @@ class MalformPacket: PacketPayload(MinecraftPacketConstants.MALFORM_PACKET) {
     }
 
     enum class PacketViolationType {
-        UNKNOWN, MALFORMED_PACKET
+        MALFORMED_PACKET
     }
 
     enum class PacketViolationSeverity {
-        UNKNOWN, WARNING, FINAL_WARNING, TERMINATING_CONNECTION
+        WARNING, FINAL_WARNING, TERMINATING_CONNECTION
     }
 }

@@ -154,6 +154,7 @@ open class PacketPayload(val id: Int): Packet() {
         writeFloatLE(attribute.getValueOrDefault())
         writeFloatLE(attribute.defaultValue)
         writeString(attribute.name)
+        writeUnsignedVarInt(0) //modifier
     }
 
     fun writeMetaData(metaTag: MetaTag) {

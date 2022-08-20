@@ -44,7 +44,7 @@ class MineText(var content: String, var color: ColorCode) {
     }
 
     override fun toString(): String {
-        return content
+        return console()
     }
 }
 

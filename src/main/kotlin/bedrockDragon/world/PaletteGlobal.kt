@@ -69,7 +69,7 @@ object PaletteGlobal {
     init {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
-            compression = NbtCompression.None // None, Gzip, Zlib
+            compression = NbtCompression.Gzip // None, Gzip, Zlib
             compressionLevel = null // in 0..9
             encodeDefaults = true
             ignoreUnknownKeys = true

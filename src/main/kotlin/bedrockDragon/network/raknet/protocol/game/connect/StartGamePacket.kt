@@ -120,13 +120,23 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
     val experimentCount = 0
     val isLockedWorldTemplate: Boolean = false
     val blockRegistryChecksum = 0L
+
+
+    //1.9.20
+    var clientSideChunkGeneration: Boolean = true
+    var chatRestrictionLevel: Byte = 0
+    var playerInteractable: Boolean = true
+
     override suspend fun encode() {
         try {
+
+
             writeVarLong(entityIdSelf)
             writeUnsignedVarLong(runtimeEntityId)
             writeVarInt(playerGamemode)
             writeVector3(spawn)
             writeVector2(rotation)
+            //world settings //
             writeLongLE(seed)
             writeShortLE(biomeType.toInt())
             writeString(customBiomeName)
@@ -134,11 +144,9 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeVarInt(generator)
             writeVarInt(worldGamemode)
             writeVarInt(difficulty)
-
             writeBlockCoordinates(worldSpawn)
-
-
             writeBoolean(hasAchievementsDisabled)
+            writeBoolean(false) //world editor
             writeVarInt(dayCycleStopTime)
             writeVarInt(EDUOffer)
             writeBoolean(educationFeatures)
@@ -150,7 +158,6 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeBoolean(broadcastToLAN)
             writeVarInt(xboxLiveBroadcast)
             writeVarInt(platformBroadcaseMode)
-
             writeBoolean(enableCommands)
             writeBoolean(texturePackRequired)
             writeGameRules(gameRules)
@@ -167,31 +174,38 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
             writeBoolean(isFromWorldTemplate)
             writeBoolean(lockedWorldOptionTemplate)
             writeBoolean(v1Villager)
+            writeBoolean(false)//disable persona
+            writeBoolean(false)//disable custom skins
             writeString(gameVersion)
-
             writeIntLE(limitedWorldWidth)
             writeIntLE(limitedWorldHeight)
             writeBoolean(isNetherType)
-            writeString("") // EduSharedUriResource buttonName
-            writeString("") // EduSharedUriResource linkUri
-            writeBoolean(forceExperimental)//
+            writeString("")
+            writeString("")
+            writeBoolean(forceExperimental)
+            writeByte(0)//chat restriction
+            writeBoolean(false)//player interaction
+            //end world settings //
             writeString(levelId)
             writeString(worldName)
             writeString(premiumWorldId)
             writeBoolean(isTrial)
-
-            writeUnsignedVarInt(movementType)
+            writeVarInt(movementType)
             writeVarInt(movementRewindSize)
-            writeBoolean(serverAuthoritativeBlockBreaking)
+            writeBoolean(true) //block breaking
             writeLongLE(currentTick)
             writeVarInt(enchantSeed)
             writeUnsignedVarInt(0) //blockmanifest
-            writeManifest()
-
+            writeUnsignedVarInt(0) //item manifest
             writeString(multiplayerCorId)
             writeBoolean(inventoryServerAuthoritative)
             writeString(serverEngine) //server version
+            writeUnsignedVarLong(0)
             writeLongLE(blockRegistryChecksum)
+            //empty uuid
+            writeLong(0)
+            writeLong(0)
+            writeBoolean(false)
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
             println(e.message)
@@ -201,7 +215,7 @@ class StartGamePacket: PacketPayload(MinecraftPacketConstants.START_GAME) {
         }
     }
 
-    fun writeManifest() {
+    private fun writeManifest() {
         val manifest = RuntimeItemState.runtimeIdStates
         writeUnsignedVarInt(manifest.size)
         for(entry in manifest) {
