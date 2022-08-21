@@ -195,7 +195,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             nettyQueue.add(it.gamePacketBlocking())
         }
         //end debug
-        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".YELLOW()))
+        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".GOLD()))
         //nettyQueue.add(CreativeContentPacket().gamePacket())
 
     }
@@ -434,7 +434,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
      */
     fun disconnect(kickMessage: String?) {
      //   save() todo
-        println("Disconnecting Player: $username")
+        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has left the server.".GOLD()))
         nettyQueue.add(DisconnectPacket().let {
             it.kickMessage = kickMessage
             it.gamePacketBlocking()

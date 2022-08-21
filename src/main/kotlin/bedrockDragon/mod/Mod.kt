@@ -1,62 +1,45 @@
-/*
- *      ##### ##                  ##                                    /                 ##### ##
- *   ######  /##                   ##                                 #/               /#####  /##
- *  /#   /  / ##                   ##                                 ##             //    /  / ###
- * /    /  /  ##                   ##                                 ##            /     /  /   ###
- *     /  /   /                    ##                                 ##                 /  /     ###
- *    ## ##  /        /##      ### ##  ###  /###     /###     /###    ##  /##           ## ##      ## ###  /###     /###     /###      /###   ###  /###
- *    ## ## /        / ###    ######### ###/ #### / / ###  / / ###  / ## / ###          ## ##      ##  ###/ #### / / ###  / /  ###  / / ###  / ###/ #### /
- *    ## ##/        /   ###  ##   ####   ##   ###/ /   ###/ /   ###/  ##/   /           ## ##      ##   ##   ###/ /   ###/ /    ###/ /   ###/   ##   ###/
- *    ## ## ###    ##    ### ##    ##    ##       ##    ## ##         ##   /            ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *    ## ##   ###  ########  ##    ##    ##       ##    ## ##         ##  /             ## ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *    #  ##     ## #######   ##    ##    ##       ##    ## ##         ## ##             #  ##      ##   ##       ##    ## ##     ## ##    ##    ##    ##
- *       /      ## ##        ##    ##    ##       ##    ## ##         ######               /       /    ##       ##    ## ##     ## ##    ##    ##    ##
- *   /##/     ###  ####    / ##    /#    ##       ##    ## ###     /  ##  ###         /###/       /     ##       ##    /# ##     ## ##    ##    ##    ##
- *  /  ########     ######/   ####/      ###       ######   ######/   ##   ### /     /   ########/      ###       ####/ ## ########  ######     ###   ###
- * /     ####        #####     ###        ###       ####     #####     ##   ##/     /       ####         ###       ###   ##  ### ###  ####       ###   ###
- * #                                                                                #                                             ###
- *  ##                                                                               ##                                     ####   ###
- *                                                                                                                        /######  /#
- *                                                                                                                       /     ###/
- * the MIT License (MIT)
- *
- * Copyright (c) 2021-2021 Nathan Swanson
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * the above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
 package bedrockDragon.mod
 
-import bedrockDragon.mod.informative.ModStatus
+import bedrockDragon.registry.DSLBase
+import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.Serializable
+import mu.KotlinLogging
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.script.experimental.api.EvaluationResult
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.host.toScriptSource
+import kotlin.script.experimental.jvm.util.isError
+import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
+import kotlin.script.experimental.jvmhost.createJvmCompilationConfigurationFromTemplate
 
-@DragonMod
-abstract class Mod {
+class Mod(val path: Path): DSLBase() {
 
-    //abstract val MODNAME: String
-    //abstract val MODVERSION: Int
-    abstract var Status: ModStatus
-    /**
-     * preInit should contain any blocks , entities, or items added.
-     *
-     * @author Nathan
-     */
-    abstract fun preInit()
-    abstract fun init()
-    abstract fun postInit()
+    private val logger = KotlinLogging.logger {}
+
+    private val pluginPath: String = "plugin.yaml"
+    val config: Config = Yaml.default.decodeFromString(Config.serializer(), Files.readString(Paths.get("$path/$pluginPath")))
+
+    fun compile()
+    {
+        Files.walk(path, 1).filter {
+            it.toString().endsWith("dragon.kts")
+        }.forEach {
+            val response = evalFile(it.toFile())
+            if(response.isError())
+            {
+                logger.error { "Failed to compile ${it.fileName}" }
+            }
+        }
+    }
+
+    private fun evalFile(scriptFile: File): ResultWithDiagnostics<EvaluationResult> {
+        val compilationConfiguration = createJvmCompilationConfigurationFromTemplate<DragonScript>()
+        return BasicJvmScriptingHost().eval(scriptFile.toScriptSource(), compilationConfiguration, null)
+    }
+    @Serializable
+    data class Config (val name: String, val id: String, val version: String, val dependencies: Array<String>)
+
 }

@@ -62,6 +62,7 @@ import bedrockDragon.network.raknet.protocol.message.EncapsulatedPacket
 import bedrockDragon.network.raknet.server.RakNetServerHandler
 import bedrockDragon.network.raknet.server.RakNetServerListener
 import bedrockDragon.registry.Registry
+import bedrockDragon.util.text.GREEN
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelOption
@@ -121,7 +122,7 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
         ServerHandlerFactory.guid = guid
         ServerHandlerFactory.mtu = mtu
 
-        logger.info { "Starting RakNet" }
+        logger.info { "Starting RakNet".GREEN() }
 
         handle = RakNetServerHandler(this)
 
@@ -133,11 +134,14 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             .option(ChannelOption.SO_SNDBUF, mtu)
             .option(ChannelOption.SO_RCVBUF, mtu)
             .option(ChannelOption.RCVBUF_ALLOCATOR, FixedRecvByteBufAllocator(mtu + 500))
-
+        logger.info { "Binding server to address: $bindAddress"}
         channel = bootstrap.bind(bindAddress).sync().channel()
 
 
         isRunning = true
+        logger.info { "RakNet loaded, running main thread".GREEN() }
+        println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
         loop()
         return true
     }

@@ -44,9 +44,6 @@
 package bedrockDragon.world
 
 import bedrockDragon.block.Block
-import bedrockDragon.registry.resource.VanillaBlocks
-import bedrockDragon.item.Item
-import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.RuntimeItemState
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable

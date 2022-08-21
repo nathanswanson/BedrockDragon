@@ -48,7 +48,6 @@ import bedrockDragon.network.raknet.protocol.game.entity.AddItemEntityPacket
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
-import bedrockDragon.registry.resource.VanillaItems
 import bedrockDragon.resource.RuntimeItemState
 import dev.romainguy.kotlin.math.Float3
 
@@ -65,7 +64,7 @@ sealed class Item(var name: String = "item"): DSLBase(){
     var runtimeId = -1 //todo const
     var maxStackSize = 64
     var subItems = mutableListOf<Item>()
-    var tag: VanillaItems.ItemTag? = null
+    //var tag: VanillaItems.ItemTag? = null
     var durability = -1
     var onActivate: ((Player) -> Unit)? = null
     var damage = -1
@@ -99,7 +98,6 @@ sealed class Item(var name: String = "item"): DSLBase(){
             it.runtimeId = runtimeId
             it.maxStackSize = maxStackSize
             it.subItems = subItems
-            it.tag = tag
             it.durability = durability
             it.onActivate = onActivate
             it.damage = damage

@@ -1632,7 +1632,6 @@ open class Packet @JvmOverloads constructor(buffer: ByteBuf? =  /* Solves ambigu
      * Creates an empty packet.
      */
     init {
-        require(buffer !is EmptyByteBuf) { "No content" }
         this.buffer = buffer ?: Unpooled.buffer()
         inputStream = PacketDataInputStream(this)
         outputStream = PacketDataOutputStream(this)

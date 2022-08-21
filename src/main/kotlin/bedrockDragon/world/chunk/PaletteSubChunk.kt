@@ -88,6 +88,10 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     }
 
     fun getBlock(position: Float3): Block {
+        if(paletteString.isEmpty())
+        {
+            return PaletteGlobal.blockRegistry["minecraft:air"]!!
+        }
         return PaletteGlobal.blockRegistry[paletteString[get((position.y.mod(16.0) + (position.z.mod(16.0) * 16) + (position.x.mod(16.0) * 16 * 16)).toInt() and 4095)]] ?: PaletteGlobal.blockRegistry["minecraft:bedrock"]!!
     }
 

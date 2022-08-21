@@ -81,6 +81,7 @@ open class Entity(open var name: String = "entity"): ISavable, DSLBase() {
     var motion = Float3(0f,0f,0f)
     var noGravity: Boolean = false
     var onGround: Boolean = true
+    var inWater: Boolean = false
     var passengers = emptyArray<Entity>()
     var portalCooldown = 0
     open var position = Float3(38f,80f,22f)

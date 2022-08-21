@@ -43,27 +43,27 @@
 
 package bedrockDragon
 
-import bedrockDragon.mod.loader.ModLoader
+import bedrockDragon.mod.Mod
 import bedrockDragon.registry.Registry
-import bedrockDragon.registry.resource.NativeCommands
-import bedrockDragon.registry.resource.VanillaBlocks
-import bedrockDragon.registry.resource.VanillaEntities
-import bedrockDragon.registry.resource.VanillaItems
-import bedrockDragon.resource.ResourcePackManager
 import bedrockDragon.resource.ServerProperties
 import bedrockDragon.util.text.GOLD
+import bedrockDragon.util.text.GREEN
+import bedrockDragon.util.text.ITALIC
 import bedrockDragon.util.text.RED
 import bedrockDragon.world.PaletteGlobal
 import bedrockDragon.world.World
 import java.net.InetSocketAddress
 import mu.KotlinLogging
 import java.io.*
+import java.nio.file.Files
+import kotlin.io.path.Path
+import kotlin.io.path.name
 
 private val logger = KotlinLogging.logger {}
 
 const val SERVER_VERSION = "ALPHA"
-const val MINECRAFT_VERSION = "1.18.30"
-const val PROTOCOL_VERSION = "501"
+const val MINECRAFT_VERSION = "1.19.20"
+const val PROTOCOL_VERSION = "544"
 /**
  * Welcome to the very start of the server. main checks if root directory
  * is in order, loads mods, and reads server.properties
@@ -76,9 +76,12 @@ const val PROTOCOL_VERSION = "501"
 fun main(args: Array<String>) {
 
 
-    logger.info { "Starting Bedrock Dragon.".GOLD() }
-    logger.info { "Validating server root." }
+    println(ClassLoader.getSystemResource("logo.txt").readText())
 
+    logger.info { "Starting Bedrock Dragon v$SERVER_VERSION for bedrock $MINECRAFT_VERSION($PROTOCOL_VERSION)".GREEN() }
+    //configure phase
+
+    logger.info { "Configuring server".GOLD() }
     val directories = arrayOf("mods","world","logs","players","config")
     for(dir in directories) {
         if (!File(dir).isDirectory) {
@@ -86,44 +89,54 @@ fun main(args: Array<String>) {
         }
     }
 
-    logger.info { "Loading server properties.".GOLD() }
-
+    logger.info { "Loading server properties"}
 
     if(ServerProperties.getProperty("dev-mode").toBoolean())
-        logger.info { "Warning dev mode enabled.".RED() }
+        logger.info { "Warning dev mode enabled in properties".RED() }
 
-    logger.info { "Loading world.".GOLD() }
+    //bind phase
+    val bindAddress = if (ServerProperties.getProperty("server-ip").isBlank())
+        InetSocketAddress(ServerProperties.getProperty("server-port").toInt()) else
+        InetSocketAddress(ServerProperties.getProperty("server-ip"), ServerProperties.getProperty("server-port").toInt()
+    )
+    logger.info { "Server will run on $bindAddress" }
+
+
+    //register phase
+    logger.info { "Starting registry".GOLD() }
+    Registry.WORLD_REGISTRY.register(0, World(ServerProperties.getOrDefault("level-name", "world") as String))
+    PaletteGlobal
+
+    logger.info { "Loading world(s)"}
+
+
+    //world phase
     if (File(ServerProperties.getProperty("level-name")).listFiles()?.isEmpty() == true) {
         logger.warn { "World not found. Generating..." }
     }
+    logger.info { "Default world found: ${Registry.WORLD_REGISTRY[0]}" }
 
 
-    logger.info { "Registering mods.".GOLD() }
+
+    //mod phase
+    logger.info { "Registering mods".GOLD() }
     registerMods()
 
-    logger.info { "Registering blocks.".GOLD() }
+    logger.info { "Loaded ${Registry.MOD_REGISTRY.size()} mods" }
 
-    ResourcePackManager
+    logger.info { "Loaded ${Registry.COMMAND_REGISTRY.size()} commands" }
+    //VanillaEntities
+    logger.info { "Loaded ${Registry.ENTITY_REGISTRY.size()} entities" }
+    //VanillaBlocks
+    logger.info { "Loaded ${PaletteGlobal.blockRegistry.size} blocks" }
+    //VanillaItems
+    logger.info { "Loaded ${Registry.ITEM_REGISTRY.size()} items" }
+
+    //ResourcePackManager
 
 
-    logger.info { "=====================" }
-    logger.info { "SERVER PRE-INIT DONE." }
-    logger.info { "STARTING DRAGON SERVER." }
-    logger.info { "=====================" }
-
-    val bindAddress = if (ServerProperties.getProperty("server-ip").isBlank())
-                InetSocketAddress(ServerProperties.getProperty("server-port").toInt()) else
-                InetSocketAddress(ServerProperties.getProperty("server-ip"), ServerProperties.getProperty("server-port").toInt()
-            )
-
-    //world registry
-    Registry.WORLD_REGISTRY.register(0, World(ServerProperties.getOrDefault("level-name", "world") as String))
-    PaletteGlobal
-    //register commands
-    NativeCommands
-    VanillaEntities
-    VanillaBlocks
-    VanillaItems
+    logger.info { "Load complete".GREEN() }
+    println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
     DragonServer(bindAddress).start()
 }
@@ -136,7 +149,15 @@ fun main(args: Array<String>) {
  * @since Bedrock Dragon ALPHA
  */
 fun registerMods() {
-    val mods = ModLoader.getModfolderContent()
-    //remove any non jars from list
-    //mods.filter { mod -> ModManager.authenticate(mod) }
+    val files = Files.walk(Path("mods"),1).filter{ it.name != "mods"}
+
+    files.forEach {
+        val mod = Mod(it)
+        Registry.MOD_REGISTRY[mod.config.name] = mod
+
+        logger.info { "Registering mod: ${mod.config.name} - " + mod.config.id.ITALIC() + "v${mod.config.version}"  }
+        mod.compile()
+
+    }
 }
+

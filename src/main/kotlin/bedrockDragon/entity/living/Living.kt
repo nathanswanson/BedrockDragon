@@ -10,6 +10,8 @@ import bedrockDragon.network.raknet.MetaTag
 import bedrockDragon.network.raknet.protocol.game.entity.AddEntityPacket
 import bedrockDragon.player.Player
 import bedrockDragon.registry.Registry
+import bedrockDragon.world.PaletteGlobal
+import com.squareup.kotlinpoet.FLOAT
 import dev.romainguy.kotlin.math.Float3
 
 
@@ -112,11 +114,23 @@ open class Living(override var name: String): Entity() {
             } else if(velocity.y >= 0 && !onGround) {
                 //hit ground
                 onGround = true
-                fallDistance = fallStartPosition.y - position.y
-                if(fallDistance-3 > 0)
-                    damage(fallDistance-3)
+
+                //did we hit water
+                if(world.getBlockAt(position) != PaletteGlobal.blockRegistry["minecraft:water"])
+                {
+                    fallDistance = fallStartPosition.y - position.y
+                    if(fallDistance-3 > 0)
+                        damage(fallDistance-3)
+                }
+
             }
         }
+
+        //water check
+//        if(world.getBlockAt(position + Float3(0f,1f,0f)) == PaletteGlobal.blockRegistry["minecraft:water"])
+//        {
+//            print("in water")
+//        }
     }
 
     open fun damage(amount: Float) {

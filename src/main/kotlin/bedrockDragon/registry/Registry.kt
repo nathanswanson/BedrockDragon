@@ -46,6 +46,7 @@ package bedrockDragon.registry
 import bedrockDragon.command.Command
 import bedrockDragon.entity.Entity
 import bedrockDragon.item.Item
+import bedrockDragon.mod.Mod
 import bedrockDragon.world.World
 
 /**
@@ -109,5 +110,6 @@ open class Registry<T,K : DSLBase> {
         }
         val ITEM_REGISTRY = Registry<String, Item>()
         val ENTITY_REGISTRY = Registry<String, Entity>()
+        val MOD_REGISTRY = Registry<String, Mod>()
     }
 }

@@ -150,4 +150,8 @@ class World(val name: String): DSLBase() {
         }
         return true
     }
+
+    override fun toString(): String {
+        return name
+    }
 }

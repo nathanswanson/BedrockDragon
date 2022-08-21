@@ -45,3 +45,4 @@ hs_err_pid*
 /resource_pack/
 /log/
 /players/
+!/mods/bedrockcore/
