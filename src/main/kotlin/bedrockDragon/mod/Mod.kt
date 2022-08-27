@@ -1,6 +1,8 @@
 package bedrockDragon.mod
 
 import bedrockDragon.registry.DSLBase
+import bedrockDragon.util.text.GREEN
+import bedrockDragon.util.text.RED
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
@@ -20,11 +22,13 @@ class Mod(val path: Path): DSLBase() {
     private val logger = KotlinLogging.logger {}
 
     private val pluginPath: String = "plugin.yaml"
+    private val texturePath: String = "resource/"
+    private val scriptPath: String = "script/"
     val config: Config = Yaml.default.decodeFromString(Config.serializer(), Files.readString(Paths.get("$path/$pluginPath")))
 
     fun compile()
     {
-        Files.walk(path, 1).filter {
+        Files.walk(path.resolve(scriptPath), 1).filter {
             it.toString().endsWith("dragon.kts")
         }.forEach {
             val response = evalFile(it.toFile())
@@ -37,7 +41,9 @@ class Mod(val path: Path): DSLBase() {
 
     private fun evalFile(scriptFile: File): ResultWithDiagnostics<EvaluationResult> {
         val compilationConfiguration = createJvmCompilationConfigurationFromTemplate<DragonScript>()
-        return BasicJvmScriptingHost().eval(scriptFile.toScriptSource(), compilationConfiguration, null)
+        val result = BasicJvmScriptingHost().eval(scriptFile.toScriptSource(), compilationConfiguration, null)
+        logger.info { "loading script: ${scriptFile.name}... ${if (result.isError()) "failed".RED() else "success".GREEN()}" }
+        return result
     }
     @Serializable
     data class Config (val name: String, val id: String, val version: String, val dependencies: Array<String>)

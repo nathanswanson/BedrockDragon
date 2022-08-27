@@ -30,7 +30,7 @@ object ModScriptCompiler: ScriptCompilationConfiguration({
                     val hash = compiledScriptUniqueName(script, scriptCompilationConfiguration)
                     if(!Files.exists(Path(".cache/$hash.jar")))
                     {
-                        logger.info { "Generating jar for: ${script.locationId}" }
+                        logger.info { "generating jar for: ${script.locationId}" }
                     }
                     File(".cache", "$hash.jar")
                 }

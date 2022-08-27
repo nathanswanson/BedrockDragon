@@ -59,6 +59,8 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.io.path.name
 
+import java.lang.management.ManagementFactory
+
 private val logger = KotlinLogging.logger {}
 
 const val SERVER_VERSION = "ALPHA"
@@ -73,10 +75,12 @@ const val PROTOCOL_VERSION = "544"
  * @author Nathan Swanson
  * @since Bedrock Dragon ALPHA
  */
-fun main(args: Array<String>) {
-
+fun main() {
+    val sysBean = ManagementFactory.getOperatingSystemMXBean()
 
     println(ClassLoader.getSystemResource("logo.txt").readText())
+
+    logger.info { "System configuration OS=${sysBean.name}, ARCH=${sysBean.arch}, CPU=${sysBean.availableProcessors}"}
 
     logger.info { "Starting Bedrock Dragon v$SERVER_VERSION for bedrock $MINECRAFT_VERSION($PROTOCOL_VERSION)".GREEN() }
     //configure phase
@@ -117,7 +121,6 @@ fun main(args: Array<String>) {
     logger.info { "Default world found: ${Registry.WORLD_REGISTRY[0]}" }
 
 
-
     //mod phase
     logger.info { "Registering mods".GOLD() }
     registerMods()
@@ -137,7 +140,6 @@ fun main(args: Array<String>) {
 
     logger.info { "Load complete".GREEN() }
     println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-
     DragonServer(bindAddress).start()
 }
 

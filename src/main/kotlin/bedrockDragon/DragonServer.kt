@@ -157,10 +157,10 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
                     val command = Registry.COMMAND_REGISTRY[args[0]]
                     if(command == null) {
                         logger.info { "Unknown command please try again." }
-                        return
                     }
-                    //  CommandEngine.invokeWith(args.toTypedArray(), command, /*CommandEngine.CONSOLE*/)
                 }
+                continue
+
             }
         }
     }
@@ -255,9 +255,5 @@ class DragonServer(private val bindAddress: InetSocketAddress): RakNetServerList
             }
 
         }
-    }
-
-    companion object {
-        const val MINECRAFT_VERSION = "1.18.2"
     }
 }
