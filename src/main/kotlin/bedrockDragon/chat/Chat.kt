@@ -50,14 +50,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import mu.KotlinLogging
-import kotlin.math.log
 
 /**
  * [ChatRail] holds a common state for players to chat on. Think of it as a chat room for the coroutines to use.
  * @author Nathan Swanson
  * @since ALPHA
  */
-class ChatRail {
+class Chat {
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     val logger = KotlinLogging.logger {}
 
@@ -66,7 +65,7 @@ class ChatRail {
     //String, and probably filter for player
     private val _subscription = MutableSharedFlow<TextPacket>()
     private val subscription = _subscription.asSharedFlow()
-
+    var sendToConsole = true
     fun sendMessage(message: TextPacket) {
         invoke(message)
     }
@@ -78,6 +77,7 @@ class ChatRail {
     }
 
     fun invoke(emitter: String, type: Int = 0) {
+        logger.info { emitter }
         invoke(TextPacket().let {
             it.message = emitter
             it.type = type.toByte()
@@ -95,6 +95,6 @@ class ChatRail {
     }
 
     companion object {
-        val DEFAULT = ChatRail()
+        val DEFAULT = Chat()
     }
 }

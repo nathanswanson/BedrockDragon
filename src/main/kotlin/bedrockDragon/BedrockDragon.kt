@@ -131,12 +131,11 @@ fun main() {
     //VanillaEntities
     logger.info { "Loaded ${Registry.ENTITY_REGISTRY.size()} entities" }
     //VanillaBlocks
-    logger.info { "Loaded ${PaletteGlobal.blockRegistry.size} blocks" }
+    logger.info { "Loaded ${Registry.BLOCK_REGISTRY.size()} blocks" }
     //VanillaItems
     logger.info { "Loaded ${Registry.ITEM_REGISTRY.size()} items" }
 
     //ResourcePackManager
-
 
     logger.info { "Load complete".GREEN() }
     println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")

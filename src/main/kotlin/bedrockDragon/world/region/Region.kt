@@ -136,6 +136,19 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
         return RegionPointer(xPointer, yPointer)
     }
 
+    private fun writeChunkPointer(file: RandomAccessFile, x: Int, z: Int, size: Int): RegionPointer
+    {
+        //(x % 32 + z % 32) * 32) * 4
+        // (x and 31 + z and 31) shl 7
+        file.seek(idxLocationTable(x, z))
+        val xPointer = manifest.getFirstUsableSlot(size)
+        val yPointer = 1 // 4096kb = 1 block
+
+        writeTryte(xPointer, file)
+        file.write(yPointer)
+        return RegionPointer(xPointer, yPointer)
+    }
+
     /**
      * [idxLocationTable] takes a chunk coordinates (relative to the region) then returns the memory
      * address/position of that chunk in the .mca file
@@ -225,12 +238,6 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
         }
         writer.close()
     }
-
-    /** [readRegion] reads the entire .mca file however, it is not used and not implemented yet. */
-    fun readRegion() {
-        TODO("Not yet implemented")
-    }
-
     /**
      * [writeChunkBinary] writes the given chunk its designated region file.
      * This method tries to save in original position however if it has
@@ -269,21 +276,18 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
      *
      */
     fun readChunkBinary(chunk: Chunk): ByteArray {
-
-//        val entityPointer = findChunkPointer(entityManifest, chunk.position.x, chunk.position.y)
-//        //chunk world ata
-//        RandomAccessFile(fileName.toFile(), "r").use {
-//            it.seek(entityPointer!!.start.toLong() * 4096 + 5)
-//            val entityArray = ByteArray(entityPointer!!.end * 4096)
-//            it.read(entityArray)
-//
-//            println()
-//
-//        }
-
-        val regionPointer = findChunkPointer(fileName, chunk.position.x, chunk.position.y)
+        var regionPointer = findChunkPointer(fileName, chunk.position.x, chunk.position.y)
         //chunk world ata
-        RandomAccessFile(fileName.toFile(), "r").use {
+        RandomAccessFile(fileName.toFile(), "rw").use {
+            if(regionPointer == null)
+            {
+                //generate region pointer
+                logger.debug { "generating chunk pointer in $this, for $chunk" }
+                regionPointer = writeChunkPointer(it, chunk.position.x, chunk.position.y, 4096)
+                logger.debug { "generating $this"}
+                createChunk(it, chunk)
+
+            }
             it.seek(regionPointer!!.start.toLong() * 4096 + 5)
             val tempArray = ByteArray(regionPointer!!.end * 4096)
             it.read(tempArray)
@@ -293,6 +297,19 @@ class Region(val x : Int,val z: Int,val world: World): Iterable<Chunk> {
 
     }
 
+    private fun createChunk(file: RandomAccessFile, chunk: Chunk)
+    {
+        val bytes = world.generateChunk(chunk)
+        val regionPointer = findChunkPointer(fileName, chunk.position.x, chunk.position.y)
+
+        if(bytes.size > regionPointer!!.end * 4096)
+        {
+            logger.error { "$chunk tried to write itself on a block too small!" }
+            return
+        }
+        file.seek(regionPointer!!.start.toLong() * 4096)
+        file.write(bytes)
+    }
     override fun toString(): String {
         return "Region: x:$x z:$z"
     }

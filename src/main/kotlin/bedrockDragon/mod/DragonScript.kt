@@ -6,7 +6,6 @@ import kotlin.script.experimental.annotations.KotlinScript
     fileExtension = "dragon.kts",
     compilationConfiguration = ModScriptCompiler::class,
     evaluationConfiguration = ModScriptEval::class
-
 )
 
 abstract class DragonScript

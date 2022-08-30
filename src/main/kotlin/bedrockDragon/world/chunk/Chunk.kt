@@ -45,9 +45,11 @@ package bedrockDragon.world.chunk
 
 import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
+import bedrockDragon.registry.Registry
 import bedrockDragon.util.ISavable
 import bedrockDragon.util.SaveStatus
 import bedrockDragon.util.WorldInt2
+import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +79,7 @@ class Chunk(val position: WorldInt2,
     private var sectionCount = 0
 
 
-    private var sections = ArrayList<SubChunk>()
+    private var sections = arrayOfNulls<SubChunk>(18)
     private var fluidTicks = ArrayList<NbtTag>()
     private var postProcessing = ArrayList<NbtTag>()
     private var blockTicks = ArrayList<NbtTag>()
@@ -126,7 +128,8 @@ class Chunk(val position: WorldInt2,
             //sections
             try {
                 sections.forEach {
-                    stream.write(it.encodePayload())
+                    if(it != null)
+                        stream.write(it.encodePayload())
                 }
             } catch(e: ConcurrentModificationException) {
                 stream.close()
@@ -168,13 +171,14 @@ class Chunk(val position: WorldInt2,
     }
 
     fun getBlockAt(position: Float3): Block {
-        return sections[(position.y.toInt() shr 4) + 4].paletteSubChunk!!.getBlock(position)
+        sections[(position.y.toInt() shr 4) + 4] ?: return Registry.BLOCK_REGISTRY["minecraft:air"]!!
+        return sections[(position.y.toInt() shr 4) + 4]!!.paletteSubChunk!!.getBlock(position)
     }
 
     fun encodeNbtToStorage(): ByteArray {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
-            compression = NbtCompression.Zlib // None, Gzip, Zlib
+            compression = NbtCompression.None // None, Gzip, Zlib
             compressionLevel = null // in 0..9
             encodeDefaults = true
             ignoreUnknownKeys = true
@@ -187,14 +191,18 @@ class Chunk(val position: WorldInt2,
     private fun decodeNbtFromStorage(byteArray: ByteArray) {
         val nbt = Nbt {
             variant = NbtVariant.Java // Java, Bedrock, BedrockNetwork
-            compression = NbtCompression.Zlib // None, Gzip, Zlib
+            compression = NbtCompression.None // None, Gzip, Zlib
             compressionLevel = null // in 0..9
             encodeDefaults = true
             ignoreUnknownKeys = true
             serializersModule = EmptySerializersModule
         }
-
+        if(byteArray.contentEquals(ByteArray(4096))) //todo slow fix
+        {
+            return
+        }
         val decodedNBT = nbt.decodeFromByteArray<NbtCompound>(byteArray)[""]!!.nbtCompound
+
         //todo add safety check for null
         //why is there x y and z pos for chunks...
         //status = decodedNBT["Status"]?.nbtString?.value ?: "empty"
@@ -204,10 +212,10 @@ class Chunk(val position: WorldInt2,
         lastUpdate = decodedNBT["LastUpdate"]?.nbtLong?.value ?: 0L
         inhabitedTime = decodedNBT["InhabitedTime"]?.nbtLong?.value ?: 0L
         isLightOn = decodedNBT["isLightOn"]?.nbtByte?.booleanValue ?: false
-        decodedNBT["sections"]!!.nbtList.map {
-            sectionCount++
-            SubChunk.decodeFromNbt(it.nbtCompound)
-        }.toList().toCollection(sections)
+//        decodedNBT["sections"]!!.nbtList.map {
+//            sectionCount++
+//            SubChunk.decodeFromNbt(it.nbtCompound)
+//        }.toList(sections)
         decodedNBT["block_entities"]!!.nbtList.toCollection(blockEntities)
         heightMaps = decodedNBT["Heightmaps"]!!.nbtCompound
         decodedNBT["block_ticks"]!!.nbtList.toCollection(blockTicks)
@@ -215,6 +223,11 @@ class Chunk(val position: WorldInt2,
         decodedNBT["fluid_ticks"]!!.nbtList.toCollection(fluidTicks)
         decodedNBT["PostProcessing"]!!.nbtList.toCollection(postProcessing)
 
+    }
+
+    fun getAnvilData(): ByteArray
+    {
+        return sections[0]!!.paletteSubChunk!!.getAnvilData()
     }
 
     private fun initChunkFromStorage() {

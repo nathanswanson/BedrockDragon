@@ -5,6 +5,8 @@ import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.name
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -28,11 +30,17 @@ object ModScriptCompiler: ScriptCompilationConfiguration({
             compilationCache(
                 CompiledScriptJarsCache { script, scriptCompilationConfiguration ->
                     val hash = compiledScriptUniqueName(script, scriptCompilationConfiguration)
-                    if(!Files.exists(Path(".cache/$hash.jar")))
+                    if(!Files.exists(Path(".cache/${script.name}-$hash.jar")))
                     {
                         logger.info { "generating jar for: ${script.locationId}" }
+                        Files.list(Path(".cache")).filter {
+                            it.name.startsWith(script.name?:"")
+                        }.forEach {
+                            logger.debug { "deleting cached jar $it" }
+                            it.deleteIfExists()
+                        }
                     }
-                    File(".cache", "$hash.jar")
+                    File(".cache", "${script.name}-$hash.jar")
                 }
             )
         }

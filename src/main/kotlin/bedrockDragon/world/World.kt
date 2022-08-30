@@ -124,6 +124,14 @@ class World(val name: String): DSLBase() {
         )
     }
 
+    private fun encodeForAnvil(): ByteArray {
+        return ByteArray(0)
+    }
+    fun generateChunk(chunk: Chunk): ByteArray
+    {
+        return chunk.getAnvilData()
+    }
+
     /**
      * [getBlockAt] will find the block with the given coordinates. If the block is an unloaded chunk it will return air.
      */
@@ -132,7 +140,9 @@ class World(val name: String): DSLBase() {
         return getChunkAt(position).getBlockAt(position)
     }
 
-
+    fun setBlockAt(position: Float3, block: Block) {
+        getChunkAt(position).updateBlockAt(position,block)
+    }
     fun destroyBlock(position: Float3) : Block {
         val removedBlock = getBlockAt(position)
 

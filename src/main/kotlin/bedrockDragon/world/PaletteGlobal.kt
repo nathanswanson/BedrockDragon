@@ -61,7 +61,7 @@ import java.util.HashMap
 @OptIn(ExperimentalSerializationApi::class)
 object PaletteGlobal {
     val globalBlockPalette = HashMap<String, ArrayList<PaletteEntry>>()
-    val blockRegistry = HashMap<String, Block>() //contract needed for private access todo
+    //val blockRegistry = HashMap<String, Block>() //contract needed for private access todo
 
     init {
         val nbt = Nbt {

@@ -47,6 +47,7 @@ import bedrockDragon.block.blockState.BlockState
 import bedrockDragon.inventory.Inventory
 import bedrockDragon.item.Item
 import bedrockDragon.player.Player
+import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
 import bedrockDragon.util.aabb.AABB
 import bedrockDragon.world.PaletteGlobal
@@ -63,7 +64,7 @@ class BlockImpl(name: String): Block(name)
  * @since BETA
  */
 @BlockDSL
-sealed class Block(var name: String) {
+sealed class Block(var name: String): DSLBase() {
 
     //comment parameters todo
 
@@ -164,6 +165,6 @@ class RegisterBlock(var modName: String) {
             //todo create palette entry
         }
         block.signature = "$modName:${block.name}"
-        PaletteGlobal.blockRegistry[block.signature] = block
+        Registry.BLOCK_REGISTRY[block.signature] = block
     }
 }

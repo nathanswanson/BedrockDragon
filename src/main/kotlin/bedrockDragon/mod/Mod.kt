@@ -24,7 +24,14 @@ class Mod(val path: Path): DSLBase() {
     private val pluginPath: String = "plugin.yaml"
     private val texturePath: String = "resource/"
     private val scriptPath: String = "script/"
+    private val langPath: String = "lang/"
     val config: Config = Yaml.default.decodeFromString(Config.serializer(), Files.readString(Paths.get("$path/$pluginPath")))
+
+    enum class ModStatus {
+        OK,
+        WARNING,
+        ERROR,
+    }
 
     fun compile()
     {

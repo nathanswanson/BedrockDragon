@@ -116,7 +116,7 @@ open class Living(override var name: String): Entity() {
                 onGround = true
 
                 //did we hit water
-                if(world.getBlockAt(position) != PaletteGlobal.blockRegistry["minecraft:water"])
+                if(world.getBlockAt(position) != Registry.BLOCK_REGISTRY["minecraft:water"])
                 {
                     fallDistance = fallStartPosition.y - position.y
                     if(fallDistance-3 > 0)

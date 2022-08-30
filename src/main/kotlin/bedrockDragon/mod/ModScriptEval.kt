@@ -7,5 +7,4 @@ import kotlin.script.experimental.api.scriptsInstancesSharing
 object ModScriptEval: ScriptEvaluationConfiguration({
     scriptsInstancesSharing(true)
     implicitReceivers("")
-    //refineConfigurationBeforeEvaluate(::co)
 })

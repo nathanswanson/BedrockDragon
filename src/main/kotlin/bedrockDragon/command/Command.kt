@@ -43,11 +43,11 @@
 
 package bedrockDragon.command
 
-import bedrockDragon.block.RegisterBlock
-import bedrockDragon.block.registerBlock
+import bedrockDragon.mod.Mod
 import bedrockDragon.player.Player
 import bedrockDragon.registry.DSLBase
 import bedrockDragon.registry.Registry
+import mu.KotlinLogging
 
 /**
  * [Command] is for a dsl object to create new commands, this is not meant to be extended.
@@ -56,6 +56,7 @@ import bedrockDragon.registry.Registry
  */
 @CommandDSL
 sealed class Command(val name: String): DSLBase() {
+
     var args = mutableListOf<CommandTag<*>>()
     var invoke: ((Player, Array<Any?>) -> Unit)? = null //called by command manager *entry point*
 
@@ -79,8 +80,8 @@ class CommandImpl(name: String): Command(name)
  * [registerCommand] is the DSL builder for creating and registering commands to the server.
  */
 @CommandDSL
-fun registerCommand(modName: String, registerList: RegisterCommand.() -> Unit) {
-    RegisterCommand(modName).run(registerList)
+fun registerCommand(registerList: RegisterCommand.() -> Unit): Unit {
+    RegisterCommand().run(registerList)
 }
 /**
  * [RegisterCommand] DSL class for registering multiple Commands.
@@ -89,10 +90,19 @@ fun registerCommand(modName: String, registerList: RegisterCommand.() -> Unit) {
  * @since BETA
  */
 @CommandDSL
-class RegisterCommand(var modName: String) {
-    fun command(name: String, lambda: Command.() -> Unit = {}) {
-        val command = CommandImpl(name).apply(lambda)
+class RegisterCommand() {
+
+    private val logger = KotlinLogging.logger {}
+
+    fun command(name: String, lambda: Command.() -> Unit = {}): Mod.ModStatus {
+        val command = CommandImpl("/$name").apply(lambda)
+        if(Registry.COMMAND_REGISTRY.containsKey("/$name"))
+        {
+            logger.warn { "/$name is already registered" }
+            return Mod.ModStatus.WARNING
+        }
         Registry.COMMAND_REGISTRY.register(command.name, command)
+        return Mod.ModStatus.OK
     }
 }
 

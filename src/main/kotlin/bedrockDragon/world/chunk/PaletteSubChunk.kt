@@ -47,12 +47,15 @@ import bedrockDragon.block.Block
 import bedrockDragon.network.raknet.VarInt
 import bedrockDragon.util.bitmap.EvenParityBitMap
 import bedrockDragon.util.OddParityBitMap
+import bedrockDragon.util.bitmap.BitMap
 import bedrockDragon.util.extension.writeLInt
 import bedrockDragon.world.PaletteGlobal
 import dev.romainguy.kotlin.math.Float3
 import it.unimi.dsi.fastutil.io.FastByteArrayOutputStream
 import mu.KotlinLogging
 import net.benwoodworth.knbt.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import kotlin.collections.ArrayList
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -73,7 +76,7 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     private val blockBits = if (paletteResolution.size * paletteResolution.entriesPerWord == 32)
         EvenParityBitMap(getWordsForSize(), paletteResolution) else
-            OddParityBitMap(getWordsForSize(), paletteResolution)
+        OddParityBitMap(getWordsForSize(), paletteResolution)
 
     private fun getPaletteHeader(runtime: Boolean): Int {
         return (paletteResolution.size shl 1) or if (runtime) 1 else 0
@@ -88,18 +91,21 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
     }
 
     fun getBlock(position: Float3): Block {
-        if(paletteString.isEmpty())
-        {
+        if (paletteString.isEmpty()) {
             return PaletteGlobal.blockRegistry["minecraft:air"]!!
         }
-        return PaletteGlobal.blockRegistry[paletteString[get((position.y.mod(16.0) + (position.z.mod(16.0) * 16) + (position.x.mod(16.0) * 16 * 16)).toInt() and 4095)]] ?: PaletteGlobal.blockRegistry["minecraft:bedrock"]!!
+        return PaletteGlobal.blockRegistry[paletteString[get(
+            (position.y.mod(16.0) + (position.z.mod(16.0) * 16) + (position.x.mod(
+                16.0
+            ) * 16 * 16)).toInt() and 4095
+        )]] ?: PaletteGlobal.blockRegistry["minecraft:bedrock"]!!
     }
 
     fun debugGetChunk() {
-        for(x in 0 until 16) {
-            for(y in 0 until 16) {
-                for(z in 0 until 16) {
-                    if(get(z.mod(16) + (y.mod(16) * 16) + (x.mod(16) * 16 * 16)) == 9) {
+        for (x in 0 until 16) {
+            for (y in 0 until 16) {
+                for (z in 0 until 16) {
+                    if (get(z.mod(16) + (y.mod(16) * 16) + (x.mod(16) * 16 * 16)) == 9) {
                         println("$x:$y:$z")
                     }
                 }
@@ -113,35 +119,48 @@ class PaletteSubChunk(var paletteResolution: PaletteResolution) {
 
     fun global2SectionId(globalId: Int): Int {
         var idx = palette.indexOf(globalId)
-        if(idx != -1)
+        if (idx != -1)
             return idx
 
         //id doesn't exist add it
         idx = palette.size
-        if(idx > paletteResolution.maxSize) {
-           resize()
+        if (idx > paletteResolution.maxSize) {
+            resize()
         }
         palette.add(globalId)
         return idx
     }
 
     private fun resize() {
-        paletteResolution = PaletteResolution.values()[paletteResolution.ordinal+1]
+        paletteResolution = PaletteResolution.values()[paletteResolution.ordinal + 1]
     }
 
 
     /**
      * Please note, entriesPerWord is for Int32 NOT Long64 entries would be 2x.
      */
-    enum class PaletteResolution(val size: Int,val entriesPerWord: Int) {
+    enum class PaletteResolution(val size: Int, val entriesPerWord: Int) {
         B2(2, 16),
-        B4(4,8),
+        B4(4, 8),
         B5(5, 6),
         B6(6, 5),
         B8(8, 4),
         RAW(15, 4);
+
         val maxSize = (1 shl size) - 1
 
+    }
+
+    fun getAnvilData(): ByteArray
+    {
+        val array = ByteArrayOutputStream()
+        for(i in 0 until blockBits.blockData.size)
+        {
+            array.write(blockBits.blockData[i])
+        }
+        val bytes = array.toByteArray()
+        array.close()
+        return bytes
     }
 
     fun encode(outputStream: FastByteArrayOutputStream) {

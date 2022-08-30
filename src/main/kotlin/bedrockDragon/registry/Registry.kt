@@ -43,6 +43,7 @@
 
 package bedrockDragon.registry
 
+import bedrockDragon.block.Block
 import bedrockDragon.command.Command
 import bedrockDragon.entity.Entity
 import bedrockDragon.item.Item
@@ -108,6 +109,7 @@ open class Registry<T,K : DSLBase> {
                 return getObject(value) ?: (registeredValues[0] as World) //todo null check
             }
         }
+        val BLOCK_REGISTRY = Registry<String, Block>()
         val ITEM_REGISTRY = Registry<String, Item>()
         val ENTITY_REGISTRY = Registry<String, Entity>()
         val MOD_REGISTRY = Registry<String, Mod>()

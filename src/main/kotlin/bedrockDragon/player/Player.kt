@@ -43,7 +43,7 @@
 
 package bedrockDragon.player
 
-import bedrockDragon.chat.ChatRail
+import bedrockDragon.chat.Chat
 import bedrockDragon.command.CommandEngine
 import bedrockDragon.entity.DataTag
 import bedrockDragon.entity.ItemEntity
@@ -177,7 +177,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
         //NBT exists for player if so use those settings else use default and create one
 
         //register to Chat Rail
-        ChatRail.DEFAULT.subscribe(this)
+        Chat.DEFAULT.subscribe(this)
         chunkRelay.addPlayer(this)
 
         sendAdventure()
@@ -195,7 +195,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             nettyQueue.add(it.gamePacketBlocking())
         }
         //end debug
-        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".GOLD()))
+        Chat.DEFAULT.invoke(TextPacket.richTextPacket("$username has joined the server.".GOLD()))
         //nettyQueue.add(CreativeContentPacket().gamePacket())
 
     }
@@ -434,7 +434,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
      */
     fun disconnect(kickMessage: String?) {
      //   save() todo
-        ChatRail.DEFAULT.invoke(TextPacket.richTextPacket("$username has left the server.".GOLD()))
+        Chat.DEFAULT.invoke(TextPacket.richTextPacket("$username has left the server.".GOLD()))
         nettyQueue.add(DisconnectPacket().let {
             it.kickMessage = kickMessage
             it.gamePacketBlocking()
@@ -505,7 +505,7 @@ class Player(var username: String, override var uuid: String): Living("minecraft
                 val payload = TextPacket()
                 payload.decode(inGamePacket.payload)
                 sendAdventure()
-                ChatRail.DEFAULT.invoke(payload.message)
+                Chat.DEFAULT.invoke(payload.message)
 
             }
             MinecraftPacketConstants.MOVE_ENTITY_ABSOLUTE -> { println("MOVE_ENTITY_ABSOLUTE") }
@@ -531,7 +531,6 @@ class Player(var username: String, override var uuid: String): Living("minecraft
             MinecraftPacketConstants.INTERACT -> {
                 val interact = InteractPacket()
                 interact.decode(inGamePacket.payload)
-                logger.info { interact }
                 when(interact.actionId.toInt()) {
                     4 -> {
 

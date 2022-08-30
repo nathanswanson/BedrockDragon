@@ -75,6 +75,7 @@ object ServerProperties: Properties() {
             setProperty("motd", "Bedrock Modded Server")
             setProperty("motd2", "by Nathan S")
             setProperty("dev-mode", "true")
+            setProperty("lang", "en_us")
             store(FileOutputStream("server.properties"), "Dragon Server")
         }
     }
